@@ -1,6 +1,7 @@
 "use client"
 import { useState, useEffect } from "react"
 import { toRomaji } from "wanakana";
+import Link from 'next/link';
 
 export default function KanjiList() {
     const [level, setLevel] = useState("JLPT N5 Kanji"); // Store a single selected value
@@ -14,8 +15,9 @@ export default function KanjiList() {
 
     useEffect(() => {
         const get_label = async () => {
-            const get_tags = await fetch(`/api/tags`);
+            const get_tags = await fetch(`https://apizenkanji.kahitoz.com/v1/tags`);
             let raw_tags = await get_tags.json();
+            console.log("raw_tags", raw_tags);
             setLabel(raw_tags['result']);
             set_label_load(false);
         };
@@ -25,7 +27,7 @@ export default function KanjiList() {
     useEffect(() => {
         const get_data = async () => {
             if (selectedLabel === 'All') {
-                let raw_kanji = await fetch(`/api/get_kanji?label=${selectedLabel}`);
+                let raw_kanji = await fetch(`https://apizenkanji.kahitoz.com/v1/get_kanji?label=${selectedLabel}`);
                 let raw_data = await raw_kanji.json()
                 let list = []
                 for (let i = 0; i < label.length; i++) {
@@ -52,7 +54,7 @@ export default function KanjiList() {
                 setTable(list)
             }
             else {
-                let raw_kanji = await fetch(`/api/get_kanji?label=${selectedLabel}`);
+                let raw_kanji = await fetch(`https://apizenkanji.kahitoz.com/v1/get_kanji?label=${selectedLabel}`);
                 let raw_data = await raw_kanji.json()
                 let list = []
                 let kanji = []
@@ -97,73 +99,119 @@ export default function KanjiList() {
     };
 
     return (
-        <div >
-            <div>
-                <select
-                    value={level} // Ensure this is a single string
-                    onChange={(e) => setLevel(e.target.value)} // Update with a single value
-                    className="p-2 border border-gray-300 rounded-lg text-black"
-                >
-                    <option value="">Select Level</option>
-                    {["JLPT N5 Kanji", "JLPT N4 Kanji"].map((tag, index) => (
-                        <option key={index} value={tag}>
-                            {tag}
-                        </option>
-                    ))}
-                </select>
-
+        <div className="h-full">
+            {/* Top fixed bar */}
+            <div className="fixed top-0 left-0 right-0 z-10 h-8 bg-black">
             </div>
-            <div >
-                <select
-                    value={selectedLabel}
-                    onChange={handleLabelChange}
-                    className="p-2 border border-gray-300 rounded-lg text-black"
-                >
-                    <option value="">Select a label</option>
-                    {!label_load && label.map((tag, index) => (
 
-                        <option key={index} value={tag}>
-                            {tag}
-                        </option>
-                    ))}
-
-                </select>
-            </div>
-            <p>{console.log(table)}</p>
-            <div>
-                {table.length > 0 ? (
-                    table.map((item, index) => (
-                        <div key={index} className="border p-2 my-2">
-                            <h3 className="font-bold text-center p-4">{item.label}</h3>
-                            <table className="border-collapse border border-gray-400 w-full">
-                                <thead>
-                                    <tr className="bg-blue-500">
-                                        <th className="border border-gray-400 p-2">SNo.</th>
-                                        <th className="border border-gray-400 p-2">Kanji</th>
-                                        <th className="border border-gray-400 p-2">Onyomi</th>
-                                        <th className="border border-gray-400 p-2">Kunyomi</th>
-                                        <th className="border border-gray-400 p-2">Meaning</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {item.data.map((kanji, i) => (
-                                        <tr key={i} className="text-center">
-                                            <td className="border border-gray-400 p-2">{i + 1}</td>
-                                            <td className="border border-gray-400 p-2 font-bold">{kanji.kanji}</td>
-                                            <td className="border border-gray-400 p-2 text-purple-500 font-bold hover:cursor-pointer" onClick={() => handleWordClick(kanji.h_o)} >{kanji.onyomi}</td>
-                                            <td className="border border-gray-400 p-2 text-purple-500 font-bold hover:cursor-pointer" onClick={() => handleWordClick(kanji.h_k)}>{kanji.kunyomi}</td>
-                                            <td className="border border-gray-400 p-2">{kanji.meaning}</td>
-                                        </tr>
+            {/* Scrollable content area */}
+            <div className="h-full pt-8 pb-24 overflow-y-auto">
+                <div className="w-full px-2 md:px-4 lg:px-12 py-0 md:py-4 ">
+                    <div className="h-full">
+                        <div className={'flex justify-between'}>
+                            <Link href="/" passHref>
+                            <button className={'bg-blue-500 text-white p-2 rounded-lg '}>
+                                back
+                            </button>
+                            </Link>
+                            <select
+                                value={selectedLabel}
+                                onChange={handleLabelChange}
+                                className="p-2 border border-gray-300 rounded-lg text-black"
+                            >
+                                <option value="">Select a label</option>
+                                {!label_load &&
+                                    label.map((tag, index) => (
+                                        <option key={index} value={tag}>
+                                            {tag}
+                                        </option>
                                     ))}
-                                </tbody>
-                            </table>
+                            </select>
                         </div>
-                    ))
-                ) : (
-                    <p>No data available</p>
-                )}
+
+                        <p>{console.log(table)}</p>
+
+                        <div>
+                            {table.length > 0 ? (
+                                table.map((item, index) => (
+                                    <div key={index} className="p-0 my-2">
+                                        <h3 className="font-bold text-center p-4">{item.label}</h3>
+                                        <table className="border-collapse border border-gray-400 w-full">
+                                            <thead>
+                                            <tr className="bg-blue-500">
+                                                <th className="border border-gray-400 p-2">SNo.</th>
+                                                <th className="border border-gray-400 p-2">Kanji</th>
+                                                <th className="border border-gray-400 p-2">Onyomi</th>
+                                                <th className="border border-gray-400 p-2">Kunyomi</th>
+                                                <th className="border border-gray-400 p-2">Meaning</th>
+                                            </tr>
+                                            </thead>
+                                            <tbody>
+                                            {item.data.map((kanji, i) => (
+                                                <tr key={i} className="text-center">
+                                                    <td className="border border-gray-400 p-1">{i + 1}</td>
+                                                    <td className="border border-gray-400 p-1 font-bold">{kanji.kanji}</td>
+
+                                                    {/* Onyomi */}
+                                                    <td className="border border-gray-400 p-1 text-purple-500 font-bold">
+                                                        <ul>
+                                                            {JSON.parse(kanji.h_o).map((reading, idx) => (
+                                                                <li
+                                                                    key={idx}
+                                                                    onClick={() => handleWordClick(reading)}
+                                                                    className="hover:underline hover:cursor-pointer"
+                                                                >
+                                                                    {reading} ({toRomaji(reading)})
+                                                                </li>
+                                                            ))}
+                                                        </ul>
+                                                    </td>
+
+                                                    {/* Kunyomi */}
+                                                    <td className="border border-gray-400 p-1 text-purple-500 font-bold">
+                                                        <ul>
+                                                            {JSON.parse(kanji.h_k).map((reading, idx) => (
+                                                                <li
+                                                                    key={idx}
+                                                                    onClick={() => handleWordClick(reading)}
+                                                                    className="hover:underline hover:cursor-pointer"
+                                                                >
+                                                                    {reading} ({toRomaji(reading)})
+                                                                </li>
+                                                            ))}
+                                                        </ul>
+                                                    </td>
+
+                                                    {/* Meaning */}
+                                                    <td className="border border-gray-400 p-1">
+                                                        <ul>
+                                                            {kanji.meaning.split(";").map((meaning, idx) => (
+                                                                <li key={idx}>{meaning.trim()}</li>
+                                                            ))}
+                                                        </ul>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                ))
+                            ) : (
+                                <p>No data available</p>
+                            )}
+                        </div>
+                    </div>
+                </div>
             </div>
 
+            {/* Optional bottom fixed bar (just like your chat input) */}
+            {/*
+        <div className="px-4 lg:px-32 fixed bottom-4 w-full">
+            Bottom Fixed Content (if you need)
         </div>
-    )
+        */}
+        </div>
+    );
+
+
 }
