@@ -14,7 +14,7 @@ export default function KanjiCard({ kanji, flipAudio, face, setFace, onBookmarkT
 
   const handleBookmarkClick = (e) => {
     e.stopPropagation();
-    onBookmarkToggle(kanji.uid, !kanji.marked); // pass new status
+    onBookmarkToggle(kanji.uid, !kanji.marked);
   };
 
   return (
@@ -23,10 +23,7 @@ export default function KanjiCard({ kanji, flipAudio, face, setFace, onBookmarkT
           <div className="flip-card-front">
             <p className="kanji-text">{kanji.kanji}</p>
 
-            <div
-                className="fixed bottom-2 right-2 z-10 hover:cursor-pointer"
-                onClick={handleBookmarkClick}
-            >
+            <div className="fixed bottom-2 right-2 z-10 hover:cursor-pointer" onClick={handleBookmarkClick}>
               {kanji.marked ? (
                   <Image src="/icons/bookmarked.svg" alt="bookmarked" width={20} height={30} />
               ) : (
@@ -37,12 +34,10 @@ export default function KanjiCard({ kanji, flipAudio, face, setFace, onBookmarkT
 
           <div className="flip-card-back">
             <p className="text-2xl text-center">
-              Onyomi: {JSON.parse(kanji.onyomi).join(", ")} (
-              {toRomaji(JSON.parse(kanji.onyomi).join(""))})
+              Onyomi: {JSON.parse(kanji.onyomi).join(", ")} ({toRomaji(JSON.parse(kanji.onyomi).join(""))})
             </p>
             <p className="text-2xl text-center">
-              Kunyomi: {JSON.parse(kanji.kunyomi).join(", ")} (
-              {toRomaji(JSON.parse(kanji.kunyomi).join(""))})
+              Kunyomi: {JSON.parse(kanji.kunyomi).join(", ")} ({toRomaji(JSON.parse(kanji.kunyomi).join(""))})
             </p>
             <p className="text-2xl text-center">Meaning: {kanji.english}</p>
           </div>
