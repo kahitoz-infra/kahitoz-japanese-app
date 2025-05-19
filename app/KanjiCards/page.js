@@ -7,49 +7,117 @@ import Image from "next/image";
 
 export default function KanjiCards() {
   const [label, setLabel] = useState([]);
-  const [selectedLabel, setSelectedLabel] = useState("");
   const [kanjiList, setKanjiList] = useState([]);
   const [allKanjiList, setAllKanjiList] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [labelLoad, setLabelLoad] = useState(true);
   const [face, setFace] = useState(true);
+  const [selectedLabel, setSelectedLabel] = useState("N5");
   const [showBookmarkedOnly, setShowBookmarkedOnly] = useState(false);
 
   const flipAudio = typeof Audio !== "undefined" ? new Audio("/sounds/flipcard.mp3") : null;
   const turnAudio = typeof Audio !== "undefined" ? new Audio("/sounds/pageturn.mp3") : null;
 
+  const checkAPIHealth = async () => {
+    try {
+      const response = await fetch("https://apizenkanji.kahitoz.com/health");
+      return response.status === 200;
+    } catch {
+      return false;
+    }
+  };
+
+  // Restore filters from localStorage
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const savedLabel = localStorage.getItem("selectedLabel");
+      const savedBookmark = localStorage.getItem("bookmarkFilter");
+      if (savedLabel) setSelectedLabel(savedLabel);
+      if (savedBookmark) setShowBookmarkedOnly(savedBookmark === "Bookmarked");
+    }
+  }, []);
+
   useEffect(() => {
     setFace(true);
   }, [currentIndex]);
 
-  // Fetch tags (labels)
+  // Load labels
   useEffect(() => {
     const fetchLabels = async () => {
-      const response = await fetch(`https://apizenkanji.kahitoz.com/v1/tags`);
-      const data = await response.json();
-      setLabel(data.result);
-      setLabelLoad(false);
+      try {
+        const response = await fetch("https://apizenkanji.kahitoz.com/v1/tags");
+        const data = await response.json();
+        setLabel(data.result);
+      } catch (e) {
+        console.warn("Failed to fetch labels", e);
+      } finally {
+        setLabelLoad(false);
+      }
     };
     fetchLabels();
   }, []);
 
-  // Fetch all Kanji when label changes
+  // Load Kanji data
   useEffect(() => {
     const fetchKanji = async () => {
-      if (selectedLabel) {
-        const response = await fetch("https://apizenkanji.kahitoz.com/v1/flagged_kanjis?user_id=1");
-        const data = await response.json();
-        setAllKanjiList(data);
-        applyFilters(data, selectedLabel, showBookmarkedOnly);
+      const healthy = await checkAPIHealth();
+
+      if (healthy) {
+        try {
+          const response = await fetch("https://apizenkanji.kahitoz.com/v1/flagged_kanjis?user_id=1");
+          const data = await response.json();
+          localStorage.setItem("kanjiData", JSON.stringify(data));
+          setAllKanjiList(data);
+          applyFilters(data, selectedLabel, showBookmarkedOnly);
+        } catch (e) {
+          console.error("Failed to fetch from API", e);
+        }
+      } else {
+        const cached = localStorage.getItem("kanjiData");
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          setAllKanjiList(parsed);
+          applyFilters(parsed, selectedLabel, showBookmarkedOnly);
+        }
       }
     };
+
     fetchKanji();
   }, [selectedLabel, showBookmarkedOnly]);
 
-  // Re-filter when bookmark toggle changes
   useEffect(() => {
     applyFilters(allKanjiList, selectedLabel, showBookmarkedOnly);
   }, [allKanjiList, selectedLabel, showBookmarkedOnly]);
+
+  // Sync offline bookmarks
+  useEffect(() => {
+    const syncBookmarks = async () => {
+      const healthy = await checkAPIHealth();
+      if (!healthy) return;
+
+      const localUpdates = JSON.parse(localStorage.getItem("immediateBookmarks") || "{}");
+
+      for (const [kanjiId, status] of Object.entries(localUpdates)) {
+        try {
+          await fetch("https://apizenkanji.kahitoz.com/v1/update_flag", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              operation_type: status,
+              kanji_id: parseInt(kanjiId),
+              user_id: 1,
+            }),
+          });
+        } catch (e) {
+          console.warn("Failed to sync:", e);
+        }
+      }
+
+      localStorage.setItem("immediateBookmarks", "{}");
+    };
+
+    syncBookmarks();
+  }, []);
 
   const applyFilters = (data, label, bookmarkedOnly, preserveCurrent = true) => {
     const filtered = data.filter((item) => {
@@ -60,21 +128,22 @@ export default function KanjiCards() {
 
     setKanjiList(filtered);
 
-    if (
-        !preserveCurrent ||
-        !filtered.some((item) => item.uid === kanjiList[currentIndex]?.uid)
-    ) {
+    if (!preserveCurrent || !filtered.some((item) => item.uid === kanjiList[currentIndex]?.uid)) {
       setCurrentIndex(0);
     }
   };
 
-
   const handleLabelChange = (e) => {
-    setSelectedLabel(e.target.value);
+    const value = e.target.value;
+    setSelectedLabel(value);
+    localStorage.setItem("selectedLabel", value);
   };
 
   const handleBookmarkChange = (e) => {
-    setShowBookmarkedOnly(e.target.value === "Bookmarked");
+    const value = e.target.value;
+    const isBookmarked = value === "Bookmarked";
+    setShowBookmarkedOnly(isBookmarked);
+    localStorage.setItem("bookmarkFilter", value);
   };
 
   const handleNext = () => {
@@ -91,6 +160,42 @@ export default function KanjiCards() {
       turnAudio.play();
     }
     setCurrentIndex((prevIndex) => (prevIndex - 1 + kanjiList.length) % kanjiList.length);
+  };
+
+  const handleBookmarkToggle = async (kanjiId, newStatus) => {
+    const updatedList = allKanjiList.map((k) =>
+        k.uid === kanjiId ? { ...k, marked: newStatus } : k
+    );
+
+    localStorage.setItem("kanjiData", JSON.stringify(updatedList));
+    const immediateBookmarks = JSON.parse(localStorage.getItem("immediateBookmarks") || "{}");
+    immediateBookmarks[kanjiId] = newStatus;
+    localStorage.setItem("immediateBookmarks", JSON.stringify(immediateBookmarks));
+
+    setAllKanjiList(updatedList);
+    applyFilters(updatedList, selectedLabel, showBookmarkedOnly);
+
+    const healthy = await checkAPIHealth();
+    if (healthy) {
+      try {
+        const response = await fetch("https://apizenkanji.kahitoz.com/v1/update_flag", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            operation_type: newStatus,
+            kanji_id: kanjiId,
+            user_id: 1,
+          }),
+        });
+
+        if (response.ok) {
+          delete immediateBookmarks[kanjiId];
+          localStorage.setItem("immediateBookmarks", JSON.stringify(immediateBookmarks));
+        }
+      } catch (e) {
+        console.warn("API failed, kept in local cache.");
+      }
+    }
   };
 
   const currentKanji = kanjiList[currentIndex];
@@ -113,33 +218,6 @@ export default function KanjiCards() {
     else if (distance < -minSwipeDistance) handlePrevious();
   };
 
-  const handleBookmarkToggle = async (kanjiId, newStatus) => {
-    try {
-      const response = await fetch("https://apizenkanji.kahitoz.com/v1/update_flag", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          operation_type: newStatus,
-          kanji_id: kanjiId,
-          user_id: 1,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to update bookmark");
-      }
-
-      // Update in-place in allKanjiList and reapply filters
-      const updatedList = allKanjiList.map((k) =>
-          k.uid === kanjiId ? { ...k, marked: newStatus } : k
-      );
-      setAllKanjiList(updatedList);
-      applyFilters(updatedList, selectedLabel, showBookmarkedOnly);
-    } catch (error) {
-      console.error("Bookmark update failed:", error);
-    }
-  };
-
   return (
       <div className="flex flex-col h-screen w-screen">
         <div className="fixed top-0 left-0 right-0 z-10 gap-x-2 p-6 mt-2">
@@ -149,23 +227,13 @@ export default function KanjiCards() {
             </Link>
 
             <div className="flex items-center justify-center space-x-2">
-              {/* Fixed dropdown for 'Cards' */}
-              <select
-                  value={"Cards"}
-                  className="border-none rounded-lg w-16 text-center text-black bg-white dark:bg-black dark:text-white"
-                  disabled
-              >
+              <select value={"Cards"} disabled className="border-none rounded-lg w-16 text-center text-black bg-white dark:bg-black dark:text-white">
                 <option value="">Cards</option>
               </select>
 
               <Image src={"icons/rightarrow.svg"} alt={"rightarrow"} width={20} height={20} />
 
-              {/* Level Select */}
-              <select
-                  value={selectedLabel}
-                  onChange={handleLabelChange}
-                  className="border-none rounded-lg w-24 text-center text-black bg-white dark:bg-black dark:text-white"
-              >
+              <select value={selectedLabel} onChange={handleLabelChange} className="border-none rounded-lg w-24 text-center text-black bg-white dark:bg-black dark:text-white">
                 <option value="">Level</option>
                 {!labelLoad &&
                     label.map((tag, index) => (
@@ -177,12 +245,7 @@ export default function KanjiCards() {
 
               <Image src={"icons/rightarrow.svg"} alt={"rightarrow"} width={20} height={20} />
 
-              {/* Bookmark Filter Select */}
-              <select
-                  value={showBookmarkedOnly ? "Bookmarked" : "All"}
-                  onChange={handleBookmarkChange}
-                  className="border-none rounded-lg w-28 text-center text-black bg-white dark:bg-black dark:text-white"
-              >
+              <select value={showBookmarkedOnly ? "Bookmarked" : "All"} onChange={handleBookmarkChange} className="border-none rounded-lg w-28 text-center text-black bg-white dark:bg-black dark:text-white">
                 <option value="All">All</option>
                 <option value="Bookmarked">Bookmarked</option>
               </select>
@@ -198,14 +261,7 @@ export default function KanjiCards() {
                 </p>
 
                 <div onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
-                  <KanjiCard
-                      kanji={currentKanji}
-                      flipAudio={flipAudio}
-                      face={face}
-                      setFace={setFace}
-                      onBookmarkToggle={handleBookmarkToggle}
-                  />
-
+                  <KanjiCard kanji={currentKanji} flipAudio={flipAudio} face={face} setFace={setFace} onBookmarkToggle={handleBookmarkToggle} />
                 </div>
 
                 <div className="hidden lg:flex gap-x-10 mt-4">
