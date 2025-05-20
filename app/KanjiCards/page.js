@@ -1,312 +1,181 @@
 "use client";
-import Link from "next/link";
-import { useState, useEffect, useRef } from "react";
-import KanjiCard from "../componets/Cards";
-import "./page.css";
-import Image from "next/image";
-import KanjiList from "@/app/KanjiList/Table";
+import { useState, useEffect } from "react";
+import KanjiCardView from "@/app/components/KanjiCardView";
+import KanjiTableView from "@/app/components/Table";
 
-export default function KanjiCards() {
-  const [label, setLabel] = useState([]);
-  const [kanjiList, setKanjiList] = useState([]);
-  const [allKanjiList, setAllKanjiList] = useState([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [labelLoad, setLabelLoad] = useState(true);
-  const [face, setFace] = useState(true);
-  const [selectedView, setSelectedView] = useState("Cards");
-  const [selectedLabel, setSelectedLabel] = useState("N5");
-  const [showBookmarkedOnly, setShowBookmarkedOnly] = useState(false);
+function shuffleArray(arr) {
+  const array = [...arr];
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+  return array;
+}
 
-  const flipAudio = typeof Audio !== "undefined" ? new Audio("/sounds/flipcard.mp3") : null;
-  const turnAudio = typeof Audio !== "undefined" ? new Audio("/sounds/pageturn.mp3") : null;
+function shuffleInGroups(arr, groupSize) {
+  if (groupSize <= 0) return arr;
+  const result = [];
+  for (let i = 0; i < arr.length; i += groupSize) {
+    const group = arr.slice(i, i + groupSize);
+    result.push(...shuffleArray(group));
+  }
+  return result;
+}
 
-  const checkAPIHealth = async () => {
-    try {
-      const response = await fetch("https://apizenkanji.kahitoz.com/v1/health");
-      return response.status === 200;
-    } catch {
-      console.log("This is false")
-      return false;
-    }
-  };
+export default function HomePage() {
+  const [viewType, setViewType] = useState("Cards");
+  const [selectedLabel, setSelectedLabel] = useState("N4");
+  const [showBookmarksOnly, setShowBookmarksOnly] = useState(false);
 
-  // Restore filters from localStorage
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const savedLabel = localStorage.getItem("selectedLabel");
-      const savedBookmark = localStorage.getItem("bookmarkFilter");
-      if (savedLabel) setSelectedLabel(savedLabel);
-      if (savedBookmark) setShowBookmarkedOnly(savedBookmark === "Bookmarked");
-    }
-  }, []);
+  // randomizeMode can be 'None', 'All', '5', '10', '15', 'Custom'
+  const [randomizeMode, setRandomizeMode] = useState("None");
+  const [customGroupSize, setCustomGroupSize] = useState("");
+
+  const [kanjiData, setKanjiData] = useState([]);
+  const [tags, setTags] = useState([]);
+  const [filteredKanji, setFilteredKanji] = useState([]);
 
   useEffect(() => {
-    setFace(true);
-  }, [currentIndex]);
-
-  // Load labels
-  useEffect(() => {
-    const fetchLabels = async () => {
+    async function fetchData() {
       try {
-        const response = await fetch("https://apizenkanji.kahitoz.com/v1/tags");
-        const data = await response.json();
-        setLabel(data.result);
+        const kanjiResp = await fetch(
+            "https://apizenkanji.kahitoz.com/v1/flagged_kanjis?user_id=1"
+        );
+        const kanjiJson = await kanjiResp.json();
+
+        const tagResp = await fetch("https://apizenkanji.kahitoz.com/v1/tags");
+        const tagJson = await tagResp.json();
+
+        setKanjiData(kanjiJson);
+        setTags(tagJson.result || []);
       } catch (e) {
-        console.warn("Failed to fetch labels", e);
-      } finally {
-        setLabelLoad(false);
+        console.error("Failed to fetch data", e);
       }
-    };
-    fetchLabels();
+    }
+    fetchData();
   }, []);
 
-  // Load Kanji data
   useEffect(() => {
-    const fetchKanji = async () => {
-      const lastFetch = localStorage.getItem("kanjiLastFetch");
-      const now = new Date().getTime();
-      const twelveHours = 12 * 60 * 60 * 1000;
+    if (!kanjiData) return;
 
-      const shouldFetch = !lastFetch || now - parseInt(lastFetch) > twelveHours;
+    let filtered = kanjiData;
 
-      if (shouldFetch) {
-        const healthy = await checkAPIHealth();
+    // Filter by label
+    if (selectedLabel !== "All") {
+      filtered = filtered.filter((k) => k.tags === selectedLabel);
+    }
 
-        if (healthy) {
-          try {
-            const response = await fetch("https://apizenkanji.kahitoz.com/v1/flagged_kanjis?user_id=1");
-            const data = await response.json();
+    // Filter bookmarks
+    if (showBookmarksOnly) {
+      filtered = filtered.filter((k) => k.marked === true);
+    }
 
-            localStorage.setItem("kanjiData", JSON.stringify(data));
-            localStorage.setItem("kanjiLastFetch", now.toString());
-            setAllKanjiList(data);
-            applyFilters(data, selectedLabel, showBookmarkedOnly);
-          } catch (e) {
-            console.error("Failed to fetch from API", e);
-          }
-        } else {
-          const cached = localStorage.getItem("kanjiData");
-          if (cached) {
-            const parsed = JSON.parse(cached);
-            setAllKanjiList(parsed);
-            applyFilters(parsed, selectedLabel, showBookmarkedOnly);
-          }
-        }
+    // Randomize logic
+    if (randomizeMode === "None") {
+      // no shuffle
+    } else if (randomizeMode === "All") {
+      filtered = shuffleArray(filtered);
+    } else {
+      // If custom group or fixed group sizes
+      let groupSize;
+      if (randomizeMode === "Custom") {
+        groupSize = parseInt(customGroupSize, 10);
       } else {
-        const cached = localStorage.getItem("kanjiData");
-        if (cached) {
-          const parsed = JSON.parse(cached);
-          setAllKanjiList(parsed);
-          applyFilters(parsed, selectedLabel, showBookmarkedOnly);
-        }
+        groupSize = parseInt(randomizeMode, 10);
       }
-    };
-
-    fetchKanji();
-  }, [selectedLabel, showBookmarkedOnly]);
-
-
-  useEffect(() => {
-    applyFilters(allKanjiList, selectedLabel, showBookmarkedOnly);
-  }, [allKanjiList, selectedLabel, showBookmarkedOnly]);
-
-  // Sync offline bookmarks
-  useEffect(() => {
-    const syncBookmarks = async () => {
-      const healthy = await checkAPIHealth();
-      if (!healthy) return;
-
-      const localUpdates = JSON.parse(localStorage.getItem("immediateBookmarks") || "{}");
-
-      for (const [kanjiId, status] of Object.entries(localUpdates)) {
-        try {
-          const response = await fetch("https://apizenkanji.kahitoz.com/v1/update_flag", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              operation_type: status,
-              kanji_id: parseInt(kanjiId),
-              user_id: 1,
-            }),
-          });
-
-          if (response.ok) {
-            delete localUpdates[kanjiId];
-          }
-        } catch (e) {
-          console.warn("Sync failed for", kanjiId);
-        }
-      }
-
-      localStorage.setItem("immediateBookmarks", JSON.stringify(localUpdates));
-    };
-
-    // Initial sync
-    syncBookmarks();
-
-    // Retry every 1 minute
-    const interval = setInterval(syncBookmarks, 60000);
-
-    return () => clearInterval(interval);
-  }, []);
-
-
-  const applyFilters = (data, label, bookmarkedOnly, preserveCurrent = true) => {
-    const filtered = data.filter((item) => {
-      const matchLabel = label === "All" || item.tags === label;
-      const matchBookmark = !bookmarkedOnly || item.marked;
-      return matchLabel && matchBookmark;
-    });
-
-    setKanjiList(filtered);
-
-    if (!preserveCurrent || !filtered.some((item) => item.uid === kanjiList[currentIndex]?.uid)) {
-      setCurrentIndex(0);
-    }
-  };
-
-  const handleLabelChange = (e) => {
-    const value = e.target.value;
-    setSelectedLabel(value);
-    localStorage.setItem("selectedLabel", value);
-  };
-
-  const handleBookmarkChange = (e) => {
-    const value = e.target.value;
-    const isBookmarked = value === "Bookmarked";
-    setShowBookmarkedOnly(isBookmarked);
-    localStorage.setItem("bookmarkFilter", value);
-  };
-
-  const handleNext = () => {
-    if (turnAudio) {
-      turnAudio.currentTime = 0;
-      turnAudio.play();
-    }
-    setCurrentIndex((prevIndex) => (prevIndex + 1) % kanjiList.length);
-  };
-
-  const handlePrevious = () => {
-    if (turnAudio) {
-      turnAudio.currentTime = 0;
-      turnAudio.play();
-    }
-    setCurrentIndex((prevIndex) => (prevIndex - 1 + kanjiList.length) % kanjiList.length);
-  };
-
-  const handleBookmarkToggle = async (kanjiId, newStatus) => {
-    const updatedList = allKanjiList.map((k) =>
-        k.uid === kanjiId ? { ...k, marked: newStatus } : k
-    );
-
-    localStorage.setItem("kanjiData", JSON.stringify(updatedList));
-    const immediateBookmarks = JSON.parse(localStorage.getItem("immediateBookmarks") || "{}");
-    immediateBookmarks[kanjiId] = newStatus;
-    localStorage.setItem("immediateBookmarks", JSON.stringify(immediateBookmarks));
-
-    setAllKanjiList(updatedList);
-    applyFilters(updatedList, selectedLabel, showBookmarkedOnly);
-
-    const healthy = await checkAPIHealth();
-    if (healthy) {
-      try {
-        const response = await fetch("https://apizenkanji.kahitoz.com/v1/update_flag", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            operation_type: newStatus,
-            kanji_id: kanjiId,
-            user_id: 1,
-          }),
-        });
-
-        if (response.ok) {
-          delete immediateBookmarks[kanjiId];
-          localStorage.setItem("immediateBookmarks", JSON.stringify(immediateBookmarks));
-        }
-      } catch (e) {
-        console.warn("API failed, kept in local cache.");
+      if (groupSize > 0) {
+        filtered = shuffleInGroups(filtered, groupSize);
       }
     }
-  };
 
-  const currentKanji = kanjiList[currentIndex];
-  const touchStartX = useRef(null);
-  const touchEndX = useRef(null);
+    setFilteredKanji(filtered);
+  }, [kanjiData, selectedLabel, showBookmarksOnly, randomizeMode, customGroupSize]);
 
-  const handleTouchStart = (e) => {
-    touchStartX.current = e.changedTouches[0].screenX;
-  };
-
-  const handleTouchEnd = (e) => {
-    touchEndX.current = e.changedTouches[0].screenX;
-    handleSwipeGesture();
-  };
-
-  const handleSwipeGesture = () => {
-    const minSwipeDistance = 50;
-    const distance = touchStartX.current - touchEndX.current;
-    if (distance > minSwipeDistance) handleNext();
-    else if (distance < -minSwipeDistance) handlePrevious();
-  };
+  // Handle custom input change
+  function onCustomGroupSizeChange(e) {
+    const val = e.target.value;
+    if (val === "" || /^\d+$/.test(val)) {
+      setCustomGroupSize(val);
+    }
+  }
 
   return (
-      <div className="flex flex-col h-screen w-screen">
-        <div className="fixed top-0 left-0 right-0 z-10 gap-x-2 p-6 mt-2">
-          <div className="flex w-full justify-between">
-            <Link href="/" passHref>
-              <Image src={"icons/back.svg"} width={40} height={40} alt="back" />
-            </Link>
+      <div className="min-h-screen w-screen">
+        <div className="fixed top-0 left-0 right-0 z-20 flex flex-wrap items-center justify-center p-4 space-x-4 bg-white dark:bg-black">
+          {/* View Type */}
+          <select
+              value={viewType}
+              onChange={(e) => setViewType(e.target.value)}
+              className="p-2 rounded-md"
+          >
+            <option value="Cards">Cards</option>
+            <option value="Table">Table</option>
+          </select>
 
-            <div className="flex items-center justify-center space-x-2">
-              <select value={"Cards"} disabled className="border-none rounded-lg w-16 text-center text-black bg-white dark:bg-black dark:text-white">
-                <option value="">Cards</option>
-              </select>
+          {/* Label Filter */}
+          <select
+              value={selectedLabel}
+              onChange={(e) => setSelectedLabel(e.target.value)}
+              className="p-2 rounded-md"
+          >
+            <option value="N4">N4</option>
+            <option value="N5">N5</option>
+            <option value="All">All</option>
+            {tags
+                .filter((t) => !["N4", "N5"].includes(t))
+                .map((tag) => (
+                    <option key={tag} value={tag}>
+                      {tag}
+                    </option>
+                ))}
+          </select>
 
-              <Image src={"icons/rightarrow.svg"} alt={"rightarrow"} width={20} height={20} />
+          {/* Bookmark Filter */}
+          <select
+              value={showBookmarksOnly ? "Bookmarked" : "All"}
+              onChange={(e) => setShowBookmarksOnly(e.target.value === "Bookmarked")}
+              className="p-2 rounded-md"
+          >
+            <option value="All">All</option>
+            <option value="Bookmarked">Bookmarked</option>
+          </select>
 
-              <select value={selectedLabel} onChange={handleLabelChange} className="border-none rounded-lg w-24 text-center text-black bg-white dark:bg-black dark:text-white">
-                <option value="">Level</option>
-                {!labelLoad &&
-                    label.map((tag, index) => (
-                        <option key={index} value={tag}>
-                          {tag}
-                        </option>
-                    ))}
-              </select>
+          {/* Randomization select */}
+          <select
+              value={randomizeMode}
+              onChange={(e) => {
+                setRandomizeMode(e.target.value);
+                if (e.target.value !== "Custom") {
+                  setCustomGroupSize("");
+                }
+              }}
+              className="p-2 rounded-md"
+          >
+            <option value="None">Stop Randomization</option>
+            <option value="All">Randomize All</option>
+            <option value="5">Randomize in groups of 5</option>
+            <option value="10">Randomize in groups of 10</option>
+            <option value="15">Randomize in groups of 15</option>
+            <option value="Custom">Custom Group Size</option>
+          </select>
 
-              <Image src={"icons/rightarrow.svg"} alt={"rightarrow"} width={20} height={20} />
-
-              <select value={showBookmarkedOnly ? "Bookmarked" : "All"} onChange={handleBookmarkChange} className="border-none rounded-lg w-28 text-center text-black bg-white dark:bg-black dark:text-white">
-                <option value="All">All</option>
-                <option value="Bookmarked">Bookmarked</option>
-              </select>
-            </div>
-          </div>
+          {/* Custom group size input, only visible if Custom is selected */}
+          {randomizeMode === "Custom" && (
+              <input
+                  type="text"
+                  placeholder="Enter group size"
+                  value={customGroupSize}
+                  onChange={onCustomGroupSizeChange}
+                  className="p-2 rounded-md w-36"
+              />
+          )}
         </div>
 
-        <div className="flex flex-col items-center justify-center h-full">
-          {kanjiList.length > 0 && currentKanji ? (
-              <>
-                <p className=" text-xl mb-4 mt-4">
-                  {currentIndex + 1} / {kanjiList.length}
-                </p>
-
-                <div onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
-                  <KanjiCard kanji={currentKanji} flipAudio={flipAudio} face={face} setFace={setFace} onBookmarkToggle={handleBookmarkToggle} />
-                </div>
-
-                <div className="hidden lg:flex gap-x-10 mt-4">
-                  <button onClick={handlePrevious} className="p-2 bg-green-500 text-white rounded-lg">
-                    ⬅️ Previous
-                  </button>
-                  <button onClick={handleNext} className="p-2 bg-green-500 text-white rounded-lg">
-                    Next ➡️
-                  </button>
-                </div>
-              </>
+        <div className="pt-24">
+          {viewType === "Cards" ? (
+              <KanjiCardView kanjiList={filteredKanji} setKanjiData={setKanjiData} />
           ) : (
-              <p className="text-white mt-8">Please select a label to load kanji cards.</p>
+              <KanjiTableView kanjiList={filteredKanji} />
           )}
         </div>
       </div>
