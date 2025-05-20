@@ -2,8 +2,11 @@
 import { toRomaji } from "wanakana";
 import "./Cards.css";
 import Image from "next/image";
+import {useState} from "react";
 
 export default function KanjiCard({ kanji, flipAudio, face, setFace, onBookmarkToggle }) {
+  const [isBookmarking, setIsBookmarking] = useState(false);
+
   const handleFlip = () => {
     if (flipAudio) {
       flipAudio.currentTime = 0;
@@ -12,9 +15,20 @@ export default function KanjiCard({ kanji, flipAudio, face, setFace, onBookmarkT
     setFace(!face);
   };
 
-  const handleBookmarkClick = (e) => {
+
+  const handleBookmarkClick = async (e) => {
     e.stopPropagation();
-    onBookmarkToggle(kanji.uid, !kanji.marked);
+    if (isBookmarking) return;
+
+    setIsBookmarking(true);
+    try {
+      // Pass the current opposite of marked status as operation_type
+      await onBookmarkToggle(kanji.uid, !kanji.marked);
+    } catch (error) {
+      console.error("Bookmark update error:", error);
+    } finally {
+      setIsBookmarking(false);
+    }
   };
 
   return (
@@ -23,7 +37,10 @@ export default function KanjiCard({ kanji, flipAudio, face, setFace, onBookmarkT
           <div className="flip-card-front">
             <p className="kanji-text">{kanji.kanji}</p>
 
-            <div className="fixed bottom-2 right-2 z-10 hover:cursor-pointer" onClick={handleBookmarkClick}>
+            <div
+                className={`fixed bottom-2 right-2 z-10 hover:cursor-pointer ${isBookmarking ? 'opacity-50' : ''}`}
+                onClick={handleBookmarkClick}
+            >
               {kanji.marked ? (
                   <Image src="/icons/bookmarked.svg" alt="bookmarked" width={20} height={30} />
               ) : (
