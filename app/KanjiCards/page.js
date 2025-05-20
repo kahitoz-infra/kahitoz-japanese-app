@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import KanjiCard from "../componets/Cards";
 import "./page.css";
 import Image from "next/image";
+import KanjiList from "@/app/KanjiList/Table";
 
 export default function KanjiCards() {
   const [label, setLabel] = useState([]);
@@ -12,6 +13,7 @@ export default function KanjiCards() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [labelLoad, setLabelLoad] = useState(true);
   const [face, setFace] = useState(true);
+  const [selectedView, setSelectedView] = useState("Cards");
   const [selectedLabel, setSelectedLabel] = useState("N5");
   const [showBookmarkedOnly, setShowBookmarkedOnly] = useState(false);
 
@@ -20,9 +22,10 @@ export default function KanjiCards() {
 
   const checkAPIHealth = async () => {
     try {
-      const response = await fetch("https://apizenkanji.kahitoz.com/health");
+      const response = await fetch("https://apizenkanji.kahitoz.com/v1/health");
       return response.status === 200;
     } catch {
+      console.log("This is false")
       return false;
     }
   };
@@ -60,17 +63,34 @@ export default function KanjiCards() {
   // Load Kanji data
   useEffect(() => {
     const fetchKanji = async () => {
-      const healthy = await checkAPIHealth();
+      const lastFetch = localStorage.getItem("kanjiLastFetch");
+      const now = new Date().getTime();
+      const twelveHours = 12 * 60 * 60 * 1000;
 
-      if (healthy) {
-        try {
-          const response = await fetch("https://apizenkanji.kahitoz.com/v1/flagged_kanjis?user_id=1");
-          const data = await response.json();
-          localStorage.setItem("kanjiData", JSON.stringify(data));
-          setAllKanjiList(data);
-          applyFilters(data, selectedLabel, showBookmarkedOnly);
-        } catch (e) {
-          console.error("Failed to fetch from API", e);
+      const shouldFetch = !lastFetch || now - parseInt(lastFetch) > twelveHours;
+
+      if (shouldFetch) {
+        const healthy = await checkAPIHealth();
+
+        if (healthy) {
+          try {
+            const response = await fetch("https://apizenkanji.kahitoz.com/v1/flagged_kanjis?user_id=1");
+            const data = await response.json();
+
+            localStorage.setItem("kanjiData", JSON.stringify(data));
+            localStorage.setItem("kanjiLastFetch", now.toString());
+            setAllKanjiList(data);
+            applyFilters(data, selectedLabel, showBookmarkedOnly);
+          } catch (e) {
+            console.error("Failed to fetch from API", e);
+          }
+        } else {
+          const cached = localStorage.getItem("kanjiData");
+          if (cached) {
+            const parsed = JSON.parse(cached);
+            setAllKanjiList(parsed);
+            applyFilters(parsed, selectedLabel, showBookmarkedOnly);
+          }
         }
       } else {
         const cached = localStorage.getItem("kanjiData");
@@ -84,6 +104,7 @@ export default function KanjiCards() {
 
     fetchKanji();
   }, [selectedLabel, showBookmarkedOnly]);
+
 
   useEffect(() => {
     applyFilters(allKanjiList, selectedLabel, showBookmarkedOnly);
@@ -99,7 +120,7 @@ export default function KanjiCards() {
 
       for (const [kanjiId, status] of Object.entries(localUpdates)) {
         try {
-          await fetch("https://apizenkanji.kahitoz.com/v1/update_flag", {
+          const response = await fetch("https://apizenkanji.kahitoz.com/v1/update_flag", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -108,16 +129,27 @@ export default function KanjiCards() {
               user_id: 1,
             }),
           });
+
+          if (response.ok) {
+            delete localUpdates[kanjiId];
+          }
         } catch (e) {
-          console.warn("Failed to sync:", e);
+          console.warn("Sync failed for", kanjiId);
         }
       }
 
-      localStorage.setItem("immediateBookmarks", "{}");
+      localStorage.setItem("immediateBookmarks", JSON.stringify(localUpdates));
     };
 
+    // Initial sync
     syncBookmarks();
+
+    // Retry every 1 minute
+    const interval = setInterval(syncBookmarks, 60000);
+
+    return () => clearInterval(interval);
   }, []);
+
 
   const applyFilters = (data, label, bookmarkedOnly, preserveCurrent = true) => {
     const filtered = data.filter((item) => {
@@ -256,7 +288,7 @@ export default function KanjiCards() {
         <div className="flex flex-col items-center justify-center h-full">
           {kanjiList.length > 0 && currentKanji ? (
               <>
-                <p className="text-white text-xl mb-4 mt-4">
+                <p className=" text-xl mb-4 mt-4">
                   {currentIndex + 1} / {kanjiList.length}
                 </p>
 
