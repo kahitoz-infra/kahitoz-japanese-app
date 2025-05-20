@@ -1,7 +1,7 @@
 "use client"
 import Link from 'next/link';
 import Image from "next/image";
-import Navbar from "@/app/componets/Navbar";
+import Navbar from "@/app/components/Navbar";
 
 const Dashboard = () => {
     return (
