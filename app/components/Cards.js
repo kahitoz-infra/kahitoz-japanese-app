@@ -4,11 +4,11 @@ import "./Cards.css";
 import Image from "next/image";
 import {useState} from "react";
 
-export default function KanjiCard({ kanji, flipAudio, face, setFace, onBookmarkToggle }) {
+export default function KanjiCard({ kanji, flipAudio, face, setFace, onBookmarkToggle, sound }) {
   const [isBookmarking, setIsBookmarking] = useState(false);
 
   const handleFlip = () => {
-    if (flipAudio) {
+    if (sound && flipAudio) {
       flipAudio.currentTime = 0;
       flipAudio.play();
     }

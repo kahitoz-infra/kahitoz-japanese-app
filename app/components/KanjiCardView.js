@@ -47,7 +47,6 @@ export default function KanjiCardView({ kanjiList, onBookmarkToggle, sound }) {
         setFace(true);
     };
 
-
     const currentKanji = kanjiList[currentIndex];
 
     const touchStartX = useRef(null);
@@ -78,7 +77,8 @@ export default function KanjiCardView({ kanjiList, onBookmarkToggle, sound }) {
                             flipAudio={flipAudio}
                             face={face}
                             setFace={setFace}
-                            onBookmarkToggle={onBookmarkToggle} // Pass onBookmarkToggle directly
+                            onBookmarkToggle={onBookmarkToggle}
+                            sound={sound}// Pass onBookmarkToggle directly
                         />
                     </div>
                     <div className="hidden lg:flex gap-x-10 mt-4">
