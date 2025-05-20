@@ -2,7 +2,8 @@
 import { useState, useRef, useEffect } from "react";
 import KanjiCard from "./Cards";
 
-export default function KanjiCardView({ kanjiList, onBookmarkToggle }) {
+export default function KanjiCardView({ kanjiList, onBookmarkToggle, sound }) {
+
     const [currentIndex, setCurrentIndex] = useState(0);
     const [face, setFace] = useState(true);
     const prevLengthRef = useRef(kanjiList.length);
@@ -29,7 +30,7 @@ export default function KanjiCardView({ kanjiList, onBookmarkToggle }) {
     const turnAudio = typeof Audio !== "undefined" ? new Audio("/sounds/pageturn.mp3") : null;
 
     const handleNext = () => {
-        if (turnAudio) {
+        if (sound && turnAudio) {
             turnAudio.currentTime = 0;
             turnAudio.play();
         }
@@ -38,13 +39,14 @@ export default function KanjiCardView({ kanjiList, onBookmarkToggle }) {
     };
 
     const handlePrevious = () => {
-        if (turnAudio) {
+        if (sound && turnAudio) {
             turnAudio.currentTime = 0;
             turnAudio.play();
         }
         setCurrentIndex((prev) => (prev - 1 + kanjiList.length) % kanjiList.length);
         setFace(true);
     };
+
 
     const currentKanji = kanjiList[currentIndex];
 

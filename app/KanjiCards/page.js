@@ -36,6 +36,7 @@ export default function HomePage() {
   const [kanjiData, setKanjiData] = useState([]);
   const [tags, setTags] = useState([]);
   const [filteredKanji, setFilteredKanji] = useState([]);
+  const [sound, setSound] = useState(true);
 
   const CACHE_KEY_KANJI = "kanjiDataCache";
   const CACHE_KEY_TAGS = "kanjiTagsCache";
@@ -173,16 +174,22 @@ export default function HomePage() {
 
   return (
       <div className="">
-        <div className="fixed lg:hidden top-0 left-0 right-0 z-20 h-4 bg-black"></div>
+        <div className="fixed lg:hidden top-0 left-0 right-0 z-20 h-8 bg-black"></div>
 
-        <div className={'fixed top-4 left-0 right-0'}>
+        <div className={'fixed top-8 left-0 right-0'}>
           <div className={'flex items-center justify-between'}>
             <Link href="/">
               <Image src="/icons/back.svg" alt="back" width={40} height={40} />
             </Link>
             <div>
-              {showFilters && <Image src={'icons/show.svg'} alt={'show'} width={40} height={40} onClick={()=>setShowFilters(false)}/>}
-              {!showFilters && <Image src={'icons/hide.svg'} alt={'show'} width={40} height={40} onClick={()=>setShowFilters(true)}/>}
+
+              <div className={'flex items-center justify-center gap-x-2'}>
+                {sound && <Image src={'icons/sound.svg'} alt={'sound'} width={40} height={40} onClick={()=>setSound(false)} /> }
+                {!sound && <Image src={'icons/mute.svg'} alt={'sound'} width={40} height={40} onClick={()=>setSound(true)} /> }
+                {showFilters && <Image src={'icons/show.svg'} alt={'show'} width={40} height={40} onClick={()=>setShowFilters(false)}/>}
+                {!showFilters && <Image src={'icons/hide.svg'} alt={'show'} width={40} height={40} onClick={()=>setShowFilters(true)}/>}
+              </div>
+
             </div>
           </div>
 
@@ -259,7 +266,9 @@ export default function HomePage() {
               <KanjiCardView
                   kanjiList={filteredKanji}
                   onBookmarkToggle={handleBookmarkToggle}
+                  sound={sound}
               />
+
           ) : (
               <KanjiTableView kanjiList={filteredKanji} />
           )}
