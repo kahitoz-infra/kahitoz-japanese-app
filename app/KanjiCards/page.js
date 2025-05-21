@@ -46,8 +46,6 @@ export default function HomePage() {
   const [tags, setTags] = useState([]);
   const [filteredKanji, setFilteredKanji] = useState([]);
   const [sound, setSound] = useState(true);
-  const [currentBookmarked, setCurrentBookMarked] = useState([])
-  const [changedBookMaked, setChangedBookMarked] = useState([])
   const CACHE_KEY_KANJI = "kanjiDataCache";
   const CACHE_KEY_TAGS = "kanjiTagsCache";
   const CACHE_TIMESTAMP_KEY = "kanjiCacheTimestamp";
