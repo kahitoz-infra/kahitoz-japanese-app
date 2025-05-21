@@ -24,6 +24,15 @@ function shuffleInGroups(arr, groupSize) {
   return result;
 }
 
+function getBookmarkMap(data) {
+  const map = {};
+  data.forEach(item => {
+    map[item.uid] = item.marked;
+  });
+  return map;
+}
+
+
 export default function HomePage() {
   const [viewType, setViewType] = useState("Cards");
   const [selectedLabel, setSelectedLabel] = useState("N4");
@@ -37,11 +46,14 @@ export default function HomePage() {
   const [tags, setTags] = useState([]);
   const [filteredKanji, setFilteredKanji] = useState([]);
   const [sound, setSound] = useState(true);
-
+  const [currentBookmarked, setCurrentBookMarked] = useState([])
+  const [changedBookMaked, setChangedBookMarked] = useState([])
   const CACHE_KEY_KANJI = "kanjiDataCache";
   const CACHE_KEY_TAGS = "kanjiTagsCache";
   const CACHE_TIMESTAMP_KEY = "kanjiCacheTimestamp";
   const CACHE_EXPIRATION_HOURS = 12;
+  const LS_KEY_ORIGINAL = "bookmarkedOriginal";
+  const LS_KEY_MODIFIED = "bookmarkedModified";
 
 
   useEffect(() => {
@@ -50,6 +62,7 @@ export default function HomePage() {
       const cachedTags = localStorage.getItem(CACHE_KEY_TAGS);
       const cachedTimestamp = localStorage.getItem(CACHE_TIMESTAMP_KEY);
 
+
       const now = Date.now();
       const isCacheValid =
           cachedKanji &&
@@ -57,11 +70,15 @@ export default function HomePage() {
           cachedTimestamp &&
           now - parseInt(cachedTimestamp, 10) < CACHE_EXPIRATION_HOURS * 60 * 60 * 1000;
 
-      if (isCacheValid) {
-        // Use cached data
-        setKanjiData(JSON.parse(cachedKanji));
-        setTags(JSON.parse(cachedTags));
-      } else {
+          if (isCacheValid) {
+            const parsedKanji = JSON.parse(cachedKanji);
+            setKanjiData(parsedKanji);
+            setTags(JSON.parse(cachedTags));
+          
+            // Save initial bookmark state
+            localStorage.setItem(LS_KEY_ORIGINAL, JSON.stringify(getBookmarkMap(parsedKanji)));
+            localStorage.setItem(LS_KEY_MODIFIED, JSON.stringify(getBookmarkMap(parsedKanji)));
+          } else {
         try {
           const kanjiResp = await fetch("https://apizenkanji.kahitoz.com/v1/flagged_kanjis?user_id=1");
           const kanjiJson = await kanjiResp.json();
@@ -131,45 +148,54 @@ export default function HomePage() {
     }
   }
 
-  const handleBookmarkToggle = async (kanjiId, shouldBookmark) => {
-    const isLastBookmarked =
-        showBookmarksOnly &&
-        filteredKanji.length === 1 &&
-        filteredKanji[0].uid === kanjiId;
-
-    // Optimistic update
+  const handleBookmarkToggle = (kanjiId, shouldBookmark) => {
     const updatedKanjiData = kanjiData.map(k =>
-        k.uid === kanjiId ? { ...k, marked: shouldBookmark } : k
+      k.uid === kanjiId ? { ...k, marked: shouldBookmark } : k
     );
-
-    // If unbookmarking last one, delay update to avoid flicker
-    if (isLastBookmarked && !shouldBookmark) {
-      setTimeout(() => {
-        setKanjiData(updatedKanjiData);
-      }, 300); // adjust delay as needed (300ms is usually fine)
-    } else {
-      setKanjiData(updatedKanjiData);
-    }
-
-    try {
-      const response = await fetch('https://apizenkanji.kahitoz.com/v1/update_flag', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          operation_type: shouldBookmark,
-          kanji_id: kanjiId,
-          user_id: 1
-        }),
-      });
-
-      if (!response.ok) throw new Error('Failed to update bookmark');
-
-    } catch (error) {
-      console.error('Bookmark update failed:', error);
-      setKanjiData(kanjiData); // Revert to original on failure
-    }
+    setKanjiData(updatedKanjiData);
+  
+    // Update modified bookmarks in localStorage
+    const modified = JSON.parse(localStorage.getItem(LS_KEY_MODIFIED) || "{}");
+    modified[kanjiId] = shouldBookmark;
+    localStorage.setItem(LS_KEY_MODIFIED, JSON.stringify(modified));
   };
-
+  
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const original = JSON.parse(localStorage.getItem(LS_KEY_ORIGINAL) || "{}");
+      const modified = JSON.parse(localStorage.getItem(LS_KEY_MODIFIED) || "{}");
+  
+      const changes = [];
+  
+      for (const id in modified) {
+        if (modified[id] !== original[id]) {
+          changes.push({
+            kanji_id: parseInt(id),
+            operation_type: modified[id], // true = bookmark, false = unbookmark
+            user_id: 1,
+          });
+        }
+      }
+  
+      // If there are changes, send them
+      if (changes.length > 0) {
+        Promise.all(changes.map(change =>
+          fetch('https://apizenkanji.kahitoz.com/v1/update_flag', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(change)
+          })
+        )).then(() => {
+          // After syncing, update the original to match modified
+          localStorage.setItem(LS_KEY_ORIGINAL, JSON.stringify(modified));
+        }).catch((e) => {
+          console.error("Failed to sync bookmarks:", e);
+        });
+      }
+    }, 2 * 60 * 1000); // 2 minutes
+  
+    return () => clearInterval(interval);
+  }, []);
 
 
   return (
