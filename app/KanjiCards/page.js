@@ -198,9 +198,8 @@ export default function HomePage() {
 
   return (
       <div className="">
-        <div className="fixed lg:hidden top-0 left-0 right-0 z-20 h-8 bg-black"></div>
 
-        <div className={'fixed top-8 left-0 right-0'}>
+        <div className={'fixed top-0 p-2 left-0 right-0'}>
           <div className={'flex items-center justify-between'}>
             <Link href="/">
               <Image src="/icons/back.svg" alt="back" width={40} height={40} />
