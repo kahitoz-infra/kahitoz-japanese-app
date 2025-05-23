@@ -51,11 +51,16 @@ export default function KanjiCard({ kanji, flipAudio, face, setFace, onBookmarkT
 
           <div className="flip-card-back">
             <p className="text-2xl text-center">
-              Onyomi: {JSON.parse(kanji.onyomi).join(", ")} ({toRomaji(JSON.parse(kanji.onyomi).join(""))})
+              Onyomi: {JSON.parse(kanji.onyomi).join(", ")} (
+                {JSON.parse(kanji.onyomi).map(reading => toRomaji(reading)).join(", ")}
+              )
             </p>
             <p className="text-2xl text-center">
-              Kunyomi: {JSON.parse(kanji.kunyomi).join(", ")} ({toRomaji(JSON.parse(kanji.kunyomi).join(""))})
+              Kunyomi: {JSON.parse(kanji.kunyomi).join(", ")} (
+                {JSON.parse(kanji.kunyomi).map(reading => toRomaji(reading)).join(", ")}
+              )
             </p>
+
             <p className="text-2xl text-center">Meaning: {kanji.english}</p>
           </div>
         </div>
