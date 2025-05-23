@@ -5,6 +5,7 @@ import KanjiTableView from "@/app/components/Table";
 import Image from "next/image";
 import Link from "next/link";
 
+let api = process.env.NEXT_PUBLIC_API_URL
 function shuffleArray(arr) {
   const array = [...arr];
   for (let i = array.length - 1; i > 0; i--) {
@@ -78,10 +79,10 @@ export default function HomePage() {
             localStorage.setItem(LS_KEY_MODIFIED, JSON.stringify(getBookmarkMap(parsedKanji)));
           } else {
         try {
-          const kanjiResp = await fetch("https://apizenkanji.kahitoz.com/v1/flagged_kanjis?user_id=1");
+          const kanjiResp = await fetch(`${api}/flagged_kanjis?user_id=1`);
           const kanjiJson = await kanjiResp.json();
 
-          const tagResp = await fetch("https://apizenkanji.kahitoz.com/v1/tags");
+          const tagResp = await fetch(`${api}/tags`);
           const tagJson = await tagResp.json();
 
           // Save to state
@@ -178,7 +179,7 @@ export default function HomePage() {
       // If there are changes, send them
       if (changes.length > 0) {
         Promise.all(changes.map(change =>
-          fetch('https://apizenkanji.kahitoz.com/v1/update_flag', {
+          fetch(`${api}/update_flag`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(change)
