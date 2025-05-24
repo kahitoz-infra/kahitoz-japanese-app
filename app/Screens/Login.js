@@ -3,36 +3,54 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowRight } from 'lucide-react';
-import { useTheme } from 'next-themes';
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default function Login() {
-    const { theme } = useTheme();
     const [showFields, setShowFields] = useState(false);
-    const [username, setUsername] = useState('');
-    const [password, setPassword] = useState('');
 
     useEffect(() => {
-        const fieldsTimer = setTimeout(() => setShowFields(true), 1300); // 1s after logo fade-in (which has 300ms delay)
+        const fieldsTimer = setTimeout(() => setShowFields(true), 1300);
         return () => clearTimeout(fieldsTimer);
     }, []);
-
-
-
-    const logoSrc = theme === 'dark' ? '/Zen Kanji Dark.png' : '/Zen Kanji.png';
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-[#FAF8F6] dark:bg-[#2F2F2F] px-4 font-inter transition-colors">
             <div className="flex flex-col items-center">
-                <motion.img
-                    src={logoSrc}
-                    alt="App Logo"
-                    className="mx-auto object-contain"
-                    style={{ width: 360, height: 211 }}
+
+                {/* Logo - Light Theme */}
+                <motion.div
+                    className="block dark:hidden"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ duration: 1, delay: 0.3 }}
-                />
+                >
+                    <Image
+                        src="/zen_kanji.png"
+                        alt="App Logo Light"
+                        width={360}
+                        height={211}
+                        className="mx-auto object-contain"
+                        priority
+                    />
+                </motion.div>
+
+                {/* Logo - Dark Theme */}
+                <motion.div
+                    className="hidden dark:block"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 1, delay: 0.3 }}
+                >
+                    <Image
+                        src="/zen_kanji_dark.png"
+                        alt="App Logo Dark"
+                        width={360}
+                        height={211}
+                        className="mx-auto object-contain"
+                        priority
+                    />
+                </motion.div>
 
                 {showFields && (
                     <motion.div
@@ -43,37 +61,27 @@ export default function Login() {
                     >
                         <input
                             type="text"
-                            value={username}
-                            onChange={(e) => setUsername(e.target.value)}
                             placeholder="Enter your username"
                             className="w-[228px] h-[35px] px-3 mb-3 rounded-[10px] border border-[#F4A7B9] bg-white text-black placeholder-gray-400 dark:bg-white dark:text-black transition-all outline-none focus:opacity-80 focus:ring-2 focus:ring-[#F4A7B9]"
                         />
 
                         <input
                             type="password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
                             placeholder="Enter your password"
                             className="w-[228px] h-[35px] px-3 mb-3 rounded-[10px] border border-[#F4A7B9] bg-white text-black placeholder-gray-400 dark:bg-white dark:text-black transition-all outline-none focus:opacity-80 focus:ring-2 focus:ring-[#F4A7B9]"
                         />
 
-                        <Link href={'/Dashboard'}>
-
-
+                        <Link href="/Dashboard">
                             <button
                                 className="w-[53.41px] h-[53.41px] rounded-full bg-[#F789A3] flex items-center justify-center mb-6"
                                 aria-label="Login"
-
                                 type="submit"
                             >
                                 <ArrowRight size={25.98} className="text-white" />
                             </button>
                         </Link>
 
-
-                        <button
-                            className="w-[150px] h-[30px] text-sm rounded-[10px] border border-[#F4A7B9] bg-white text-black hover:opacity-80 transition-all mb-10"
-                        >
+                        <button className="w-[150px] h-[30px] text-sm rounded-[10px] border border-[#F4A7B9] bg-white text-black hover:opacity-80 transition-all mb-10">
                             Register Account
                         </button>
 
