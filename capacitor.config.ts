@@ -1,8 +1,8 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.zenkanji.kahitoz',
-  appName: 'zenkanji',
+  appId: 'com.kahitoz.zenkanji',
+  appName: 'ZenKanji',
   webDir: 'out'
 };
 
