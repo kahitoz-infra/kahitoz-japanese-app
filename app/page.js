@@ -1,11 +1,9 @@
-import Image from "next/image";
-import SketchComponent from "./Screens/Sketch";
-import Dashboard from "./Screens/Dashboard";
+import Login from "./Screens/Login";
 
 export default function Home() {
   return (
     <>
-    <Dashboard/>
+    <Login/>
     </>
   );
 }
