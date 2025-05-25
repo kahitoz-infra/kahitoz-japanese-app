@@ -1,21 +1,19 @@
 'use client';
 import Image from "next/image";
-import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 
 export default function Navbar() {
     const [mounted, setMounted] = useState(false);
-    const { theme } = useTheme();
 
     useEffect(() => {
         setMounted(true);
     }, []);
 
     const items = [
-        { label: "Home", lightIcon: "/home.png", darkIcon: "/homewhite.png" },
-        { label: "Chat", lightIcon: "/chat.png", darkIcon: "/chat_white.png" },
-        { label: "Streak", lightIcon: "/calendar.png", darkIcon: "/calendar_white.png" },
-        { label: "Profile", lightIcon: "/user.png", darkIcon: "/user_white.png" },
+        { label: "Home", lightIcon: "/icons/home.png", darkIcon: "/icons/homewhite.png" },
+        { label: "Chat", lightIcon: "/icons/chat.png", darkIcon: "/icons/chatwhite.png" },
+        { label: "Streak", lightIcon: "/icons/calendar.png", darkIcon: "/icons/calendarwhite.png" },
+        { label: "Profile", lightIcon: "/icons/user.png", darkIcon: "/icons/userwhite.png" },
     ];
 
     if (!mounted) return null;
@@ -31,12 +29,21 @@ export default function Navbar() {
                         )}
 
                         <li className="flex flex-col items-center justify-center w-full">
+                            {/* Light icon */}
                             <Image
-                                src={theme === "dark" ? item.darkIcon : item.lightIcon}
-                                alt={item.label}
+                                src={item.lightIcon}
+                                alt={`${item.label} Light`}
                                 width={24}
                                 height={24}
-                                className="object-contain"
+                                className="block dark:hidden object-contain"
+                            />
+                            {/* Dark icon */}
+                            <Image
+                                src={item.darkIcon}
+                                alt={`${item.label} Dark`}
+                                width={24}
+                                height={24}
+                                className="hidden dark:block object-contain"
                             />
                             <p className="text-xs mt-1">{item.label}</p>
                         </li>
