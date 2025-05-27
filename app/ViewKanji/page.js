@@ -160,7 +160,7 @@ export default function HomePage() {
     <div>
       <div className="fixed top-0 p-2 left-0 right-0 bg-opacity-90 z-10">
         <div className="flex items-center justify-between">
-          <Link href="/">
+          <Link href="/Dashboard">
             <Image src="/icons/back.svg" alt="back" width={40} height={40} />
           </Link>
           <div className="flex items-center gap-x-2">
