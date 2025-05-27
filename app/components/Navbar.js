@@ -10,10 +10,10 @@ export default function Navbar() {
     }, []);
 
     const items = [
-        { label: "Home", lightIcon: "/icons/home.png", darkIcon: "/icons/homewhite.png" },
-        { label: "Chat", lightIcon: "/icons/chat.png", darkIcon: "/icons/chatwhite.png" },
-        { label: "Streak", lightIcon: "/icons/calendar.png", darkIcon: "/icons/calendarwhite.png" },
-        { label: "Profile", lightIcon: "/icons/user.png", darkIcon: "/icons/userwhite.png" },
+        { lightIcon: "/icons/home.png", darkIcon: "/icons/homewhite.png" },
+        { lightIcon: "/icons/chat.png", darkIcon: "/icons/chatwhite.png" },
+        { lightIcon: "/icons/calendar.png", darkIcon: "/icons/calendarwhite.png" },
+        { lightIcon: "/icons/user.png", darkIcon: "/icons/userwhite.png" },
     ];
 
     if (!mounted) return null;
