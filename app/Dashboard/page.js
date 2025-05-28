@@ -11,7 +11,7 @@ const Dashboard = () => {
                     <div className="flex flex-col gap-y-4">
 
                         <div className="flex items-center justify-center">
-                            <Link href="/KanjiCards" className={'flex items-center justify-center w-full'}>
+                            <Link href="/ViewKanji" className={'flex items-center justify-center w-full'}>
 
 
                                 <div className=" flex flex-col items-center justify-center p-4 w-full border border-cyan-600 rounded-xl shadow-lg shadow-cyan-500 font-bold text-xl cursor-pointer">
