@@ -239,7 +239,7 @@ export default function HomePage() {
         />
       )}
 
-      <div className="h-screen w-screen pt-24">
+      <div className="h-screen w-screen flex items-center justify-center">
         {viewType === "Cards" ? (
           <KanjiCardView kanjiList={filteredKanji} onBookmarkToggle={handleBookmarkToggle} sound={sound} />
         ) : (
