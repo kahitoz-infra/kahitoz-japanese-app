@@ -62,13 +62,17 @@ export default function Login() {
                         <input
                             type="text"
                             placeholder="Enter your username"
-                            className="w-[228px] h-[35px] px-3 mb-3 rounded-[10px] border border-[#F4A7B9] bg-white text-black placeholder-gray-400 dark:bg-white dark:text-black transition-all outline-none focus:opacity-80 focus:ring-2 focus:ring-[#F4A7B9]"
+                            className="w-[228px] h-[35px] px-3 mb-3 rounded-[10px] border border-[#F4A7B9]  bg-white text-black placeholder-gray-400
+                                dark:bg-[#3A3A3A] dark:text-white dark:placeholder-[#AAAAAA]
+                                transition-all outline-none focus:opacity-80 focus:ring-2 focus:ring-[#F4A7B9]"
                         />
 
                         <input
                             type="password"
                             placeholder="Enter your password"
-                            className="w-[228px] h-[35px] px-3 mb-3 rounded-[10px] border border-[#F4A7B9] bg-white text-black placeholder-gray-400 dark:bg-white dark:text-black transition-all outline-none focus:opacity-80 focus:ring-2 focus:ring-[#F4A7B9]"
+                            className="w-[228px] h-[35px] px-3 mb-7 rounded-[10px] border border-[#F4A7B9] bg-white text-black placeholder-gray-400
+                                dark:bg-[#3A3A3A] dark:text-white dark:placeholder-[#AAAAAA]
+                                transition-all outline-none focus:opacity-80 focus:ring-2 focus:ring-[#F4A7B9]"
                         />
 
                         <Link href="/Dashboard">
@@ -81,16 +85,19 @@ export default function Login() {
                             </button>
                         </Link>
 
-                        <button className="w-[150px] h-[30px] text-sm rounded-[10px] border border-[#F4A7B9] bg-white text-black hover:opacity-80 transition-all mb-10">
+                        <button className="w-[150px] h-[30px] text-sm rounded-[10px] border border-[#F4A7B9] bg-white text-black
+                            hover:opacity-80 transition-all mb-10 dark:bg-[#3A3A3A] dark:text-white">
                             Register Account
                         </button>
 
                         <div className="flex items-center justify-center space-x-4">
-                            <div className="w-[38px] h-[38px] bg-white dark:bg-white rounded-full flex items-center justify-center">
+                            <div className="w-[38px] h-[38px] bg-white dark:bg-[#3A3A3A] hover:opacity-80
+                                rounded-full flex items-center justify-center transition-all">
                                 <img src="/google-logo.webp" alt="Google" className="w-7 h-7" />
                             </div>
                             <div className="h-6 w-px bg-gray-300 dark:bg-gray-500"></div>
-                            <div className="w-[38px] h-[38px] bg-white dark:bg-white rounded-full flex items-center justify-center">
+                            <div className="w-[38px] h-[38px] bg-white dark:bg-[#3A3A3A] hover:opacity-80
+                                rounded-full flex items-center justify-center transition-all">
                                 <img src="/facebook-logo.png" alt="Facebook" className="w-5 h-5" />
                             </div>
                         </div>
