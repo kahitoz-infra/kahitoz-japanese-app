@@ -60,19 +60,11 @@ export default function DrawCard({
                                     height={25}
                                     onClick={(e) => {
                                         e.stopPropagation();
+                                        handleClear();
                                         onPrevious();
                                     }}
                                 />
-                                <Image
-                                    src="/icons/clear.svg"
-                                    alt="clear"
-                                    width={25}
-                                    height={25}
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleClear();
-                                    }}
-                                />
+
                                 <Image
                                     src="/icons/next.svg"
                                     alt="next"
@@ -80,6 +72,7 @@ export default function DrawCard({
                                     height={25}
                                     onClick={(e) => {
                                         e.stopPropagation();
+                                        handleClear();
                                         onNext();
                                     }}
                                 />
@@ -99,6 +92,16 @@ export default function DrawCard({
                         <div className="fixed bottom-1 w-full left-0 right-0">
                             <div className="flex justify-between items-center px-2">
                             <Image src={'/icons/rotate.svg'} alt="rotate" width={25} height={25} onClick={handleFlip}/>
+                            <Image
+                                src="/icons/clear.svg"
+                                alt="clear"
+                                width={25}
+                                height={25}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleClear();
+                                }}
+                            />
                             <Image src={'/icons/save.svg'} alt="save" width={20} height={20} />
 
                             </div>
