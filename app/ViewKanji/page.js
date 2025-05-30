@@ -14,6 +14,13 @@ const LS_KEYS = {
   timestamp: "kanjiCacheTimestamp",
   originalBookmarks: "bookmarkedOriginal",
   modifiedBookmarks: "bookmarkedModified",
+  viewType: "prefViewType",
+  selectedLabel: "prefSelectedLabel",
+  bookmarksOnly: "prefBookmarksOnly",
+  randomizeMode: "prefRandomizeMode",
+  customGroupSize: "prefCustomGroupSize",
+  sound: "prefSound",
+  showFilters: "prefShowFilters",
 };
 
 const shuffleArray = (arr) => {
@@ -35,10 +42,10 @@ const shuffleInGroups = (arr, groupSize) => {
 };
 
 const getBookmarkMap = (data) =>
-  data.reduce((map, item) => {
-    map[item.uid] = item.marked;
-    return map;
-  }, {});
+    data.reduce((map, item) => {
+      map[item.uid] = item.marked;
+      return map;
+    }, {});
 
 export default function HomePage() {
   const [viewType, setViewType] = useState("Cards");
@@ -51,6 +58,25 @@ export default function HomePage() {
   const [tags, setTags] = useState([]);
   const [sound, setSound] = useState(true);
 
+  // Load saved preferences
+  useEffect(() => {
+    const storedViewType = localStorage.getItem(LS_KEYS.viewType);
+    const storedLabel = localStorage.getItem(LS_KEYS.selectedLabel);
+    const storedBookmarks = localStorage.getItem(LS_KEYS.bookmarksOnly);
+    const storedRandomMode = localStorage.getItem(LS_KEYS.randomizeMode);
+    const storedCustomGroupSize = localStorage.getItem(LS_KEYS.customGroupSize);
+    const storedSound = localStorage.getItem(LS_KEYS.sound);
+    const storedFilters = localStorage.getItem(LS_KEYS.showFilters);
+
+    if (storedViewType) setViewType(storedViewType);
+    if (storedLabel) setSelectedLabel(storedLabel);
+    if (storedBookmarks) setShowBookmarksOnly(storedBookmarks === "true");
+    if (storedRandomMode) setRandomizeMode(storedRandomMode);
+    if (storedCustomGroupSize) setCustomGroupSize(storedCustomGroupSize);
+    if (storedSound) setSound(storedSound === "true");
+    if (storedFilters) setShowFilters(storedFilters === "true");
+  }, []);
+
   useEffect(() => {
     const fetchData = async () => {
       const cachedKanji = localStorage.getItem(LS_KEYS.kanji);
@@ -58,10 +84,10 @@ export default function HomePage() {
       const cachedTimestamp = localStorage.getItem(LS_KEYS.timestamp);
       const now = Date.now();
       const isCacheValid =
-        cachedKanji &&
-        cachedTags &&
-        cachedTimestamp &&
-        now - parseInt(cachedTimestamp, 10) < CACHE_EXPIRATION_HOURS * 3600000;
+          cachedKanji &&
+          cachedTags &&
+          cachedTimestamp &&
+          now - parseInt(cachedTimestamp, 10) < CACHE_EXPIRATION_HOURS * 3600000;
 
       if (isCacheValid) {
         const parsedKanji = JSON.parse(cachedKanji);
@@ -132,25 +158,25 @@ export default function HomePage() {
       const modified = JSON.parse(localStorage.getItem(LS_KEYS.modifiedBookmarks) || "{}");
 
       const changes = Object.entries(modified)
-        .filter(([id, value]) => original[id] !== value)
-        .map(([id, value]) => ({
-          kanji_id: parseInt(id, 10),
-          operation_type: value,
-          user_id: 1,
-        }));
+          .filter(([id, value]) => original[id] !== value)
+          .map(([id, value]) => ({
+            kanji_id: parseInt(id, 10),
+            operation_type: value,
+            user_id: 1,
+          }));
 
       if (changes.length > 0) {
         Promise.all(changes.map(change =>
-          fetch(`${api}/update_flag`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(change),
-          })
+            fetch(`${api}/update_flag`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(change),
+            })
         ))
-          .then(() => {
-            localStorage.setItem(LS_KEYS.originalBookmarks, JSON.stringify(modified));
-          })
-          .catch((e) => console.error("Failed to sync bookmarks:", e));
+            .then(() => {
+              localStorage.setItem(LS_KEYS.originalBookmarks, JSON.stringify(modified));
+            })
+            .catch((e) => console.error("Failed to sync bookmarks:", e));
       }
     }, 120000);
 
@@ -158,94 +184,120 @@ export default function HomePage() {
   }, []);
 
   return (
-    <div>
-      <div className="fixed top-0 p-2 left-0 right-0 bg-opacity-90 z-10">
-        <div className="flex items-center justify-between">
-          <Link href="/Dashboard">
-            <Image src="/icons/back.svg" alt="back" width={40} height={40} />
-          </Link>
-          <div className="flex items-center gap-x-2">
-            <Image
-              src={sound ? "/icons/sound.svg" : "/icons/mute.svg"}
-              alt="sound"
-              width={40}
-              height={40}
-              onClick={() => setSound(!sound)}
-            />
-            <Image
-              src={showFilters ? "/icons/show.svg" : "/icons/hide.svg"}
-              alt="toggle filters"
-              width={40}
-              height={40}
-              onClick={() => setShowFilters(!showFilters)}
-            />
+      <div>
+        <div className="fixed top-0 p-2 left-0 right-0 bg-opacity-90 z-10">
+          <div className="flex items-center justify-between">
+            <Link href="/Dashboard">
+              <Image src="/icons/back.svg" alt="back" width={40} height={40} />
+            </Link>
+            <div className="flex items-center gap-x-2">
+              <Image
+                  src={sound ? "/icons/sound.svg" : "/icons/mute.svg"}
+                  alt="sound"
+                  width={40}
+                  height={40}
+                  onClick={() => {
+                    const newVal = !sound;
+                    setSound(newVal);
+                    localStorage.setItem(LS_KEYS.sound, newVal.toString());
+                  }}
+              />
+              <Image
+                  src={showFilters ? "/icons/show.svg" : "/icons/hide.svg"}
+                  alt="toggle filters"
+                  width={40}
+                  height={40}
+                  onClick={() => {
+                    const newVal = !showFilters;
+                    setShowFilters(newVal);
+                    localStorage.setItem(LS_KEYS.showFilters, newVal.toString());
+                  }}
+              />
+            </div>
           </div>
+
+          {showFilters && (
+              <div className="flex flex-wrap gap-x-2 mt-2 justify-start lg:justify-end">
+                <select value={viewType} onChange={(e) => {
+                  setViewType(e.target.value);
+                  localStorage.setItem(LS_KEYS.viewType, e.target.value);
+                }} className="select-box w-20 text-black bg-white dark:text-white dark:bg-black">
+                  <option value="Cards">Cards</option>
+                  <option value="Table">Table</option>
+                  <option value="Draw">Draw</option>
+                </select>
+
+                <Image src="/icons/rightarrow.svg" alt="arrow" width={25} height={12} />
+
+                <select value={selectedLabel} onChange={(e) => {
+                  setSelectedLabel(e.target.value);
+                  localStorage.setItem(LS_KEYS.selectedLabel, e.target.value);
+                }} className="select-box w-14 text-black bg-white dark:text-white dark:bg-black">
+                  <option value="N4">N4</option>
+                  <option value="N5">N5</option>
+                  {tags.filter(tag => !["N4", "N5"].includes(tag)).map(tag => (
+                      <option key={tag} value={tag}>{tag}</option>
+                  ))}
+                </select>
+
+                <Image src="/icons/rightarrow.svg" alt="arrow" width={25} height={12} />
+
+                <select value={showBookmarksOnly ? "Bookmarked" : "All"} onChange={(e) => {
+                  const val = e.target.value === "Bookmarked";
+                  setShowBookmarksOnly(val);
+                  localStorage.setItem(LS_KEYS.bookmarksOnly, val.toString());
+                }} className="select-box w-16 text-black bg-white dark:text-white dark:bg-black">
+                  <option value="All">All</option>
+                  <option value="Bookmarked">Bookmarked</option>
+                </select>
+
+                <Image src="/icons/rightarrow.svg" alt="arrow" width={25} height={12} />
+
+                <select
+                    value={randomizeMode}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setRandomizeMode(val);
+                      localStorage.setItem(LS_KEYS.randomizeMode, val);
+                      if (val !== "Custom") {
+                        setCustomGroupSize("");
+                        localStorage.removeItem(LS_KEYS.customGroupSize);
+                      }
+                    }}
+                    className="select-box w-48 text-black bg-white dark:text-white dark:bg-black"
+                >
+                  <option value="None">Stop Randomization</option>
+                  <option value="All">Randomize All</option>
+                  <option value="5">Groups of 5</option>
+                  <option value="10">Groups of 10</option>
+                  <option value="15">Groups of 15</option>
+                  <option value="Custom">Custom Group</option>
+                </select>
+              </div>
+          )}
         </div>
 
-        {showFilters && (
-          <div className="flex flex-wrap gap-x-2 mt-2 justify-start lg:justify-end">
-            <select value={viewType} onChange={(e) => setViewType(e.target.value)} className="select-box w-20 text-black bg-white dark:text-white dark:bg-black">
-              <option value="Cards">Cards</option>
-              <option value="Table">Table</option>
-              <option value="Draw">Draw</option>
-            </select>
-
-            <Image src="/icons/rightarrow.svg" alt="arrow" width={25} height={12} />
-
-            <select value={selectedLabel} onChange={(e) => setSelectedLabel(e.target.value)} className="select-box w-14 text-black bg-white dark:text-white dark:bg-black">
-              <option value="N4">N4</option>
-              <option value="N5">N5</option>
-              {tags.filter(tag => !["N4", "N5"].includes(tag)).map(tag => (
-                <option key={tag} value={tag}>{tag}</option>
-              ))}
-            </select>
-
-            <Image src="/icons/rightarrow.svg" alt="arrow" width={25} height={12} />
-
-            <select value={showBookmarksOnly ? "Bookmarked" : "All"} onChange={(e) => setShowBookmarksOnly(e.target.value === "Bookmarked")} className="select-box w-16 text-black bg-white dark:text-white dark:bg-black">
-              <option value="All">All</option>
-              <option value="Bookmarked">Bookmarked</option>
-            </select>
-
-            <Image src="/icons/rightarrow.svg" alt="arrow" width={25} height={12} />
-
-            <select
-              value={randomizeMode}
-              onChange={(e) => {
-                setRandomizeMode(e.target.value);
-                if (e.target.value !== "Custom") setCustomGroupSize("");
-              }}
-              className="select-box w-48 text-black bg-white dark:text-white dark:bg-black"
-            >
-              <option value="None">Stop Randomization</option>
-              <option value="All">Randomize All</option>
-              <option value="5">Groups of 5</option>
-              <option value="10">Groups of 10</option>
-              <option value="15">Groups of 15</option>
-              <option value="Custom">Custom Group</option>
-            </select>
-          </div>
+        {randomizeMode === "Custom" && (
+            <input
+                type="text"
+                placeholder="Enter group size"
+                value={customGroupSize}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === "" || /^\d+$/.test(val)) {
+                    setCustomGroupSize(val);
+                    localStorage.setItem(LS_KEYS.customGroupSize, val);
+                  }
+                }}
+                className="p-2 rounded-md w-36 mt-2 ml-2"
+            />
         )}
-      </div>
 
-      {randomizeMode === "Custom" && (
-        <input
-          type="text"
-          placeholder="Enter group size"
-          value={customGroupSize}
-          onChange={(e) => {
-            const val = e.target.value;
-            if (val === "" || /^\d+$/.test(val)) setCustomGroupSize(val);
-          }}
-          className="p-2 rounded-md w-36 mt-2 ml-2"
-        />
-      )}
-
-      <div className="h-screen w-screen flex items-center justify-center">
-        {viewType === "Cards" && <KanjiCardView kanjiList={filteredKanji} onBookmarkToggle={handleBookmarkToggle} sound={sound} />}
-        {viewType === "Table" &&  <KanjiTableView kanjiList={filteredKanji} />}
-        {viewType === "Draw" &&  <DrawCardView kanjiList={filteredKanji} />}
+        <div className="h-screen w-screen flex items-center justify-center">
+          {viewType === "Cards" && <KanjiCardView kanjiList={filteredKanji} onBookmarkToggle={handleBookmarkToggle} sound={sound} />}
+          {viewType === "Table" && <KanjiTableView kanjiList={filteredKanji} />}
+          {viewType === "Draw" && <DrawCardView kanjiList={filteredKanji} />}
+        </div>
       </div>
-    </div>
   );
 }
