@@ -67,17 +67,6 @@ export default function DrawCardView({ kanjiList, onBookmarkToggle, sound }) {
     // Touch handlers
     const touchStartX = useRef(null);
 
-    const handleTouchStart = (e) => {
-        touchStartX.current = e.changedTouches[0].screenX;
-    };
-
-    const handleTouchEnd = (e) => {
-        const touchEndX = e.changedTouches[0].screenX;
-        const distance = touchStartX.current - touchEndX;
-
-        if (distance > 50) handleNext();
-        else if (distance < -50) handlePrevious();
-    };
 
     const currentKanji = kanjiList[currentIndex];
 
@@ -104,7 +93,7 @@ export default function DrawCardView({ kanjiList, onBookmarkToggle, sound }) {
             {kanjiList.length > 0 && currentKanji ? (
                 <>
 
-                    <div onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
+                    <div>
                         <DrawCard
                             kanji={currentKanji}
                             flipAudio={flipAudio}
@@ -115,7 +104,6 @@ export default function DrawCardView({ kanjiList, onBookmarkToggle, sound }) {
                             onNext={handleNext}
                             onPrevious={handlePrevious}
                         />
-
                     </div>
                     <p className="text-xl mt-8">
                         {currentIndex + 1} / {kanjiList.length}
