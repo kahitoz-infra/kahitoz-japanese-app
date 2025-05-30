@@ -15,7 +15,7 @@ export default function Login() {
     }, []);
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-[#FAF8F6] dark:bg-[#2F2F2F] px-4 font-inter transition-colors">
+        <div className="min-h-screen flex items-center justify-center  px-4 font-inter transition-colors">
             <div className="flex flex-col items-center">
 
                 {/* Logo - Light Theme */}
