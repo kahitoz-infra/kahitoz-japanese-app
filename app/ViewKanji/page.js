@@ -2,6 +2,7 @@
 import { useState, useEffect, useMemo } from "react";
 import KanjiCardView from "@/app/components/KanjiCardView";
 import KanjiTableView from "@/app/components/Table";
+import DrawCardView from "@/app/components/DrawCardView";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -186,6 +187,7 @@ export default function HomePage() {
             <select value={viewType} onChange={(e) => setViewType(e.target.value)} className="select-box w-20 text-black bg-white dark:text-white dark:bg-black">
               <option value="Cards">Cards</option>
               <option value="Table">Table</option>
+              <option value="Draw">Draw</option>
             </select>
 
             <Image src="/icons/rightarrow.svg" alt="arrow" width={25} height={12} />
@@ -240,11 +242,9 @@ export default function HomePage() {
       )}
 
       <div className="h-screen w-screen flex items-center justify-center">
-        {viewType === "Cards" ? (
-          <KanjiCardView kanjiList={filteredKanji} onBookmarkToggle={handleBookmarkToggle} sound={sound} />
-        ) : (
-          <KanjiTableView kanjiList={filteredKanji} />
-        )}
+        {viewType === "Cards" && <KanjiCardView kanjiList={filteredKanji} onBookmarkToggle={handleBookmarkToggle} sound={sound} />}
+        {viewType === "Table" &&  <KanjiTableView kanjiList={filteredKanji} />}
+        {viewType === "Draw" &&  <DrawCardView kanjiList={filteredKanji} />}
       </div>
     </div>
   );
