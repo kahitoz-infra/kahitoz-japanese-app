@@ -15,7 +15,7 @@ export default function Login() {
     }, []);
 
     return (
-        <div className="min-h-screen flex items-center justify-center  px-4 font-inter transition-colors">
+        <div className="min-h-screen flex items-center justify-center px-4 font-inter transition-colors">
             <div className="flex flex-col items-center">
 
                 {/* Logo - Light Theme */}
@@ -52,6 +52,21 @@ export default function Login() {
                     />
                 </motion.div>
 
+                {/* App Title */}
+                <motion.div
+                    className="text-center mt-6 mb-6"
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6, delay: 0.9 }}
+                >
+                    <h1 className="text-2xl font-bold text-[#F789A3] dark:text-[#F4A7B9]">
+                        ZEN KANJI
+                    </h1>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                        Japanese Learning App
+                    </p>
+                </motion.div>
+
                 {showFields && (
                     <motion.div
                         className="flex flex-col items-center mt-4"
@@ -62,7 +77,7 @@ export default function Login() {
                         <input
                             type="text"
                             placeholder="Enter your username"
-                            className="w-[228px] h-[35px] px-3 mb-3 rounded-[10px] border border-[#F4A7B9]  bg-white text-black placeholder-gray-400
+                            className="w-[228px] h-[35px] px-3 mb-3 rounded-[10px] border border-[#F4A7B9] bg-white text-black placeholder-gray-400
                                 dark:bg-[#3A3A3A] dark:text-white dark:placeholder-[#AAAAAA]
                                 transition-all outline-none focus:opacity-80 focus:ring-2 focus:ring-[#F4A7B9]"
                         />
