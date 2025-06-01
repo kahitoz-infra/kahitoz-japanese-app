@@ -187,8 +187,8 @@ export default function HomePage() {
 
   return (
       <div>
-        <div className="fixed top-0 p-2 left-0 right-0 bg-opacity-90 z-10">
-        <div className="flex items-center justify-between">
+        <div className="fixed top-0 p-2 left-0 right-0 bg-opacity-90 z-10  dark:bg-[#2a2a2a]">
+        <div className="flex items-center justify-between ">
           <Link href="/Dashboard">
             <Image src="/icons/back.svg" alt="back" width={40} height={40} />
           </Link>
@@ -299,12 +299,12 @@ export default function HomePage() {
           )}
         </div>
       </SettingsModal>
-
-        <div className="h-screen w-screen flex items-center justify-center">
+      {viewType === "Table" && <KanjiTableView kanjiList={filteredKanji} />}
+        {viewType !== "Table" && <div className="h-screen w-screen flex items-center justify-center">
           {viewType === "Cards" && <KanjiCardView kanjiList={filteredKanji} onBookmarkToggle={handleBookmarkToggle} sound={sound} />}
-          {viewType === "Table" && <KanjiTableView kanjiList={filteredKanji} />}
           {viewType === "Draw" && <DrawCardView kanjiList={filteredKanji} />}
-        </div>
+        </div>}  
+        
       </div>
   );
 }
