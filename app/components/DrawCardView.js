@@ -73,7 +73,10 @@ export default function DrawCardView({ kanjiList, onBookmarkToggle, sound }) {
     return (
         <div className="flex flex-col items-center justify-center h-full pt-8">
 
-            <div className="text-sm flex overflow-x-auto whitespace-nowrap w-64 lg:w-full  mb-2">
+            <div className="text-sm flex overflow-x-auto whitespace-nowrap w-64 lg:w-full mb-2 gap-x-2">
+                <p className="text-center">
+                    Meaning: {currentKanji.english}
+                </p>
                 <p className="text-center mr-4">
                     Onyomi: {JSON.parse(currentKanji.onyomi).join(", ")} (
                     {JSON.parse(currentKanji.onyomi).map(reading => toRomaji(reading)).join(", ")}
@@ -84,9 +87,7 @@ export default function DrawCardView({ kanjiList, onBookmarkToggle, sound }) {
                     {JSON.parse(currentKanji.kunyomi).map(reading => toRomaji(reading)).join(", ")}
                     )
                 </p>
-                <p className="text-center">
-                    Meaning: {currentKanji.english}
-                </p>
+
             </div>
 
 
