@@ -78,16 +78,31 @@ export default function DrawCard({
                                 />
                             </div>
                         </div>
-
+                        <div className="dark:block w-full h-full">
                         <ReactSketchCanvas
                             ref={canvasRef}
                             strokeWidth={7}
                             strokeColor={"white"}
                             width="100%"
                             height="100%"
-                            canvasColor="black"
+                            canvasColor="#2a2a2a"
                             style={{ border: "none" }}
                         />
+                        </div>
+                        
+                        <div className="dark:hidden w-full h-full">
+                        <ReactSketchCanvas
+                            ref={canvasRef}
+                            strokeWidth={7}
+                            strokeColor={"balck"}
+                            width="100%"
+                            height="100%"
+                            canvasColor="white"
+                            style={{ border: "none" }}
+                        />
+
+                        </div>
+                        
 
                         <div className="fixed bottom-1 w-full left-0 right-0">
                             <div className="flex justify-between items-center px-2">
