@@ -9,13 +9,13 @@ const Dashboard = () => {
     const quote = "Be better.";
 
     const boxes = [
-        { label: "View Kanji", href: "/ViewKanji", image: "/images/kanji-bg.jpg", icon: "/icons/kanji-icon.svg" },
-        { label: "Box 1", image: "/images/sample1.jpg", icon: "/icons/sample-icon.svg" },
-        { label: "Box 2", image: "/images/sample2.jpg", icon: "/icons/sample-icon.svg" },
-        { label: "Box 3", image: "/images/sample3.jpg", icon: "/icons/sample-icon.svg" },
-        { label: "Box 4", image: "/images/sample4.jpg", icon: "/icons/sample-icon.svg" },
-        { label: "Box 5", image: "/images/sample5.jpg", icon: "/icons/sample-icon.svg" },
-        { label: "Box 6", image: "/images/sample6.jpg", icon: "/icons/sample-icon.svg" },
+        { label: "View Kanji", href: "/ViewKanji", image: "/pinkbg.webp", icon: "/icons/kanji-icon.svg" },
+        { label: "Box 2", image: "/pinkbg.webp", icon: "/icons/sample-icon.svg" },
+        { label: "Box 3", image: "/pinkbg.webp", icon: "/icons/sample-icon.svg" },
+        { label: "Box 4", image: "/pinkbg.webp", icon: "/icons/sample-icon.svg" },
+        { label: "Box 5", image: "/pinkbg.webp", icon: "/icons/sample-icon.svg" },
+        { label: "Box 6", image: "/pinkbg.webp", icon: "/icons/sample-icon.svg" },
+        { label: "Box 7", image: "/pinkbg.webp", icon: "/icons/sample-icon.svg" },
     ];
 
     return (
@@ -45,8 +45,10 @@ const Dashboard = () => {
                 </div>
 
                 {/* 2x3 Grid */}
-                <div className="grid grid-cols-2 gap-4 mt-6 px-2 place-items-center">
+                <div className="grid grid-cols-2 gap-4 mt-6 px-2">
                     {boxes.map((box, idx) => {
+                        const isLastOddBox = boxes.length % 2 !== 0 && idx === boxes.length - 1;
+
                         const BoxContent = (
                             <div className="relative w-[170px] h-[190px] rounded-xl overflow-hidden border-[2.83px] border-[#F789A3] shadow-md">
                                 {/* Background Blurred Image */}
@@ -58,10 +60,10 @@ const Dashboard = () => {
                                 />
 
                                 {/* Glassmorphic White Overlay */}
-                                <div className="absolute inset-0 bg-white/50 backdrop-blur-md z-10" />
+                                <div className="absolute inset-0 bg-white/10 backdrop-blur-md z-10" />
 
-                                {/* White Circle with Icon */}
-                                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 w-[100px] h-[100px] rounded-full bg-white flex items-center justify-center">
+                                {/* White Circle with Icon and Shadow */}
+                                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 w-[100px] h-[100px] rounded-full bg-white flex items-center justify-center border-[2.83px] border-[#f9f6ee] shadow-[0_0.5px_2px_rgba(0,0,0,0.25)]">
                                     <Image
                                         src={box.icon}
                                         alt={`${box.label} Icon`}
@@ -72,10 +74,16 @@ const Dashboard = () => {
                             </div>
                         );
 
+                        const wrapperClass = isLastOddBox ? "col-span-2 flex justify-center" : "";
+
                         return box.href ? (
-                            <Link key={idx} href={box.href}>{BoxContent}</Link>
+                            <Link key={idx} href={box.href} className={wrapperClass}>
+                                {BoxContent}
+                            </Link>
                         ) : (
-                            <div key={idx}>{BoxContent}</div>
+                            <div key={idx} className={wrapperClass}>
+                                {BoxContent}
+                            </div>
                         );
                     })}
                 </div>
