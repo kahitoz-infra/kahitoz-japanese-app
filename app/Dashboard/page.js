@@ -62,7 +62,7 @@ const Dashboard = () => {
                                         />
 
                                         {/* Glass Overlay */}
-                                        <div className="absolute inset-0 bg-white/10 backdrop-blur-md z-10" />
+                                        <div className="absolute inset-0 bg-white/0 backdrop-blur-md z-10" />
 
                                         {/* Circle with Icon */}
                                         <div className="z-20 w-[80px] h-[80px] sm:w-[100px] sm:h-[100px] rounded-full bg-white border-[2.5px] border-[#f9f6ee] shadow-[0_0.5px_2px_rgba(0,0,0,0.25)] flex items-center justify-center">
