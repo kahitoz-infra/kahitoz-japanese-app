@@ -2,123 +2,117 @@
 
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowRight } from 'lucide-react';
-import Link from 'next/link';
 import Image from 'next/image';
 
 export default function Login() {
-    const [showFields, setShowFields] = useState(false);
+  const [activeTab, setActiveTab] = useState('register');
+  const [showContent, setShowContent] = useState(false);
 
-    useEffect(() => {
-        const fieldsTimer = setTimeout(() => setShowFields(true), 1300);
-        return () => clearTimeout(fieldsTimer);
-    }, []);
+  useEffect(() => {
+    const timer = setTimeout(() => setShowContent(true), 1000);
+    return () => clearTimeout(timer);
+  }, []);
 
-    return (
-        <div className="min-h-screen flex items-center justify-center px-4 font-inter transition-colors">
-            <div className="flex flex-col items-center">
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-[#FAF9F6] font-inter px-4">
+      <div className="relative w-full max-w-sm">
 
-                {/* Logo - Light Theme */}
-                <motion.div
-                    className="block dark:hidden"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ duration: 1, delay: 0.3 }}
-                >
-                    <Image
-                        src="/zen_kanji.png"
-                        alt="App Logo Light"
-                        width={360}
-                        height={211}
-                        className="mx-auto object-contain"
-                        priority
-                    />
-                </motion.div>
+        {/* Main Container with rounded top and border-top */}
+        <div className="absolute top-0 w-full h-[60%] bg-white border-t-[3px] border-[#FF5274] rounded-t-[30px] shadow-md" />
 
-                {/* Logo - Dark Theme */}
-                <motion.div
-                    className="hidden dark:block"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ duration: 1, delay: 0.3 }}
-                >
-                    <Image
-                        src="/zen_kanji_dark.png"
-                        alt="App Logo Dark"
-                        width={360}
-                        height={211}
-                        className="mx-auto object-contain"
-                        priority
-                    />
-                </motion.div>
+        <div className="relative z-10 pt-10 pb-6 px-6">
 
-                {/* App Title */}
-                <motion.div
-                    className="text-center mt-6 mb-6"
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.6, delay: 0.9 }}
-                >
-                    <h1 className="text-2xl font-bold text-[#F789A3] dark:text-[#F4A7B9]">
-                        ZEN KANJI
-                    </h1>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                        Japanese Learning App
-                    </p>
-                </motion.div>
+          {/* Logo */}
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1 }}
+            className="flex justify-center mb-6"
+          >
+            <Image
+              src="/zen_kanji.png"
+              alt="App Logo"
+              width={180}
+              height={90}
+              className="object-contain"
+              priority
+            />
+          </motion.div>
 
-                {showFields && (
-                    <motion.div
-                        className="flex flex-col items-center mt-4"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ duration: 0.5 }}
-                    >
-                        <input
-                            type="text"
-                            placeholder="Enter your username"
-                            className="w-[228px] h-[35px] px-3 mb-3 rounded-[10px] border border-[#F4A7B9] bg-white text-black placeholder-gray-400
-                                dark:bg-[#3A3A3A] dark:text-white dark:placeholder-[#AAAAAA]
-                                transition-all outline-none focus:opacity-80 focus:ring-2 focus:ring-[#F4A7B9]"
-                        />
-
-                        <input
-                            type="password"
-                            placeholder="Enter your password"
-                            className="w-[228px] h-[35px] px-3 mb-7 rounded-[10px] border border-[#F4A7B9] bg-white text-black placeholder-gray-400
-                                dark:bg-[#3A3A3A] dark:text-white dark:placeholder-[#AAAAAA]
-                                transition-all outline-none focus:opacity-80 focus:ring-2 focus:ring-[#F4A7B9]"
-                        />
-
-                        <Link href="/Dashboard">
-                            <button
-                                className="w-[53.41px] h-[53.41px] rounded-full bg-[#F789A3] flex items-center justify-center mb-6"
-                                aria-label="Login"
-                                type="submit"
-                            >
-                                <ArrowRight size={25.98} className="text-white" />
-                            </button>
-                        </Link>
-
-                        <button className="w-[150px] h-[30px] text-sm rounded-[10px] border border-[#F4A7B9] bg-white text-black
-                            hover:opacity-80 transition-all mb-10 dark:bg-[#3A3A3A] dark:text-white">
-                            Register Account
-                        </button>
-
-                        <div className="flex items-center justify-center space-x-4">
-                            <div className="w-[38px] h-[38px] bg-white dark:bg-[#3A3A3A] hover:opacity-80
-                                rounded-full flex items-center justify-center transition-all">
-                                <img src="/google-logo.webp" alt="Google" className="w-7 h-7" />
-                            </div>
-                            <div className="h-6 w-px bg-gray-300 dark:bg-gray-500"></div>
-                            <div className="w-[38px] h-[38px] bg-white dark:bg-[#3A3A3A] hover:opacity-80
-                                rounded-full flex items-center justify-center transition-all">
-                                <img src="/facebook-logo.png" alt="Facebook" className="w-5 h-5" />
-                            </div>
-                        </div>
-                    </motion.div>
+          {/* Tabs */}
+          <div className="flex justify-center space-x-6 mb-6">
+            {['register', 'login'].map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`text-md font-semibold transition-colors relative ${
+                  activeTab === tab ? 'text-[#FF5274]' : 'text-black'
+                }`}
+              >
+                {tab === 'register' ? 'Register' : 'Login'}
+                {activeTab === tab && (
+                  <span className="absolute -bottom-1 left-0 w-full h-[2px] bg-[#FF5274] rounded" />
                 )}
-            </div>
+              </button>
+            ))}
+          </div>
+
+          {/* Form */}
+          {showContent && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              className="flex flex-col items-center"
+            >
+              {activeTab === 'register' && (
+                <>
+                  <Input placeholder="Username" icon="👤" />
+                  <Input placeholder="Email Address" icon="📧" type="email" />
+                  <Input placeholder="Create a Password" icon="🔒" type="password" />
+                </>
+              )}
+              {activeTab === 'login' && (
+                <>
+                  <Input placeholder="Email Address" icon="📧" type="email" />
+                  <Input placeholder="Password" icon="🔒" type="password" />
+                </>
+              )}
+
+              <button className="w-full h-10 bg-[#FF5274] text-white rounded-lg font-semibold mt-4 hover:opacity-90 transition-all">
+                {activeTab === 'register' ? 'Create Account' : 'Sign In'}
+              </button>
+
+              {/* Google Sign In */}
+              <button className="w-full h-10 mt-3 bg-gray-100 text-black rounded-lg flex items-center justify-center space-x-2 hover:opacity-90 transition-all">
+                <Image src="/google-logo.webp" alt="Google" width={20} height={20} />
+                <span className="text-sm">Sign in with Google</span>
+              </button>
+
+              {/* Register Info */}
+              {activeTab === 'register' && (
+                <div className="bg-[#FFEFF2] mt-5 text-sm text-black text-center px-3 py-2 rounded-md">
+                  A verification code is sent to XXXXX@gmail.com
+                </div>
+              )}
+            </motion.div>
+          )}
         </div>
-    );
+      </div>
+    </div>
+  );
+}
+
+// Helper input component
+function Input({ placeholder, icon, type = 'text' }) {
+  return (
+    <div className="w-full mb-3 flex items-center bg-[#F0F0F0] rounded-md px-3 h-10 text-gray-600">
+      <span className="mr-2 text-lg">{icon}</span>
+      <input
+        type={type}
+        placeholder={placeholder}
+        className="bg-transparent flex-1 outline-none placeholder-gray-500 text-black"
+      />
+    </div>
+  );
 }
