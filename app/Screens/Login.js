@@ -116,12 +116,12 @@ export default function Login() {
 // Input Component
 function Input({ placeholder, icon, type = 'text' }) {
   return (
-    <div className="w-11/12 mb-6 flex items-center bg-[#F0F0F0] dark:bg-[#f1f1f1] rounded-md px-3 h-14 text-gray-600 dark:text-white">
+    <div className="w-11/12 mb-6 flex items-center bg-[#F0F0F0] dark:bg-[#f1f1f1] rounded-md px-3 h-14 text-gray-600 dark:text-black">
       <span className="mr-2 text-lg">{icon}</span>
       <input
         type={type}
         placeholder={placeholder}
-        className="bg-transparent flex-1 outline-none placeholder-gray-500 text-black dark:text-white"
+        className="bg-transparent flex-1 outline-none placeholder-gray-500 text-black dark:text-black"
       />
     </div>
   );
