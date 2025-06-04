@@ -14,56 +14,64 @@ export default function Login() {
   }, []);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#FAF9F6] font-inter px-4">
-      <div className="relative w-full max-w-sm">
+    <div className="h-screen flex flex-col justify-end bg-[#FAF9F6] font-inter">
+      {/* Logo */}
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 1 }}
+        className="flex justify-center mb-6"
+      >
+        <Image
+          src="/zen_kanji.png"
+          alt="App Logo"
+          width={180}
+          height={90}
+          className="object-contain"
+          priority
+        />
+      </motion.div>
 
-        {/* Main Container with rounded top and border-top */}
-        <div className="absolute top-0 w-full h-[60%] bg-white border-t-[3px] border-[#FF5274] rounded-t-[30px] shadow-md" />
-
-        <div className="relative z-10 pt-10 pb-6 px-6">
-
-          {/* Logo */}
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1 }}
-            className="flex justify-center mb-6"
+      {/* Main Container */}
+      <div className="flex flex-col w-full h-[70vh] p-4 gap-y-4 bg-white border-t-[3px] border-[#FF5274] rounded-t-[30px] shadow-md fixed bottom-0 left-0">
+        {/* Tabs */}
+        <div className="flex justify-center items-center mb-10">
+          <button
+            onClick={() => setActiveTab('register')}
+            className={`text-md font-semibold transition-colors relative ${
+              activeTab === 'register' ? 'text-[#FF5274]' : 'text-black'
+            }`}
           >
-            <Image
-              src="/zen_kanji.png"
-              alt="App Logo"
-              width={180}
-              height={90}
-              className="object-contain"
-              priority
-            />
-          </motion.div>
+            Register
+            {activeTab === 'register' && (
+              <span className="absolute -bottom-1 left-0 w-full h-[2px] bg-[#FF5274] rounded" />
+            )}
+          </button>
 
-          {/* Tabs */}
-          <div className="flex justify-center space-x-6 mb-6">
-            {['register', 'login'].map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`text-md font-semibold transition-colors relative ${
-                  activeTab === tab ? 'text-[#FF5274]' : 'text-black'
-                }`}
-              >
-                {tab === 'register' ? 'Register' : 'Login'}
-                {activeTab === tab && (
-                  <span className="absolute -bottom-1 left-0 w-full h-[2px] bg-[#FF5274] rounded" />
-                )}
-              </button>
-            ))}
-          </div>
+          {/* Vertical Separator */}
+          <div className="w-px h-5 bg-gray-400 mx-6" />
 
-          {/* Form */}
+          <button
+            onClick={() => setActiveTab('login')}
+            className={`text-md font-semibold transition-colors relative ${
+              activeTab === 'login' ? 'text-[#FF5274]' : 'text-black'
+            }`}
+          >
+            Login
+            {activeTab === 'login' && (
+              <span className="absolute -bottom-1 left-0 w-full h-[2px] bg-[#FF5274] rounded" />
+            )}
+          </button>
+        </div>
+
+        {/* Form Fields */}
+        <div className="h-full flex flex-col items-center justify-between">
           {showContent && (
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
-              className="flex flex-col items-center"
+              className="flex flex-col items-center w-full"
             >
               {activeTab === 'register' && (
                 <>
@@ -79,22 +87,9 @@ export default function Login() {
                 </>
               )}
 
-              <button className="w-full h-10 bg-[#FF5274] text-white rounded-lg font-semibold mt-4 hover:opacity-90 transition-all">
+              <button className="w-2/3 h-12 bg-[#FF5274] text-white rounded-lg font-semibold mt-6 hover:opacity-90 transition-all">
                 {activeTab === 'register' ? 'Create Account' : 'Sign In'}
               </button>
-
-              {/* Google Sign In */}
-              <button className="w-full h-10 mt-3 bg-gray-100 text-black rounded-lg flex items-center justify-center space-x-2 hover:opacity-90 transition-all">
-                <Image src="/google-logo.webp" alt="Google" width={20} height={20} />
-                <span className="text-sm">Sign in with Google</span>
-              </button>
-
-              {/* Register Info */}
-              {activeTab === 'register' && (
-                <div className="bg-[#FFEFF2] mt-5 text-sm text-black text-center px-3 py-2 rounded-md">
-                  A verification code is sent to XXXXX@gmail.com
-                </div>
-              )}
             </motion.div>
           )}
         </div>
@@ -103,10 +98,10 @@ export default function Login() {
   );
 }
 
-// Helper input component
+// Input Component
 function Input({ placeholder, icon, type = 'text' }) {
   return (
-    <div className="w-full mb-3 flex items-center bg-[#F0F0F0] rounded-md px-3 h-10 text-gray-600">
+    <div className="w-11/12 mb-6 flex items-center bg-[#F0F0F0] rounded-md px-3 h-14 text-gray-600">
       <span className="mr-2 text-lg">{icon}</span>
       <input
         type={type}
