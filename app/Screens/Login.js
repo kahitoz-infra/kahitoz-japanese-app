@@ -49,7 +49,7 @@ export default function Login() {
           </button>
 
           {/* Vertical Separator */}
-          <div className="w-px h-5 bg-gray-400 mx-6" />
+          <div className="w-px h-5 bg-gray-400 mx-16" />
 
           <button
             onClick={() => setActiveTab('login')}
