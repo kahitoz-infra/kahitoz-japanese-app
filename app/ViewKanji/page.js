@@ -5,6 +5,7 @@ import KanjiTableView from "@/app/components/Table";
 import DrawCardView from "@/app/components/DrawCardView";
 import Image from "next/image";
 import Link from "next/link";
+import SettingsModal from "../components/SettingsModal";
 
 const api = process.env.NEXT_PUBLIC_API_URL;
 const CACHE_EXPIRATION_HOURS = 12;
@@ -57,6 +58,7 @@ export default function HomePage() {
   const [kanjiData, setKanjiData] = useState([]);
   const [tags, setTags] = useState([]);
   const [sound, setSound] = useState(true);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   // Load saved preferences
   useEffect(() => {
@@ -185,119 +187,124 @@ export default function HomePage() {
 
   return (
       <div>
-        <div className="fixed top-0 p-2 left-0 right-0 bg-opacity-90 z-10">
-          <div className="flex items-center justify-between">
-            <Link href="/Dashboard">
-              <Image src="/icons/back.svg" alt="back" width={40} height={40} />
-            </Link>
-            <div className="flex items-center gap-x-2">
-              <Image
-                  src={sound ? "/icons/sound.svg" : "/icons/mute.svg"}
-                  alt="sound"
-                  width={40}
-                  height={40}
-                  onClick={() => {
-                    const newVal = !sound;
-                    setSound(newVal);
-                    localStorage.setItem(LS_KEYS.sound, newVal.toString());
-                  }}
-              />
-              <Image
-                  src={showFilters ? "/icons/show.svg" : "/icons/hide.svg"}
-                  alt="toggle filters"
-                  width={40}
-                  height={40}
-                  onClick={() => {
-                    const newVal = !showFilters;
-                    setShowFilters(newVal);
-                    localStorage.setItem(LS_KEYS.showFilters, newVal.toString());
-                  }}
-              />
-            </div>
+        <div className="fixed top-0 p-2 left-0 right-0 bg-opacity-90 z-10  dark:bg-[#2a2a2a]">
+        <div className="flex items-center justify-between ">
+          <Link href="/Dashboard">
+            <Image src="/icons/back.svg" alt="back" width={40} height={40} />
+          </Link>
+          <div className="flex items-center gap-x-2">
+            <Image
+              src="/icons/settings.svg"
+              alt="settings"
+              width={40}
+              height={40}
+              onClick={() => setIsSettingsOpen(true)}
+            />
+            {/* other icons */}
+          </div>
+        </div>
+      </div>
+
+      <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)}>
+        {/* Put all dropdowns inside modal */}
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium">View Type</label>
+            <select
+              value={viewType}
+              onChange={(e) => {
+                setViewType(e.target.value);
+                localStorage.setItem(LS_KEYS.viewType, e.target.value);
+              }}
+              className="w-full p-2 rounded bg-white dark:bg-black text-black dark:text-white"
+            >
+              <option value="Cards">Cards</option>
+              <option value="Table">Table</option>
+              <option value="Draw">Draw</option>
+            </select>
           </div>
 
-          {showFilters && (
-              <div className="flex flex-wrap gap-x-2 mt-2 justify-start lg:justify-end">
-                <select value={viewType} onChange={(e) => {
-                  setViewType(e.target.value);
-                  localStorage.setItem(LS_KEYS.viewType, e.target.value);
-                }} className="select-box w-20 text-black bg-white dark:text-white dark:bg-black">
-                  <option value="Cards">Cards</option>
-                  <option value="Table">Table</option>
-                  <option value="Draw">Draw</option>
-                </select>
+          <div>
+            <label className="block text-sm font-medium">Level</label>
+            <select
+              value={selectedLabel}
+              onChange={(e) => {
+                setSelectedLabel(e.target.value);
+                localStorage.setItem(LS_KEYS.selectedLabel, e.target.value);
+              }}
+              className="w-full p-2 rounded bg-white dark:bg-black text-black dark:text-white"
+            >
+              <option value="N4">N4</option>
+              <option value="N5">N5</option>
+              {tags.filter(tag => !["N4", "N5"].includes(tag)).map(tag => (
+                <option key={tag} value={tag}>{tag}</option>
+              ))}
+            </select>
+          </div>
 
-                <Image src="/icons/rightarrow.svg" alt="arrow" width={25} height={12} />
+          <div>
+            <label className="block text-sm font-medium">Bookmarks</label>
+            <select
+              value={showBookmarksOnly ? "Bookmarked" : "All"}
+              onChange={(e) => {
+                const val = e.target.value === "Bookmarked";
+                setShowBookmarksOnly(val);
+                localStorage.setItem(LS_KEYS.bookmarksOnly, val.toString());
+              }}
+              className="w-full p-2 rounded bg-white dark:bg-black text-black dark:text-white"
+            >
+              <option value="All">All</option>
+              <option value="Bookmarked">Bookmarked</option>
+            </select>
+          </div>
 
-                <select value={selectedLabel} onChange={(e) => {
-                  setSelectedLabel(e.target.value);
-                  localStorage.setItem(LS_KEYS.selectedLabel, e.target.value);
-                }} className="select-box w-14 text-black bg-white dark:text-white dark:bg-black">
-                  <option value="N4">N4</option>
-                  <option value="N5">N5</option>
-                  {tags.filter(tag => !["N4", "N5"].includes(tag)).map(tag => (
-                      <option key={tag} value={tag}>{tag}</option>
-                  ))}
-                </select>
+          <div>
+            <label className="block text-sm font-medium">Randomize</label>
+            <select
+              value={randomizeMode}
+              onChange={(e) => {
+                const val = e.target.value;
+                setRandomizeMode(val);
+                localStorage.setItem(LS_KEYS.randomizeMode, val);
+                if (val !== "Custom") {
+                  setCustomGroupSize("");
+                  localStorage.removeItem(LS_KEYS.customGroupSize);
+                }
+              }}
+              className="w-full p-2 rounded bg-white dark:bg-black text-black dark:text-white"
+            >
+              <option value="None">Stop Randomization</option>
+              <option value="All">Randomize All</option>
+              <option value="5">Groups of 5</option>
+              <option value="10">Groups of 10</option>
+              <option value="15">Groups of 15</option>
+              <option value="Custom">Custom Group</option>
+            </select>
+          </div>
 
-                <Image src="/icons/rightarrow.svg" alt="arrow" width={25} height={12} />
-
-                <select value={showBookmarksOnly ? "Bookmarked" : "All"} onChange={(e) => {
-                  const val = e.target.value === "Bookmarked";
-                  setShowBookmarksOnly(val);
-                  localStorage.setItem(LS_KEYS.bookmarksOnly, val.toString());
-                }} className="select-box w-16 text-black bg-white dark:text-white dark:bg-black">
-                  <option value="All">All</option>
-                  <option value="Bookmarked">Bookmarked</option>
-                </select>
-
-                <Image src="/icons/rightarrow.svg" alt="arrow" width={25} height={12} />
-
-                <select
-                    value={randomizeMode}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      setRandomizeMode(val);
-                      localStorage.setItem(LS_KEYS.randomizeMode, val);
-                      if (val !== "Custom") {
-                        setCustomGroupSize("");
-                        localStorage.removeItem(LS_KEYS.customGroupSize);
-                      }
-                    }}
-                    className="select-box w-48 text-black bg-white dark:text-white dark:bg-black"
-                >
-                  <option value="None">Stop Randomization</option>
-                  <option value="All">Randomize All</option>
-                  <option value="5">Groups of 5</option>
-                  <option value="10">Groups of 10</option>
-                  <option value="15">Groups of 15</option>
-                  <option value="Custom">Custom Group</option>
-                </select>
-              </div>
+          {randomizeMode === "Custom" && (
+            <input
+              type="text"
+              placeholder="Enter group size"
+              value={customGroupSize}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (val === "" || /^\d+$/.test(val)) {
+                  setCustomGroupSize(val);
+                  localStorage.setItem(LS_KEYS.customGroupSize, val);
+                }
+              }}
+              className="w-full p-2 rounded bg-white dark:bg-black text-black dark:text-white"
+            />
           )}
         </div>
-
-        {randomizeMode === "Custom" && (
-            <input
-                type="text"
-                placeholder="Enter group size"
-                value={customGroupSize}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  if (val === "" || /^\d+$/.test(val)) {
-                    setCustomGroupSize(val);
-                    localStorage.setItem(LS_KEYS.customGroupSize, val);
-                  }
-                }}
-                className="p-2 rounded-md w-36 mt-2 ml-2"
-            />
-        )}
-
-        <div className="h-screen w-screen flex items-center justify-center">
+      </SettingsModal>
+      {viewType === "Table" && <KanjiTableView kanjiList={filteredKanji} />}
+        {viewType !== "Table" && <div className="h-screen w-screen flex items-center justify-center">
           {viewType === "Cards" && <KanjiCardView kanjiList={filteredKanji} onBookmarkToggle={handleBookmarkToggle} sound={sound} />}
-          {viewType === "Table" && <KanjiTableView kanjiList={filteredKanji} />}
           {viewType === "Draw" && <DrawCardView kanjiList={filteredKanji} />}
-        </div>
+        </div>}  
+        
       </div>
   );
 }
