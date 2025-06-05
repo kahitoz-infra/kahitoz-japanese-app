@@ -10,45 +10,72 @@ export default function Navbar() {
     }, []);
 
     const items = [
-        { lightIcon: "/icons/home.png", darkIcon: "/icons/homewhite.png" },
-        { lightIcon: "/icons/chat.png", darkIcon: "/icons/chatwhite.png" },
-        { lightIcon: "/icons/calendar.png", darkIcon: "/icons/calendarwhite.png" },
-        { lightIcon: "/icons/user.png", darkIcon: "/icons/userwhite.png" },
+        { lightIcon: "/icons/learn.svg", darkIcon: "/icons/learnwhite.svg", label: "Learn" },
+        { lightIcon: "/icons/progress.svg", darkIcon: "/icons/progresswhite.svg", label: "Streak" },
+        { lightIcon: "/icons/chat.svg", darkIcon: "/icons/chatwhite.svg", label: "AI Chat" },
+        { lightIcon: "/icons/profile.svg", darkIcon: "/icons/profilewhite.svg", label: "Profile" },
     ];
+
+    const centerButton = {
+        lightIcon: "/icons/home.svg",
+        darkIcon: "/icons/home.svg",
+        label: "HOME"
+    };
+
+    const navItems = [items[0], items[1], centerButton, items[2], items[3]];
 
     if (!mounted) return null;
 
     return (
-        <nav className="w-full fixed bottom-0 left-0 bg-[#FAF8F6] dark:bg-[#2F2F2F]">
-            <ul className="flex justify-between items-center border-t-[3px] border-[#F4A7B9] rounded-t-[20px] px-2 py-3">
-                {items.map((item, index) => (
-                    <div key={index} className="flex items-center justify-center flex-1 relative">
-                        {/* Separator */}
-                        {index !== items.length - 1 && (
-                            <span className="absolute right-0 top-2 bottom-2 w-px bg-gray-700 dark:bg-white opacity-60"></span>
-                        )}
-
-                        <li className="flex flex-col items-center justify-center w-full">
-                            {/* Light icon */}
-                            <Image
-                                src={item.lightIcon}
-                                alt={`${item.label} Light`}
-                                width={24}
-                                height={24}
-                                className="block dark:hidden object-contain"
-                            />
-                            {/* Dark icon */}
-                            <Image
-                                src={item.darkIcon}
-                                alt={`${item.label} Dark`}
-                                width={24}
-                                height={24}
-                                className="hidden dark:block object-contain"
-                            />
-                            <p className="text-xs mt-1">{item.label}</p>
+        <nav className="w-full fixed bottom-0 left-0 bg-[#FFFFFF] dark:bg-[#353839] border-t-[3px] border-[#FF5274] dark:border-[#F66538] z-50 rounded-t-3xl">
+            <ul className="relative flex justify-between items-center px-4 py-6 rounded-t-[20px]">
+                {navItems.map((item, index) => {
+                    const isCenter = index === 2;
+                    return (
+                        <li key={index} className="flex flex-col items-center justify-center w-full relative">
+                            {/* Center circle with label */}
+                            {isCenter ? (
+                                <div className="flex flex-col items-center absolute -top-20 left-1/2 transform -translate-x-1/2 z-20">
+                                    <div className="bg-[#FF5274] dark:bg-[#F66538] rounded-full w-20 h-20 flex items-center justify-center shadow-md">
+                                        <Image
+                                            src={item.lightIcon}
+                                            alt={`${item.label} Light`}
+                                            width={28}
+                                            height={28}
+                                            className="block dark:hidden object-contain"
+                                        />
+                                        <Image
+                                            src={item.darkIcon}
+                                            alt={`${item.label} Dark`}
+                                            width={28}
+                                            height={28}
+                                            className="hidden dark:block object-contain"
+                                        />
+                                    </div>
+                                    <p className="text-xs mt-1 text-gray-800 dark:text-white">{item.label}</p>
+                                </div>
+                            ) : (
+                                <>
+                                    <Image
+                                        src={item.lightIcon}
+                                        alt={`${item.label} Light`}
+                                        width={24}
+                                        height={24}
+                                        className="block dark:hidden object-contain"
+                                    />
+                                    <Image
+                                        src={item.darkIcon}
+                                        alt={`${item.label} Dark`}
+                                        width={24}
+                                        height={24}
+                                        className="hidden dark:block object-contain"
+                                    />
+                                    <p className="text-xs mt-1 text-gray-800 dark:text-white">{item.label}</p>
+                                </>
+                            )}
                         </li>
-                    </div>
-                ))}
+                    );
+                })}
             </ul>
         </nav>
     );
