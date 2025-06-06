@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
+import Link from "next/link";
 
 export default function Login() {
   const [activeTab, setActiveTab] = useState("register");
@@ -38,11 +39,10 @@ export default function Login() {
         <div className="flex justify-center items-center mb-10">
           <button
             onClick={() => setActiveTab("register")}
-            className={`text-md font-semibold transition-colors relative ${
-              activeTab === "register"
-                ? "text-[#FF5274] dark:text-[#FF9676]"
-                : "text-black dark:text-[#FF9676]"
-            }`}
+            className={`text-md font-semibold transition-colors relative ${activeTab === "register"
+              ? "text-[#FF5274] dark:text-[#FF9676]"
+              : "text-black dark:text-[#FF9676]"
+              }`}
           >
             Register
             {activeTab === "register" && (
@@ -55,11 +55,10 @@ export default function Login() {
 
           <button
             onClick={() => setActiveTab("login")}
-            className={`text-md font-semibold transition-colors relative ${
-              activeTab === "login"
-                ? "text-[#FF5274] dark:text-[#FF9676]"
-                : "text-black dark:text-[#FF9676]"
-            }`}
+            className={`text-md font-semibold transition-colors relative ${activeTab === "login"
+              ? "text-[#FF5274] dark:text-[#FF9676]"
+              : "text-black dark:text-[#FF9676]"
+              }`}
           >
             Login
             {activeTab === "login" && (
@@ -79,7 +78,7 @@ export default function Login() {
             >
               {activeTab === "register" && (
                 <>
-                <div className="w-full px-4 mb-2">
+                  <div className="w-full px-4 mb-2">
                     <div className="flex items-center border rounded-md px-3 py-2 w-full h-14 bg-[#f2f2f2] ">
                       {/* Username Input field */}
                       <Image
@@ -139,7 +138,7 @@ export default function Login() {
               )}
               {activeTab === "login" && (
                 <>
-                 {/* Email Input Field */}
+                  {/* Email Input Field */}
                   <div className="w-full px-4 py-2">
                     <div className="flex items-center border rounded-md px-3 py-2 w-full h-14 bg-[#f2f2f2] ">
                       <Image
@@ -157,7 +156,7 @@ export default function Login() {
                       />
                     </div>
                   </div>
-                  
+
                   <div className="w-full px-4 py-2">
                     <div className="flex items-center border rounded-md px-3 py-2 w-full h-14 bg-[#f2f2f2] ">
                       {/* Password Input Field */}
@@ -176,14 +175,19 @@ export default function Login() {
                       />
                     </div>
                   </div>
-                  
+
                 </>
               )}
 
               {/* Main Button */}
-              <button className="w-2/3 h-12 bg-[#FF5274] dark:bg-[#F66538] text-white rounded-lg font-semibold mt-2 hover:opacity-90 transition-all">
+              import Link from 'next/link';
+
+              <Link
+                href="/Dashboard"
+                className="w-2/3 h-12 bg-[#FF5274] dark:bg-[#F66538] text-white rounded-lg font-semibold mt-2 hover:opacity-90 transition-all flex items-center justify-center"
+              >
                 {activeTab === "register" ? "Create Account" : "Sign In"}
-              </button>
+              </Link>
 
               {/* Sign in with Google */}
               <button className="w-[173px] h-[40px] mt-8 bg-[#f2f2f2]: dark bg-[#f2f2f2] rounded-full text-black font-medium flex items-center justify-center gap-2 shadow-sm hover:opacity-90 transition-all">
