@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import VocabConfig from "../components/VocabConfig";
 import VocabCardView from "../components/VocabCardHolder";
+import Link from "next/link";
 
 const api = process.env.NEXT_PUBLIC_API_URL;
 
@@ -56,7 +57,10 @@ export default function MainVocabHandler() {
         <div>
             <nav className="fixed top-0 left-0 w-full dark:bg-[#2a2a2a] z-20">
                 <div className="flex items-center justify-between w-full px-4 py-2">
-                    <Image src={"/icons/back.svg"} width={20} height={20} alt="back" />
+                    <Link href='/Dashboard'>
+                     <Image src={"/icons/back.svg"} width={20} height={20} alt="back" />
+                    </Link>
+                    
                     {!loading && (
                         <button onClick={() => setConfigModal(true)}>
                             <Image src={"/icons/settings.svg"} width={20} height={20} alt="settings" />
