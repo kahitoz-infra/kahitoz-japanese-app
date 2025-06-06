@@ -163,7 +163,7 @@ export default function HomePage() {
           .filter(([id, value]) => original[id] !== value)
           .map(([id, value]) => ({
             kanji_id: parseInt(id, 10),
-            operation_type: value,
+            t_id: value,
             user_id: 1,
           }));
 
