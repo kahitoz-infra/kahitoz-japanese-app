@@ -1,20 +1,22 @@
 "use client";
 import Image from "next/image";
+import Link from "next/link";
 import Navbar from "@/app/components/Navbar";
 
 const Dashboard = () => {
   const username = "John";
   const courseProgress = [
-    { label: "Course A", percent: 69 },
-    { label: "Course B", percent: 33 },
-    { label: "Course C", percent: 86 },
+    { label: "Course A", percent: 69, link: "/ViewKanji" },
+    { label: "Course B", percent: 33, link: "/ViewVocabulary" },
+    { label: "Course C", percent: 86, link: "/" }, // No link provided
   ];
 
-  const getStrokeColor = (percent) => {
-    if (percent < 40) return "#FF4C4C"; // Red
-    if (percent <= 70) return "#FFA500"; // Dark Yellow
-    return "#28A745"; // Green
-  };
+ const getStrokeColor = (percent) => {
+  if (percent < 40) return "#FF4C4C"; // Red
+  if (percent <= 70) return "#FFA500"; // Dark Yellow
+  return "#28A745"; // Green
+};
+
 
   return (
     <>
@@ -24,18 +26,17 @@ const Dashboard = () => {
           text-black dark:text-white
           relative px-4"
       >
-                {/* Profile Icon */}
+        {/* Profile Icon */}
         <div className="mt-2 w-20 sm:w-24 h-20 sm:h-24 rounded-full overflow-hidden mb-6 border border-black dark:border-white">
-        <Image
+          <Image
             src="/profile-icon.jpg"
             alt="Profile Icon"
-            width={96}     // 24 * 4 (for sm:w-24)
-            height={96}    // same height to keep it square
+            width={96}
+            height={96}
             className="object-cover"
             priority
-        />
+          />
         </div>
-
 
         {/* Greeting */}
         <h1 className="text-2xl sm:text-2xl font-bold text-center mb-1">
@@ -97,51 +98,71 @@ const Dashboard = () => {
         {/* Recent Courses Grid: 2 in first row, 1 centered below */}
         <div className="grid grid-cols-2 gap-4 w-full max-w-3xl">
           {/* First two boxes */}
-          {courseProgress.slice(0, 2).map((course, idx) => (
-            <div
-              key={idx}
-              className="relative rounded-xl overflow-hidden border
-                border-pink-600 dark:border-[#F66538]
-                bg-gray-200 dark:bg-[#3B3E40]
-                h-28"
-            >
-              <Image
-                src={`/course-thumbnails/course${idx + 1}.jpg`}
-                alt={course.label}
-                fill
-                style={{ objectFit: "cover" }}
-                priority
-              />
-              <div className="absolute bottom-0 left-0 w-full h-2 bg-gray-300 dark:bg-gray-700 rounded-t-lg">
-                <div
-                  className="h-2 rounded-t-lg transition-all duration-500 ease-in-out bg-black dark:bg-white"
-                  style={{ width: `${course.percent}%` }}
-                />
-              </div>
-            </div>
-          ))}
-
-          {/* Third box centered below by spanning two columns */}
-          <div
-            className="relative rounded-xl overflow-hidden border
-              border-pink-600 dark:border-[#F66538]
-              bg-gray-200 dark:bg-[#3B3E40]
-              h-28 col-span-2 mx-auto w-1/2 sm:w-1/3"
-          >
-            <Image
-              src={`/course-thumbnails/course3.jpg`}
-              alt={courseProgress[2].label}
-              fill
-              style={{ objectFit: "cover" }}
-              priority
-            />
-            <div className="absolute bottom-0 left-0 w-full h-2 bg-gray-300 dark:bg-gray-700 rounded-t-lg">
+          {courseProgress.slice(0, 2).map((course, idx) => {
+            const content = (
               <div
-                className="h-2 rounded-t-lg transition-all duration-500 ease-in-out bg-black dark:bg-white"
-                style={{ width: `${courseProgress[2].percent}%` }}
-              />
-            </div>
-          </div>
+                className="relative rounded-xl overflow-hidden border
+                  border-pink-600 dark:border-[#F66538]
+                  bg-gray-200 dark:bg-[#3B3E40]
+                  h-28"
+              >
+                <Image
+                  src={`/course-thumbnails/course${idx + 1}.jpg`}
+                  alt={course.label}
+                  fill
+                  style={{ objectFit: "cover" }}
+                  priority
+                />
+                <div className="absolute bottom-0 left-0 w-full h-2 bg-gray-300 dark:bg-gray-700 rounded-t-lg">
+                  <div
+                    className="h-2 rounded-t-lg transition-all duration-500 ease-in-out bg-black dark:bg-white"
+                    style={{ width: `${course.percent}%` }}
+                  />
+                </div>
+              </div>
+            );
+
+            return course.link ? (
+              <Link key={idx} href={course.link}>
+                {content}
+              </Link>
+            ) : (
+              <div key={idx}>{content}</div>
+            );
+          })}
+
+          {/* Third box centered below */}
+          {(() => {
+            const course = courseProgress[2];
+            const content = (
+              <div
+                className="relative rounded-xl overflow-hidden border
+                  border-pink-600 dark:border-[#F66538]
+                  bg-gray-200 dark:bg-[#3B3E40]
+                  h-28 col-span-2 mx-auto w-1/2 sm:w-1/3"
+              >
+                <Image
+                  src={`/course-thumbnails/course3.jpg`}
+                  alt={course.label}
+                  fill
+                  style={{ objectFit: "cover" }}
+                  priority
+                />
+                <div className="absolute bottom-0 left-0 w-full h-2 bg-gray-300 dark:bg-gray-700 rounded-t-lg">
+                  <div
+                    className="h-2 rounded-t-lg transition-all duration-500 ease-in-out bg-black dark:bg-white"
+                    style={{ width: `${course.percent}%` }}
+                  />
+                </div>
+              </div>
+            );
+
+            return course.link ? (
+              <Link href={course.link}>{content}</Link>
+            ) : (
+              content
+            );
+          })()}
         </div>
       </div>
 
