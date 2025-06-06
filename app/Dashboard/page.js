@@ -1,119 +1,156 @@
 "use client";
 import Image from "next/image";
 import Navbar from "@/app/components/Navbar";
-import Link from "next/link";
 
 const Dashboard = () => {
-    const username = "John";
-    const quote = "Be better.";
+  const username = "John";
+  const courseProgress = [
+    { label: "Course A", percent: 69 },
+    { label: "Course B", percent: 33 },
+    { label: "Course C", percent: 86 },
+  ];
 
-    const boxes = [
-        { label: "View Kanji", href: "/ViewKanji", image: "/pinkbg.webp", icon: "/icons/option1.svg", progress: 70 },
-        { label: "Box 2", image: "/pinkbg.webp", icon: "/icons/option2.svg", progress: 45 },
-        { label: "Box 3", image: "/pinkbg.webp", icon: "/icons/option3.svg", progress: 20 },
-        { label: "Box 4", image: "/pinkbg.webp", icon: "/icons/option4.svg", progress: 90 },
-        { label: "Box 5", image: "/pinkbg.webp", icon: "/icons/option5.svg", progress: 55 },
-        { label: "Box 6", image: "/pinkbg.webp", icon: "/icons/option6.svg", progress: 30 },
-        { label: "Box 7", image: "/pinkbg.webp", icon: "/icons/option7.svg", progress: 80 },
-    ];
+  const getStrokeColor = (percent) => {
+    if (percent < 40) return "#FF4C4C"; // Red
+    if (percent <= 70) return "#FFA500"; // Dark Yellow
+    return "#28A745"; // Green
+  };
 
-    return (
-        <>
-            <div className="flex flex-col min-h-screen pb-24 px-4 pt-16 dark:text-white text-black relative">
-                {/* Profile and Greeting */}
-                <div className="flex items-center gap-4 mt-2 ml-2">
-                    <Image
-                        src="/icons/profile.svg"
-                        alt="Profile"
-                        width={40}
-                        height={40}
-                        className="rounded-full border border-gray-300 shadow-sm"
-                    />
-                    <div>
-                        <h1 className="text-xl sm:text-2xl font-bold">Hi {username} 👋</h1>
-                        <p className="text-sm sm:text-base mt-1">{quote}</p>
-                    </div>
-                </div>
+  return (
+    <>
+      <div
+        className="flex flex-col min-h-screen w-screen pb-28 pt-8 items-center
+          bg-[#f3f3f3] dark:bg-[#292B2D]
+          text-black dark:text-white
+          relative px-4"
+      >
+                {/* Profile Icon */}
+        <div className="mt-2 w-20 sm:w-24 h-20 sm:h-24 rounded-full overflow-hidden mb-6 border border-black dark:border-white">
+        <Image
+            src="/profile-icon.jpg"
+            alt="Profile Icon"
+            width={96}     // 24 * 4 (for sm:w-24)
+            height={96}    // same height to keep it square
+            className="object-cover"
+            priority
+        />
+        </div>
 
-                {/* LET'S GET STARTED Heading */}
-                <div className="mt-8 px-2 text-center">
-                    <h2 className="text-lg sm:text-xl font-semibold uppercase">Let's Get Started</h2>
-                    <div className="flex justify-center mt-1">
-                        <div className="h-1 w-20 rounded-full bg-[#EFA9B8]"></div>
-                    </div>
-                </div>
 
-                {/* Grid of Boxes */}
-                <div className="flex justify-center mt-6 px-2">
-                    <div className="grid grid-cols-2 gap-x-6 gap-y-12">
-                        {boxes.map((box, idx) => {
-                            const isLastOddBox = boxes.length % 2 !== 0 && idx === boxes.length - 1;
+        {/* Greeting */}
+        <h1 className="text-2xl sm:text-2xl font-bold text-center mb-1">
+          Welcome back {username}!
+        </h1>
+        <p className="text-xl sm:text-sm text-center text-black dark:text-gray-200">
+          Be Better Everyday!
+        </p>
 
-                            const BoxContent = (
-                                <div className="flex flex-col items-center space-y-4">
-                                    {/* Box */}
-                                    <div className="relative w-[150px] h-[170px] sm:w-[170px] sm:h-[190px] rounded-xl overflow-hidden border-[2.5px] border-[#EFA9B8] shadow-md flex items-center justify-center">
-                                        {/* Background */}
-                                        <Image
-                                            src={box.image}
-                                            alt={box.label}
-                                            fill
-                                            className="object-cover blur-sm"
-                                        />
+        {/* Concentric Semi-Circles */}
+        <div className="relative w-full max-w-[440px] h-[250px] mb-2">
+          <svg width="100%" height="100%" viewBox="0 0 500 250" className="mx-auto">
+            {courseProgress.map((course, i) => {
+              const radius = 210 - i * 30;
+              const cx = 250;
+              const cy = 250;
+              const circumference = Math.PI * radius;
+              const offset = circumference * (1 - course.percent / 100);
 
-                                        {/* Glass Overlay */}
-                                        <div className="absolute inset-0 bg-white/0 backdrop-blur-md z-10" />
+              return (
+                <circle
+                  key={i}
+                  cx={cx}
+                  cy={cy}
+                  r={radius}
+                  fill="none"
+                  stroke={getStrokeColor(course.percent)}
+                  strokeWidth="8"
+                  strokeDasharray={circumference}
+                  strokeDashoffset={offset}
+                  strokeLinecap="round"
+                  transform={`rotate(-180 ${cx} ${cy})`}
+                />
+              );
+            })}
+          </svg>
 
-                                        {/* Circle with Icon */}
-                                        <div className="z-20 w-[80px] h-[80px] sm:w-[100px] sm:h-[100px] rounded-full bg-white border-[2.5px] border-[#f9f6ee] shadow-[0_0.5px_2px_rgba(0,0,0,0.25)] flex items-center justify-center">
-                                            <Image
-                                                src={box.icon}
-                                                alt={`${box.label} Icon`}
-                                                width={48}
-                                                height={48}
-                                                className="w-[48px] h-[48px] sm:w-[60px] sm:h-[60px] object-contain"
-                                            />
-                                        </div>
-                                    </div>
+          {/* Centered Progress Text */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[30%] text-center mt-12 px-2">
+            <p className="text-base sm:text-lg font-bold mb-2">Your Progress</p>
+            {courseProgress.map((course, idx) => (
+              <p key={idx} className="text-xs sm:text-sm">
+                {course.label} ={" "}
+                <span className="font-bold text-pink-600 dark:text-[#F66538]">
+                  {course.percent}%
+                </span>{" "}
+                Completed
+              </p>
+            ))}
+          </div>
+        </div>
 
-                                    {/* Progress Bar */}
-                                    <div className="w-[80%] h-[8px] rounded-full overflow-hidden bg-pink-100/40 dark:bg-pink-900/40 relative">
-                                        {/* Light mode: black bar */}
-                                        <div
-                                            className="h-full bg-black transition-all duration-500 dark:hidden"
-                                            style={{ width: `${box.progress}%` }}
-                                        />
-                                        {/* Dark mode: white bar */}
-                                        <div
-                                            className="h-full bg-white transition-all duration-500 hidden dark:block"
-                                            style={{ width: `${box.progress}%` }}
-                                        />
-                                    </div>
-                                </div>
-                            );
+        {/* Consistent Days */}
+        <p className="text-xl sm:text-2xl font-semibold text-center mt-4 mb-8">
+          Consistent for{" "}
+          <span className="text-pink-600 dark:text-[#F66538]">3 Days</span>
+        </p>
 
-                            const wrapperClass = isLastOddBox ? "col-span-2 flex justify-center" : "";
-
-                            return box.href ? (
-                                <Link key={idx} href={box.href} className={wrapperClass}>
-                                    {BoxContent}
-                                </Link>
-                            ) : (
-                                <div key={idx} className={wrapperClass}>
-                                    {BoxContent}
-                                </div>
-                            );
-                        })}
-                    </div>
-                </div>
+        {/* Recent Courses Grid: 2 in first row, 1 centered below */}
+        <div className="grid grid-cols-2 gap-4 w-full max-w-3xl">
+          {/* First two boxes */}
+          {courseProgress.slice(0, 2).map((course, idx) => (
+            <div
+              key={idx}
+              className="relative rounded-xl overflow-hidden border
+                border-pink-600 dark:border-[#F66538]
+                bg-gray-200 dark:bg-[#3B3E40]
+                h-28"
+            >
+              <Image
+                src={`/course-thumbnails/course${idx + 1}.jpg`}
+                alt={course.label}
+                fill
+                style={{ objectFit: "cover" }}
+                priority
+              />
+              <div className="absolute bottom-0 left-0 w-full h-2 bg-gray-300 dark:bg-gray-700 rounded-t-lg">
+                <div
+                  className="h-2 rounded-t-lg transition-all duration-500 ease-in-out bg-black dark:bg-white"
+                  style={{ width: `${course.percent}%` }}
+                />
+              </div>
             </div>
+          ))}
 
-            {/* Bottom Navbar */}
-            <div className="fixed bottom-0 left-0 right-0 z-30">
-                <Navbar />
+          {/* Third box centered below by spanning two columns */}
+          <div
+            className="relative rounded-xl overflow-hidden border
+              border-pink-600 dark:border-[#F66538]
+              bg-gray-200 dark:bg-[#3B3E40]
+              h-28 col-span-2 mx-auto w-1/2 sm:w-1/3"
+          >
+            <Image
+              src={`/course-thumbnails/course3.jpg`}
+              alt={courseProgress[2].label}
+              fill
+              style={{ objectFit: "cover" }}
+              priority
+            />
+            <div className="absolute bottom-0 left-0 w-full h-2 bg-gray-300 dark:bg-gray-700 rounded-t-lg">
+              <div
+                className="h-2 rounded-t-lg transition-all duration-500 ease-in-out bg-black dark:bg-white"
+                style={{ width: `${courseProgress[2].percent}%` }}
+              />
             </div>
-        </>
-    );
+          </div>
+        </div>
+      </div>
+
+      {/* Bottom Navbar */}
+      <div className="fixed bottom-0 left-0 right-0 z-30">
+        <Navbar />
+      </div>
+    </>
+  );
 };
 
 export default Dashboard;
