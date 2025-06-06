@@ -6,8 +6,8 @@ import Navbar from "@/app/components/Navbar";
 const Dashboard = () => {
   const username = "John";
   const courseProgress = [
-    { label: "Course A", percent: 69, link: "/ViewKanji" },
-    { label: "Course B", percent: 33, link: "/ViewVocabulary" },
+    { label: "View Kanji", percent: 69, link: "/ViewKanji" },
+    { label: "View Vocabulary", percent: 33, link: "/ViewVocabulary" },
     { label: "Course C", percent: 86, link: "/" }, // No link provided
   ];
 
