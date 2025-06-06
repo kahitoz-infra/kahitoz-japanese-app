@@ -180,7 +180,6 @@ export default function Login() {
               )}
 
               {/* Main Button */}
-              import Link from 'next/link';
 
               <Link
                 href="/Dashboard"
