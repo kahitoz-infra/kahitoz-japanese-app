@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
+import GoogleLogin from "@/app/components/GoogleLogin";
 
 export default function Login() {
   const [activeTab, setActiveTab] = useState("register");
@@ -187,18 +188,9 @@ export default function Login() {
               >
                 {activeTab === "register" ? "Create Account" : "Sign In"}
               </Link>
-
-              {/* Sign in with Google */}
-              <button className="w-[173px] h-[40px] mt-8 bg-[#f2f2f2]: dark bg-[#f2f2f2] rounded-full text-black font-medium flex items-center justify-center gap-2 shadow-sm hover:opacity-90 transition-all">
-                <Image
-                  src="/google-logo.webp"
-                  alt="Google Icon"
-                  width={20}
-                  height={20}
-                  className="object-contain"
-                />
-                <span className="text-sm">Sign in with Google</span>
-              </button>
+                <div className={'mt-2'}>
+                    <GoogleLogin/>
+                </div>
             </motion.div>
           )}
         </div>
