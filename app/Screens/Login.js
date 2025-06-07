@@ -188,8 +188,9 @@ export default function Login() {
               >
                 {activeTab === "register" ? "Create Account" : "Sign In"}
               </Link>
-
-              {/* Sign in with Google */}<GoogleLogin/>
+                <div className={'mt-2'}>
+                    <GoogleLogin/>
+                </div>
             </motion.div>
           )}
         </div>
