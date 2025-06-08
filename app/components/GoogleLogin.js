@@ -195,7 +195,17 @@ export default function UnifiedGoogleLoginToken() {
     useEffect(() => {
         const native = Capacitor.isNativePlatform();
         setIsNative(native);
-        if (native) GoogleAuth.initialize();
+
+        if (native) {
+            // ✅ Fix: pass clientId explicitly to avoid error code 10
+            GoogleAuth.initialize({
+                clientId: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
+                scopes: ['profile', 'email'],
+                grantOfflineAccess: true,
+                forceCodeForRefreshToken: true,
+                prompt: 'select_account',
+            });
+        }
     }, []);
 
     const handleAuthResponse = async (token) => {
@@ -211,13 +221,13 @@ export default function UnifiedGoogleLoginToken() {
             });
 
             const data = await res.json();
-            console.log("This is the data-",data)
+            console.log("This is the data -", data);
 
             if (!res.ok) {
                 throw new Error(data.detail || 'Login failed');
             }
 
-            // Set cookies (or localStorage/sessionStorage if preferred)
+            // Set cookies
             document.cookie = `auth_token=${data.auth_token}; path=/; secure; SameSite=Lax`;
             document.cookie = `refresh_token=${data.refresh_token}; path=/; secure; SameSite=Lax`;
 
@@ -257,7 +267,6 @@ export default function UnifiedGoogleLoginToken() {
                 Sign in with Google
             </button>
         ) : (
-
             <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID}>
                 <div style={{ display: 'inline-block', borderRadius: '9999px', overflow: 'hidden', fontSize: '20px', padding: '10px 30px' }}>
                     <GoogleLogin
@@ -266,7 +275,6 @@ export default function UnifiedGoogleLoginToken() {
                     />
                 </div>
             </GoogleOAuthProvider>
-
         );
 
     return (
@@ -278,6 +286,7 @@ export default function UnifiedGoogleLoginToken() {
         </div>
     );
 }
+
 
 
 
