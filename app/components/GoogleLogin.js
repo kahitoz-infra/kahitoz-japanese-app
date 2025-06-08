@@ -47,8 +47,9 @@ export default function UnifiedGoogleLoginToken() {
             }
 
             // Set cookies
-            document.cookie = `auth_token=${data.auth_token}; path=/; secure; SameSite=Lax`;
-            document.cookie = `refresh_token=${data.refresh_token}; path=/; secure; SameSite=Lax`;
+            const sevenDays = 7 * 24 * 60 * 60;
+            document.cookie = `auth_token=${data.auth_token}; path=/; max-age=${sevenDays}; SameSite=Lax`;
+            document.cookie = `refresh_token=${data.refresh_token}; path=/; path=/; max-age=${sevenDays}; SameSite=Lax`;
 
             router.push('/Dashboard');
         } catch (err) {
