@@ -4,13 +4,8 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import Navbar from "@/app/components/Navbar";
+import Cookies from "js-cookie";
 
-// Custom image loader for optimization
-const imageLoader = ({ src, width, quality }) => {
-    return `${src}?w=${width}&q=${quality || 75}`;
-};
-
-// Decode JWT token payload (simple base64 decoder)
 const parseJwt = (token) => {
     try {
         const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
@@ -28,36 +23,32 @@ const parseJwt = (token) => {
 
 const Dashboard = () => {
     const router = useRouter();
-    const [user, setUser] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
-    const [imageError, setImageError] = useState({});
+    const [userName, setUserName] = useState("");
+    const [photo, setPhoto] = useState("");
 
-    const parseToken = useCallback(() => {
-        const cookie = document.cookie
-            .split("; ")
-            .find((row) => row.startsWith("auth_token="));
-        if (!cookie) {
-            router.push("/");
-            return null;
-        }
-
-        const token = cookie.split("=")[1];
-        const data = parseJwt(token);
-        if (!data || !data.name || !data.photo) {
-            router.push("/");
-            return null;
-        }
-        return { name: data.name, photo: data.photo };
-    }, [router]);
 
     useEffect(() => {
-        setIsLoading(true);
-        const userData = parseToken();
-        if (userData) {
-            setUser(userData);
-        }
-        setIsLoading(false);
-    }, [parseToken]);
+        const setUserDetails = (token) => {
+            if (!token) {
+                router.push("/");
+                return;
+            }
+
+            try {
+                const data = parseJwt(token);
+                setUserName(data.name);
+                setPhoto(data.photo);
+            } catch (error) {
+                router.push("/");
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        const authToken = Cookies.get("auth_token");
+        setUserDetails(authToken);
+    }, []);
 
     if (isLoading) {
         return (
@@ -67,14 +58,11 @@ const Dashboard = () => {
         );
     }
 
-    if (!user) {
-        return null;
-    }
 
     const courseProgress = [
-        { label: "View Kanji", percent: 69, link: "/ViewKanji" },
-        { label: "View Vocabulary", percent: 33, link: "/ViewVocabulary" },
-        { label: "Course C", percent: 86, link: "/" },
+        { label: "View Kanji", percent: 69, link: "/ViewKanji", src: "/banner/View_Kanji.png" },
+        { label: "View Vocabulary", percent: 33, link: "/ViewVocabulary", src: "/banner/View_Vocabulary.png"},
+        { label: "View Grammar", percent: 86, link: "/Dashboard",  src: "/banner/View_Grammar.png"},
     ];
 
     const getStrokeColor = (percent) => {
@@ -83,9 +71,6 @@ const Dashboard = () => {
         return "#28A745";
     };
 
-    const handleImageError = (index) => {
-        setImageError((prev) => ({ ...prev, [index]: true }));
-    };
 
     return (
         <>
@@ -97,27 +82,19 @@ const Dashboard = () => {
             >
                 {/* Profile Icon */}
                 <div className="mt-2 w-20 sm:w-24 h-20 sm:h-24 rounded-full overflow-hidden mb-6 border border-black dark:border-white">
-                    {imageError.profile ? (
-                        <div className="w-24 h-24 bg-gray-300 dark:bg-gray-700 flex items-center justify-center">
-                            <span className="text-sm">No Image</span>
-                        </div>
-                    ) : (
-                        <Image
-                            loader={imageLoader}
-                            src={user.photo}
-                            alt={`${user.name} Profile Icon`}
-                            width={96}
-                            height={96}
-                            className="object-cover w-24 h-24"
-                            priority
-                            onError={() => handleImageError("profile")}
-                        />
-                    )}
+
+                    <img
+                        src={photo}
+                        alt="Profile"
+                        className="object-cover w-24 h-24"
+                        width={96}
+                        height={96}
+                    />
                 </div>
 
                 {/* Greeting */}
                 <h1 className="text-2xl sm:text-2xl font-bold text-center mb-1">
-                    Welcome back {user.name}!
+                    Welcome back {userName}!
                 </h1>
                 <p className="text-xl sm:text-sm text-center text-black dark:text-gray-200">
                     Be Better Everyday!
@@ -172,91 +149,47 @@ const Dashboard = () => {
                     <span className="text-pink-600 dark:text-[#F66538]">3 Days</span>
                 </p>
 
-                {/* Recent Courses Grid: 2 in first row, 1 centered below */}
-                <div className="grid grid-cols-2 gap-4 w-full max-w-3xl">
-                    {/* First two boxes */}
-                    {courseProgress.slice(0, 2).map((course, idx) => {
-                        const content = (
-                            <div
-                                className="relative rounded-xl overflow-hidden border
-                  border-pink-600 dark:border-[#F66538]
-                  bg-gray-200 dark:bg-[#3B3E40]
-                  h-28"
+                <div className="max-w-3xl mx-auto grid grid-cols-2 gap-6">
+                    {courseProgress.map(({ label, percent, link, src }, index) => {
+                        const isLastOddSingle = courseProgress.length % 2 === 1 && index === courseProgress.length - 1;
+
+                        return (
+                            <Link
+                                key={label}
+                                href={link}
+                                className={`relative rounded-lg overflow-hidden shadow-lg
+              ${isLastOddSingle ? "col-span-2 max-w-xl mx-auto" : ""}
+              block h-48`}
+                                aria-label={label}
                             >
-                                {imageError[idx] ? (
-                                    <div className="w-full h-28 bg-gray-300 dark:bg-gray-700 flex items-center justify-center">
-                                        <span className="text-sm">No Image</span>
-                                    </div>
-                                ) : (
-                                    <Image
-                                        loader={imageLoader}
-                                        src={`/course-thumbnails/course${idx + 1}.jpg`}
-                                        alt={course.label}
-                                        fill
-                                        style={{ objectFit: "cover" }}
-                                        loading="lazy"
-                                        onError={() => handleImageError(idx)}
-                                    />
-                                )}
-                                <div className="absolute bottom-0 left-0 w-full h-2 bg-gray-300 dark:bg-gray-700 rounded-t-lg">
+                                {/* Full image covering the card */}
+                                <Image
+                                    src={src}
+                                    alt={label}
+                                    width={200}
+                                    height={100}
+                                    // layout="fill"
+                                    // objectFit="cover"
+                                    // priority={true}
+                                />
+
+                                {/* Overlay label (optional) */}
+                                <div className="absolute top-3 left-3 text-white font-semibold text-lg drop-shadow-lg">
+                                    {label}
+                                </div>
+
+                                {/* Thin progress bar fixed at bottom */}
+                                <div className="absolute bottom-0 left-0 w-full h-1 bg-gray-300">
                                     <div
-                                        className="h-2 rounded-t-lg transition-all duration-500 ease-in-out bg-black dark:bg-white"
-                                        style={{ width: `${course.percent}%` }}
+                                        className="h-1 bg-green-500"
+                                        style={{ width: `${percent}%` }}
                                     />
                                 </div>
-                            </div>
-                        );
-
-                        return course.link ? (
-                            <Link key={idx} href={course.link}>
-                                {content}
                             </Link>
-                        ) : (
-                            <div key={idx}>{content}</div>
                         );
                     })}
-
-                    {/* Third box centered below */}
-                    {(() => {
-                        const course = courseProgress[2];
-                        const content = (
-                            <div
-                                className="relative rounded-xl overflow-hidden border
-                  border-pink-600 dark:border-[#F66538]
-                  bg-gray-200 dark:bg-[#3B3E40]
-                  h-28 col-span-2 mx-auto w-1/2 sm:w-1/3"
-                            >
-                                {imageError[2] ? (
-                                    <div className="w-full h-28 bg-gray-300 dark:bg-gray-700 flex items-center justify-center">
-                                        <span className="text-sm">No Image</span>
-                                    </div>
-                                ) : (
-                                    <Image
-                                        loader={imageLoader}
-                                        src={`/course-thumbnails/course3.jpg`}
-                                        alt={course.label}
-                                        fill
-                                        style={{ objectFit: "cover" }}
-                                        loading="lazy"
-                                        onError={() => handleImageError(2)}
-                                    />
-                                )}
-                                <div className="absolute bottom-0 left-0 w-full h-2 bg-gray-300 dark:bg-gray-700 rounded-t-lg">
-                                    <div
-                                        className="h-2 rounded-t-lg transition-all duration-500 ease-in-out bg-black dark:bg-white"
-                                        style={{ width: `${course.percent}%` }}
-                                    />
-                                </div>
-                            </div>
-                        );
-
-                        return course.link ? (
-                            <Link href={course.link}>{content}</Link>
-                        ) : (
-                            content
-                        );
-                    })()}
                 </div>
+
             </div>
 
             {/* Bottom Navbar */}

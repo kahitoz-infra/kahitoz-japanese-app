@@ -21,6 +21,7 @@
     "@react-oauth/google": "^0.12.2",
     "formidable": "^3.5.2",
     "framer-motion": "^12.12.2",
+    "js-cookie": "^3.0.5",
     "jwt-decode": "^4.0.0",
     "kuroshiro": "^1.2.0",
     "kuroshiro-analyzer-kuromoji": "^1.1.0",
