@@ -169,7 +169,7 @@ const Learn = () => {
 
               {openBox === index && (
                 <div className="absolute top-full mt-4 flex gap-4 transition-opacity duration-1000">
-                  <Link href={`/view/${index}`}>
+                  <Link href={index === 0 ? "/KanjiCards" : `/view/${index}`}>
                     <div className="w-14 h-14 rounded-full bg-[#FF5274] dark:bg-[#F66538] shadow-md flex items-center justify-center cursor-pointer">
                       <EyeIcon className="w-6 h-6 text-white" />
                     </div>

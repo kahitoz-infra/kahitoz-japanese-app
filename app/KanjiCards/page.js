@@ -112,7 +112,7 @@ export default function KanjiCardsPage() {
       {/* Top Bar */}
       <div className="absolute top-4 mt-2 left-4 z-10 flex items-center gap-2">
         <Link
-          href="/"
+          href="/Learn"
           className="text-lg font-bold"
           style={{ color: isDark ? "white" : "black" }} // Back button color
           aria-label="Back"
