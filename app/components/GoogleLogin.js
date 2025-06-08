@@ -4,21 +4,20 @@ import { useRouter } from 'next/navigation';
 import { Capacitor } from '@capacitor/core';
 import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth';
 import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
+import Image from "next/image";
 
 const auth_Api = process.env.NEXT_PUBLIC_AUTH_URL;
-
 
 export default function UnifiedGoogleLoginToken() {
     const router = useRouter();
     const [isNative, setIsNative] = useState(false);
-    const [status, setStatus] = useState('');
+    const [loading, setLoading] = useState(false);
 
     useEffect(() => {
         const native = Capacitor.isNativePlatform();
         setIsNative(native);
 
         if (native) {
-            // ✅ Fix: pass clientId explicitly to avoid error code 10
             GoogleAuth.initialize({
                 clientId: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
                 scopes: ['profile', 'email'],
@@ -30,7 +29,7 @@ export default function UnifiedGoogleLoginToken() {
     }, []);
 
     const handleAuthResponse = async (token) => {
-        setStatus("Sending token to backend...");
+        setLoading(true);
 
         try {
             const res = await fetch(`${auth_Api}/google_login`, {
@@ -42,7 +41,6 @@ export default function UnifiedGoogleLoginToken() {
             });
 
             const data = await res.json();
-            console.log("This is the data -", data);
 
             if (!res.ok) {
                 throw new Error(data.detail || 'Login failed');
@@ -52,11 +50,11 @@ export default function UnifiedGoogleLoginToken() {
             document.cookie = `auth_token=${data.auth_token}; path=/; secure; SameSite=Lax`;
             document.cookie = `refresh_token=${data.refresh_token}; path=/; secure; SameSite=Lax`;
 
-            setStatus("Login successful. Redirecting…");
             router.push('/Dashboard');
         } catch (err) {
             console.error(err);
-            setStatus(`Error: ${err.message}`);
+            setLoading(false);
+            // You can optionally handle errors visually here if you want
         }
     };
 
@@ -68,7 +66,7 @@ export default function UnifiedGoogleLoginToken() {
             }
         } catch (err) {
             console.error('Native login failed:', err);
-            setStatus('Native login failed');
+            // Optionally handle error state here
         }
     };
 
@@ -79,20 +77,21 @@ export default function UnifiedGoogleLoginToken() {
     };
 
     const webSignInError = () => {
-        setStatus('Web login failed');
+        // Optionally handle error state here
     };
 
     const renderLoginButton = () =>
         isNative ? (
-            <button onClick={nativeSignIn} style={{ fontSize: 18, padding: '10px 20px' }}>
+            <button onClick={nativeSignIn} style={{ fontSize: 18, padding: '10px 20px' }} disabled={loading}>
                 Sign in with Google
             </button>
         ) : (
             <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID}>
-                <div style={{ display: 'inline-block', borderRadius: '9999px', overflow: 'hidden', fontSize: '20px', padding: '10px 30px' }}>
+                <div style={{ display: 'inline-block', borderRadius: '9999px', overflow: 'hidden', fontSize: '20px', padding: '10px 30px', opacity: loading ? 0.5 : 1 }}>
                     <GoogleLogin
                         onSuccess={webSignInSuccess}
                         onError={webSignInError}
+                        disabled={loading}
                     />
                 </div>
             </GoogleOAuthProvider>
@@ -101,8 +100,16 @@ export default function UnifiedGoogleLoginToken() {
     return (
         <div style={{ textAlign: 'center' }}>
             {renderLoginButton()}
-            {status && (
-                <p style={{ marginTop: 20, fontWeight: 'bold' }}>{status}</p>
+            {loading && (
+                <div className={'flex items-center justify-center'}>
+                    <Image
+                        src="/icons/loading.svg"
+                        alt="loading"
+                        width={30}
+                        height={30}
+                        className="animate-spin"
+                    />
+                </div>
             )}
         </div>
     );
