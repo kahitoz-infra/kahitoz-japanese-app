@@ -65,12 +65,19 @@ const Dashboard = () => {
         { label: "View Grammar", percent: 86, link: "/Dashboard",  src: "/banner/View_Grammar.png"},
     ];
 
-    const getStrokeColor = (percent) => {
-        if (percent < 40) return "#FF4C4C";
-        if (percent <= 70) return "#FFA500";
-        return "#28A745";
-    };
+  // Updated color scale from dark red to dark green
+  const getStrokeColor = (percent) => {
+    if (percent < 20) return "#8B0000";        // Dark Red
+    if (percent < 40) return "#FF4C4C";         // Light Red
+    if (percent < 60) return "#FFA500";         // Dark Yellow
+    if (percent < 80) return "#90EE90";         // Light Green
+    return "#006400";                           // Dark Green
+  };
 
+  const truncateLabel = (label, max = 15) =>
+    label.length > max ? label.slice(0, max) + "..." : label;
+
+  const hasCourses = courseProgress.length > 0;
 
     return (
         <>
@@ -100,48 +107,50 @@ const Dashboard = () => {
                     Be Better Everyday!
                 </p>
 
-                {/* Concentric Semi-Circles */}
-                <div className="relative w-full max-w-[440px] h-[250px] mb-2">
-                    <svg width="100%" height="100%" viewBox="0 0 500 250" className="mx-auto">
-                        {courseProgress.map((course, i) => {
-                            const radius = 210 - i * 30;
-                            const cx = 250;
-                            const cy = 250;
-                            const circumference = Math.PI * radius;
-                            const offset = circumference * (1 - course.percent / 100);
+        {/* Concentric Semi-Circles */}
+        {hasCourses && (
+          <div className="relative w-full max-w-[440px] h-[250px] mb-2">
+            <svg width="100%" height="100%" viewBox="0 0 500 250" className="mx-auto">
+              {courseProgress.map((course, i) => {
+                const radius = 210 - i * 30;
+                const cx = 250;
+                const cy = 250;
+                const circumference = Math.PI * radius;
+                const offset = circumference * (1 - course.percent / 100);
 
-                            return (
-                                <circle
-                                    key={i}
-                                    cx={cx}
-                                    cy={cy}
-                                    r={radius}
-                                    fill="none"
-                                    stroke={getStrokeColor(course.percent)}
-                                    strokeWidth="8"
-                                    strokeDasharray={circumference}
-                                    strokeDashoffset={offset}
-                                    strokeLinecap="round"
-                                    transform={`rotate(-180 ${cx} ${cy})`}
-                                />
-                            );
-                        })}
-                    </svg>
+                return (
+                  <circle
+                    key={i}
+                    cx={cx}
+                    cy={cy}
+                    r={radius}
+                    fill="none"
+                    stroke={getStrokeColor(course.percent)}
+                    strokeWidth="8"
+                    strokeDasharray={circumference}
+                    strokeDashoffset={offset}
+                    strokeLinecap="round"
+                    transform={`rotate(-180 ${cx} ${cy})`}
+                  />
+                );
+              })}
+            </svg>
 
-                    {/* Centered Progress Text */}
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[30%] text-center mt-12 px-2">
-                        <p className="text-base sm:text-lg font-bold mb-2">Your Progress</p>
-                        {courseProgress.map((course, idx) => (
-                            <p key={idx} className="text-xs sm:text-sm">
-                                {course.label} ={" "}
-                                <span className="font-bold text-pink-600 dark:text-[#F66538]">
-                  {course.percent}%
-                </span>{" "}
-                                Completed
-                            </p>
-                        ))}
-                    </div>
-                </div>
+            {/* Centered Progress Text */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[30%] text-center mt-12 px-2">
+              <p className="text-base sm:text-lg font-bold mb-2">Your Progress</p>
+              {courseProgress.map((course, idx) => (
+                <p key={idx} className="text-xs sm:text-sm">
+                  {truncateLabel(course.label)} ={" "}
+                  <span className="font-bold text-pink-600 dark:text-[#F66538]">
+                    {course.percent}%
+                  </span>{" "}
+                  Completed
+                </p>
+              ))}
+            </div>
+          </div>
+        )}
 
                 {/* Consistent Days */}
                 <p className="text-xl sm:text-2xl font-semibold text-center mt-4 mb-8">
