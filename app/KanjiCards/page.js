@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, ArrowRight } from "lucide-react";
-import { ChevronLeftIcon, Cog6ToothIcon } from "@heroicons/react/24/solid"; // HeroIcons imported
+import { ArrowLeft, ArrowRight, Volume2, VolumeX } from "lucide-react";
+import { Cog6ToothIcon } from "@heroicons/react/24/solid";
 import SettingsModal from "@/app/components/SettingsModal";
 import Link from "next/link";
 
@@ -69,6 +69,7 @@ export default function KanjiCardsPage() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
+  const [isSoundOn, setIsSoundOn] = useState(true);
   const cardRef = useRef(null);
   const touchStartX = useRef(0);
 
@@ -79,6 +80,18 @@ export default function KanjiCardsPage() {
     match.addEventListener("change", update);
     return () => match.removeEventListener("change", update);
   }, []);
+
+  useEffect(() => {
+    const storedSound = localStorage.getItem("soundEnabled");
+    if (storedSound !== null) setIsSoundOn(storedSound === "true");
+  }, []);
+
+  const toggleSound = () => {
+    setIsSoundOn((prev) => {
+      localStorage.setItem("soundEnabled", String(!prev));
+      return !prev;
+    });
+  };
 
   const currentKanji = dummyKanjiList[currentIndex];
 
@@ -109,32 +122,47 @@ export default function KanjiCardsPage() {
     >
       <CherryBlossomSnowfall isDark={isDark} />
 
-      {/* Top Bar */}
+      {/* Top Left Back */}
       <div className="absolute top-4 mt-2 left-4 z-10 flex items-center gap-2">
         <Link
           href="/Learn"
           className="text-lg font-bold"
-          style={{ color: isDark ? "white" : "black" }} // Back button color
+          style={{ color: isDark ? "white" : "black" }}
           aria-label="Back"
         >
           &lt; BACK
         </Link>
       </div>
 
-      <div className="absolute top-4 mt-2 right-4 z-10">
+      {/* Top Right Buttons */}
+      <div className="absolute top-4 mt-2 right-4 z-10 flex items-center gap-2">
+        {/* Sound Toggle */}
+        <button
+          onClick={toggleSound}
+          className="p-2 rounded-full"
+          style={{ backgroundColor: isDark ? "white" : "#292b2d" }}
+          aria-label="Toggle Sound"
+        >
+          {isSoundOn ? (
+            <Volume2 className={`h-6 w-6 ${isDark ? "text-black" : "text-[#de3163]"}`} />
+          ) : (
+            <VolumeX className={`h-6 w-6 ${isDark ? "text-black" : "text-[#de3163]"}`} />
+          )}
+        </button>
+
+        {/* Settings */}
         <button
           onClick={() => setIsSettingsOpen(true)}
           className="p-2 rounded-full"
-          style={{ backgroundColor: isDark ? "white" : "#292b2d" }} // Settings circle fill color
+          style={{ backgroundColor: isDark ? "white" : "#292b2d" }}
           aria-label="Settings"
         >
           <Cog6ToothIcon className={`h-6 w-6 ${isDark ? "text-[#000000]" : "text-[#de3163]"}`} />
         </button>
       </div>
 
-      {/* Card & Arrows */}
+      {/* Card Area */}
       <div className="relative z-10 w-full max-w-[400px] flex items-center justify-center px-4">
-        {/* Left Arrow */}
         <button
           onClick={goBack}
           className="absolute left-0 z-20 p-2 rounded-full text-white"
@@ -144,7 +172,6 @@ export default function KanjiCardsPage() {
           <ArrowLeft />
         </button>
 
-        {/* Card */}
         <div
           ref={cardRef}
           onClick={() => setIsFlipped(!isFlipped)}
@@ -175,7 +202,6 @@ export default function KanjiCardsPage() {
           </div>
         </div>
 
-        {/* Right Arrow */}
         <button
           onClick={goNext}
           className="absolute right-0 z-20 p-2 rounded-full text-white"
@@ -197,7 +223,6 @@ export default function KanjiCardsPage() {
         </span>
       </div>
 
-      {/* Settings Modal */}
       <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
     </div>
   );
