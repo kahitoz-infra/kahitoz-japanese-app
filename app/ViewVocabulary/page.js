@@ -4,54 +4,62 @@ import Image from "next/image";
 import VocabConfig from "../components/VocabConfig";
 import VocabCardView from "../components/VocabCardHolder";
 import Link from "next/link";
+import { authFetch } from "../middleware";
 
 const api = process.env.NEXT_PUBLIC_API_URL;
 
 function check_vocab_validity() {
-    let time_cache = localStorage.getItem("vocab_time_cache");
-    if (time_cache === null) {
-        localStorage.setItem("vocab_time_cache", new Date().toISOString());
-        return true;
-    } else {
-        let cachedTime = new Date(time_cache);
-        let currentTime = new Date();
-        let diffInMs = currentTime - cachedTime;
-        let diffInHours = diffInMs / (1000 * 60 * 60);
-        return diffInHours > 12;
-    }
+  let time_cache = localStorage.getItem("vocab_time_cache");
+  if (time_cache === null) {
+    localStorage.setItem("vocab_time_cache", new Date().toISOString());
+    return true;
+  } else {
+    let cachedTime = new Date(time_cache);
+    let currentTime = new Date();
+    let diffInMs = currentTime - cachedTime;
+    let diffInHours = diffInMs / (1000 * 60 * 60);
+    return diffInHours > 12;
+  }
 }
 
 export default function MainVocabHandler() {
-    const [vocabStore, setVocabStore] = useState(null);
-    const [loading, setLoading] = useState(false);
-    const [configModal, setConfigModal] = useState(false);
-    const [filteredVocab, setFilteredVocab] = useState([]);
+  const [vocabStore, setVocabStore] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [configModal, setConfigModal] = useState(false);
+  const [filteredVocab, setFilteredVocab] = useState([]);
 
-    useEffect(() => {
-        async function get_vocab_data() {
-            setLoading(true);
-            const vocab_api = `${api}/flagged_vocab?user_id=1`;
-            const cached_data = localStorage.getItem("cached_vocab_data");
-            let check_cache_refresh = check_vocab_validity();
+  useEffect(() => {
+    async function get_vocab_data() {
+      setLoading(true);
+      const cached_data = localStorage.getItem("cached_vocab_data");
+      const check_cache_refresh = check_vocab_validity();
 
-            if (cached_data === null || check_cache_refresh === true) {
-                const response = await fetch(vocab_api);
-                const vocab_data = await response.json();
-                localStorage.setItem("cached_vocab_data", JSON.stringify(vocab_data));
-                setVocabStore(vocab_data);
-            } else {
-                setVocabStore(JSON.parse(cached_data));
-            }
-            setLoading(false);
+      if (!cached_data || check_cache_refresh) {
+        try {
+          const response = await authFetch(`${api}/flagged_vocab`);
+          if (!response.ok) throw new Error("Failed to fetch vocab data");
+
+          const vocab_data = await response.json();
+          localStorage.setItem("cached_vocab_data", JSON.stringify(vocab_data));
+          localStorage.setItem("vocab_time_cache", new Date().toISOString());
+          setVocabStore(vocab_data);
+        } catch (err) {
+          console.error("Error fetching vocab:", err);
         }
-        get_vocab_data();
-        console.log(filteredVocab)
-    }, []);
+      } else {
+        setVocabStore(JSON.parse(cached_data));
+      }
+      setLoading(false);
+    }
 
-    const handleFilteredData = (filtered) => {
-        setFilteredVocab(filtered);
-        console.log("Filtered Data from Modal:", filtered);
-    };
+    get_vocab_data();
+  }, []);
+
+  const handleFilteredData = (filtered) => {
+    setFilteredVocab(filtered);
+    console.log("Filtered Data from Modal:", filtered);
+  };
+
     
     return (
         <div>
