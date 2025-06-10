@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, ArrowRight, Volume2, VolumeX } from "lucide-react";
+import { ArrowLeft, ArrowRight, Volume2, VolumeX, Bookmark, BookmarkCheck } from "lucide-react";
 import { Cog6ToothIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 
@@ -68,7 +68,7 @@ const CherryBlossomSnowfall = ({ isDark }) => {
   return <canvas ref={canvasRef} className="pointer-events-none fixed top-0 left-0 w-full h-full z-0" />;
 };
 
-// Settings Modal Component with Dropdown
+// Settings Modal Component
 function SettingsModal({ isOpen, onClose, viewType, setViewType }) {
   if (!isOpen) return null;
 
@@ -113,6 +113,7 @@ export default function KanjiCardsPage() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
   const [isSoundOn, setIsSoundOn] = useState(true);
+  const [bookmarked, setBookmarked] = useState([]);
   const cardRef = useRef(null);
   const touchStartX = useRef(0);
 
@@ -127,13 +128,29 @@ export default function KanjiCardsPage() {
   useEffect(() => {
     const storedSound = localStorage.getItem("soundEnabled");
     if (storedSound !== null) setIsSoundOn(storedSound === "true");
+
+    const storedBookmarks = JSON.parse(localStorage.getItem("bookmarkedKanji")) || [];
+    setBookmarked(storedBookmarks);
   }, []);
+
+  useEffect(() => {
+    localStorage.setItem("bookmarkedKanji", JSON.stringify(bookmarked));
+  }, [bookmarked]);
 
   const toggleSound = () => {
     setIsSoundOn((prev) => {
       localStorage.setItem("soundEnabled", String(!prev));
       return !prev;
     });
+  };
+
+  const toggleBookmark = () => {
+    const currentKanjiChar = dummyKanjiList[currentIndex].kanji;
+    setBookmarked((prev) =>
+      prev.includes(currentKanjiChar)
+        ? prev.filter((k) => k !== currentKanjiChar)
+        : [...prev, currentKanjiChar]
+    );
   };
 
   const currentKanji = dummyKanjiList[currentIndex];
@@ -190,6 +207,20 @@ export default function KanjiCardsPage() {
             <Volume2 className={`h-6 w-6 ${isDark ? "text-black" : "text-[#de3163]"}`} />
           ) : (
             <VolumeX className={`h-6 w-6 ${isDark ? "text-black" : "text-[#de3163]"}`} />
+          )}
+        </button>
+
+        {/* Bookmark Toggle */}
+        <button
+          onClick={toggleBookmark}
+          className="p-2 rounded-full"
+          style={{ backgroundColor: isDark ? "white" : "#292b2d" }}
+          aria-label="Toggle Bookmark"
+        >
+          {bookmarked.includes(currentKanji.kanji) ? (
+            <BookmarkCheck className={`h-6 w-6 ${isDark ? "text-black" : "text-[#de3163]"}`} />
+          ) : (
+            <Bookmark className={`h-6 w-6 ${isDark ? "text-black" : "text-[#de3163]"}`} />
           )}
         </button>
 
@@ -266,6 +297,7 @@ export default function KanjiCardsPage() {
         </span>
       </div>
 
+      {/* Settings Modal */}
       <SettingsModal
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
