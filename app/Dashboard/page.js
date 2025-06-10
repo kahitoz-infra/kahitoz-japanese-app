@@ -1,54 +1,61 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import Navbar from "@/app/components/Navbar";
+import { refresh_auth_token } from "../middleware"; // Ensure this is named correctly
 import Cookies from "js-cookie";
 
 const parseJwt = (token) => {
-    try {
-        const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
-        const jsonPayload = decodeURIComponent(
-            atob(base64)
-                .split("")
-                .map((c) => `%${("00" + c.charCodeAt(0).toString(16)).slice(-2)}`)
-                .join("")
-        );
-        return JSON.parse(jsonPayload);
-    } catch {
-        return null;
-    }
+  try {
+    const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split("")
+        .map((c) => `%${("00" + c.charCodeAt(0).toString(16)).slice(-2)}`)
+        .join("")
+    );
+    return JSON.parse(jsonPayload);
+  } catch {
+    return null;
+  }
 };
 
 const Dashboard = () => {
-    const router = useRouter();
-    const [isLoading, setIsLoading] = useState(true);
-    const [userName, setUserName] = useState("");
-    const [photo, setPhoto] = useState("");
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(true);
+  const [userName, setUserName] = useState("");
+  const [photo, setPhoto] = useState("");
 
+  useEffect(() => {
+    const initializeUser = async () => {
+      let authToken = Cookies.get("auth_token");
 
-    useEffect(() => {
-        const setUserDetails = (token) => {
-            if (!token) {
-                router.push("/");
-                return;
-            }
+      // If no auth token, try refreshing
+      if (!authToken) {
+        const newAuthToken = await refresh_auth_token();
+        if (!newAuthToken) {
+          router.push("/"); // Redirect if refresh fails
+          return;
+        }
+        authToken = newAuthToken;
+      }
 
-            try {
-                const data = parseJwt(token);
-                setUserName(data.name);
-                setPhoto(data.photo);
-            } catch (error) {
-                router.push("/");
-            } finally {
-                setIsLoading(false);
-            }
-        };
+      // Decode and set user info
+      const data = parseJwt(authToken);
+      if (!data || !data.name || !data.photo) {
+        router.push("/"); // Invalid token structure
+        return;
+      }
 
-        const authToken = Cookies.get("auth_token");
-        setUserDetails(authToken);
-    }, []);
+      setUserName(data.name);
+      setPhoto(data.photo);
+      setIsLoading(false);
+    };
+
+    initializeUser();
+  }, [router]);
 
     if (isLoading) {
         return (

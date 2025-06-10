@@ -6,9 +6,11 @@ import DrawCardView from "@/app/components/DrawCardView";
 import Image from "next/image";
 import Link from "next/link";
 import SettingsModal from "../components/SettingsModal";
+import { authFetch } from "../middleware";    
 
 const api = process.env.NEXT_PUBLIC_API_URL;
 const CACHE_EXPIRATION_HOURS = 12;
+
 const LS_KEYS = {
   kanji: "kanjiDataCache",
   tags: "kanjiTagsCache",
@@ -24,6 +26,7 @@ const LS_KEYS = {
   showFilters: "prefShowFilters",
 };
 
+/* -------------------- utility helpers -------------------- */
 const shuffleArray = (arr) => {
   const array = [...arr];
   for (let i = array.length - 1; i > 0; i--) {
@@ -43,11 +46,12 @@ const shuffleInGroups = (arr, groupSize) => {
 };
 
 const getBookmarkMap = (data) =>
-    data.reduce((map, item) => {
-      map[item.uid] = item.marked;
-      return map;
-    }, {});
+  data.reduce((map, item) => {
+    map[item.uid] = item.marked;
+    return map;
+  }, {});
 
+/* -------------------- component -------------------- */
 export default function HomePage() {
   const [viewType, setViewType] = useState("Cards");
   const [selectedLabel, setSelectedLabel] = useState("N4");
@@ -60,7 +64,7 @@ export default function HomePage() {
   const [sound, setSound] = useState(true);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
-  // Load saved preferences
+  /* -------- load saved preferences on mount -------- */
   useEffect(() => {
     const storedViewType = localStorage.getItem(LS_KEYS.viewType);
     const storedLabel = localStorage.getItem(LS_KEYS.selectedLabel);
@@ -79,18 +83,20 @@ export default function HomePage() {
     if (storedFilters) setShowFilters(storedFilters === "true");
   }, []);
 
+  /* -------- fetch kanji & tag data (with token) -------- */
   useEffect(() => {
     const fetchData = async () => {
       const cachedKanji = localStorage.getItem(LS_KEYS.kanji);
       const cachedTags = localStorage.getItem(LS_KEYS.tags);
       const cachedTimestamp = localStorage.getItem(LS_KEYS.timestamp);
       const now = Date.now();
+  
       const isCacheValid =
-          cachedKanji &&
-          cachedTags &&
-          cachedTimestamp &&
-          now - parseInt(cachedTimestamp, 10) < CACHE_EXPIRATION_HOURS * 3600000;
-
+        cachedKanji &&
+        cachedTags &&
+        cachedTimestamp &&
+        now - parseInt(cachedTimestamp, 10) < CACHE_EXPIRATION_HOURS * 3600000;
+  
       if (isCacheValid) {
         const parsedKanji = JSON.parse(cachedKanji);
         setKanjiData(parsedKanji);
@@ -100,12 +106,13 @@ export default function HomePage() {
       } else {
         try {
           const [kanjiResp, tagResp] = await Promise.all([
-            fetch(`${api}/flagged_kanjis?user_id=1`),
-            fetch(`${api}/tags`),
+            authFetch(`${api}/flagged_kanjis`), // 🔁 uses token, refreshes if needed
+            fetch(`${api}/tags`)
           ]);
+  
           const kanjiJson = await kanjiResp.json();
           const tagJson = await tagResp.json();
-
+  
           setKanjiData(kanjiJson);
           setTags(tagJson.result || []);
           localStorage.setItem(LS_KEYS.kanji, JSON.stringify(kanjiJson));
@@ -116,10 +123,11 @@ export default function HomePage() {
         }
       }
     };
-
+  
     fetchData();
   }, []);
 
+  
   const filteredKanji = useMemo(() => {
     let filtered = [...kanjiData].sort((a, b) => a.uid - b.uid);
 
