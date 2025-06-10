@@ -2,9 +2,9 @@
 import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, ArrowRight, Volume2, VolumeX } from "lucide-react";
 import { Cog6ToothIcon } from "@heroicons/react/24/solid";
-import SettingsModal from "@/app/components/SettingsModal";
 import Link from "next/link";
 
+// Dummy Kanji Data
 const dummyKanjiList = [
   { kanji: "日", meaning: "Sun" },
   { kanji: "月", meaning: "Moon" },
@@ -12,8 +12,10 @@ const dummyKanjiList = [
   { kanji: "水", meaning: "Water" },
 ];
 
+// Cherry Blossom Canvas Background
 const CherryBlossomSnowfall = ({ isDark }) => {
   const canvasRef = useRef(null);
+
   useEffect(() => {
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
@@ -51,12 +53,14 @@ const CherryBlossomSnowfall = ({ isDark }) => {
     };
 
     draw();
+
     const resize = () => {
       width = window.innerWidth;
       height = window.innerHeight;
       canvas.width = width;
       canvas.height = height;
     };
+
     window.addEventListener("resize", resize);
     return () => window.removeEventListener("resize", resize);
   }, [isDark]);
@@ -64,9 +68,48 @@ const CherryBlossomSnowfall = ({ isDark }) => {
   return <canvas ref={canvasRef} className="pointer-events-none fixed top-0 left-0 w-full h-full z-0" />;
 };
 
+// Settings Modal Component with Dropdown
+function SettingsModal({ isOpen, onClose, viewType, setViewType }) {
+  if (!isOpen) return null;
+
+  const options = ["All", "Bookmarked", "Random", "Level 1", "Level 2"];
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+      <div className="bg-white dark:bg-[#292b2d] text-black dark:text-white p-6 rounded-xl shadow-lg min-w-[300px] relative">
+        <h2 className="text-xl font-bold mb-4">Settings</h2>
+
+        {/* Dropdown */}
+        <label className="block mb-2 font-medium">View Type:</label>
+        <select
+          value={viewType}
+          onChange={(e) => setViewType(e.target.value)}
+          className="w-full px-4 py-2 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#1e1e1e] text-black dark:text-white"
+        >
+          {options.map((opt) => (
+            <option key={opt} value={opt}>
+              {opt}
+            </option>
+          ))}
+        </select>
+
+        {/* Close Button */}
+        <button
+          onClick={onClose}
+          className="mt-6 bg-[#de3163] hover:bg-pink-600 text-white px-4 py-2 rounded-md w-full"
+        >
+          Close
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// Main Component
 export default function KanjiCardsPage() {
   const [isDark, setIsDark] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [viewType, setViewType] = useState("All");
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
   const [isSoundOn, setIsSoundOn] = useState(true);
@@ -223,7 +266,12 @@ export default function KanjiCardsPage() {
         </span>
       </div>
 
-      <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
+      <SettingsModal
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+        viewType={viewType}
+        setViewType={setViewType}
+      />
     </div>
   );
 }
