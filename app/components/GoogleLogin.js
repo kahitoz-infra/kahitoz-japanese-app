@@ -83,12 +83,17 @@ export default function UnifiedGoogleLoginToken() {
 
     const renderLoginButton = () =>
         isNative ? (
-            <button onClick={nativeSignIn} style={{ fontSize: 18, padding: '10px 20px' }} disabled={loading}>
-                Sign in with Google
-            </button>
+            <div className='flex justify-center items-center gap-x-2 dark:bg-white dark:text-black p-2 rounded-xl bg-blue-400 text-white'>
+                <Image src="/google-logo.webp" width={30} height={30} alt="google" />
+                <button onClick={nativeSignIn} className='' disabled={loading}>
+                    Sign in with Google
+                </button>
+
+            </div>
+
         ) : (
             <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID}>
-                <div style={{ display: 'inline-block', borderRadius: '9999px', overflow: 'hidden', fontSize: '20px', padding: '10px 30px', opacity: loading ? 0.5 : 1 }}>
+                <div >
                     <GoogleLogin
                         onSuccess={webSignInSuccess}
                         onError={webSignInError}
