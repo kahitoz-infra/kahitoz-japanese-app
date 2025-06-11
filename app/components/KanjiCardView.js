@@ -1,6 +1,7 @@
 "use client";
 import { useState, useRef, useEffect, useMemo } from "react";
 import KanjiCard from "./Cards";
+import Image from "next/image";
 
 const LS_KEYS = {
   all: "kanji_current_index_all",
@@ -107,7 +108,10 @@ export default function KanjiCardView({ kanjiList, onBookmarkToggle, sound }) {
           </div>
         </>
       ) : (
-        <p className="text-white mt-8">No Kanji found</p>
+        <div className="animate-spin">
+          <Image src={'/icons/loading.svg'} width={40} height={40} alt="loading"/>
+        </div>
+
       )}
     </div>
   );

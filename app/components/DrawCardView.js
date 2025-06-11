@@ -2,6 +2,7 @@
 import DrawCard from "./DrawCards";
 import { useState, useRef, useEffect, useMemo } from "react";
 import { toRomaji } from "wanakana";
+import Image from "next/image";
 
 const LS_KEYS = {
     all: "kanji_current_index_all",
@@ -112,7 +113,10 @@ export default function DrawCardView({ kanjiList, onBookmarkToggle, sound }) {
 
                 </>
             ) : (
-                <p className="text-white mt-4">No Kanji found</p>
+                <div className="animate-spin">
+                    <Image src={'/icons/loading.svg'} width={40} height={40} alt="loading"/>
+                </div>
+
             )}
         </div>
     );
