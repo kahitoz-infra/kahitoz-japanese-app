@@ -1,309 +1,153 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, ArrowRight, Volume2, VolumeX, Bookmark, BookmarkCheck } from "lucide-react";
-import { Cog6ToothIcon } from "@heroicons/react/24/solid";
+
+import { useEffect, useState } from "react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  Volume2,
+  VolumeX,
+  Bookmark,
+  BookmarkCheck,
+} from "lucide-react";
 import Link from "next/link";
+import { authFetch } from "../middleware";
 
-// Dummy Kanji Data
-const dummyKanjiList = [
-  { kanji: "日", meaning: "Sun" },
-  { kanji: "月", meaning: "Moon" },
-  { kanji: "火", meaning: "Fire" },
-  { kanji: "水", meaning: "Water" },
-];
-
-// Cherry Blossom Canvas Background
-const CherryBlossomSnowfall = ({ isDark }) => {
-  const canvasRef = useRef(null);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext("2d");
-    let width = window.innerWidth;
-    let height = window.innerHeight;
-    canvas.width = width;
-    canvas.height = height;
-
-    const particles = Array.from({ length: 50 }, () => ({
-      x: Math.random() * width,
-      y: Math.random() * height,
-      radius: Math.random() * 1.4 + 0.4,
-      speedY: 0.1 + Math.random() * 0.2,
-      swayAngle: Math.random() * 2 * Math.PI,
-      swaySpeed: 0.002 + Math.random() * 0.004,
-    }));
-
-    const draw = () => {
-      ctx.clearRect(0, 0, width, height);
-      const color = isDark ? "rgba(255, 102, 0, 0.8)" : "rgba(222, 49, 99, 0.8)";
-      particles.forEach((p) => {
-        p.swayAngle += p.swaySpeed;
-        p.x += Math.sin(p.swayAngle) * 0.2;
-        p.y += p.speedY;
-        if (p.y > height) {
-          p.y = 0;
-          p.x = Math.random() * width;
-        }
-        ctx.beginPath();
-        ctx.fillStyle = color;
-        ctx.arc(p.x, p.y, p.radius, 0, 2 * Math.PI);
-        ctx.fill();
-      });
-      requestAnimationFrame(draw);
-    };
-
-    draw();
-
-    const resize = () => {
-      width = window.innerWidth;
-      height = window.innerHeight;
-      canvas.width = width;
-      canvas.height = height;
-    };
-
-    window.addEventListener("resize", resize);
-    return () => window.removeEventListener("resize", resize);
-  }, [isDark]);
-
-  return <canvas ref={canvasRef} className="pointer-events-none fixed top-0 left-0 w-full h-full z-0" />;
-};
-
-// Settings Modal Component
-function SettingsModal({ isOpen, onClose, viewType, setViewType }) {
-  if (!isOpen) return null;
-
-  const options = ["All", "Bookmarked", "Random", "Level 1", "Level 2"];
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="bg-white dark:bg-[#292b2d] text-black dark:text-white p-6 rounded-xl shadow-lg min-w-[300px] relative">
-        <h2 className="text-xl font-bold mb-4">Settings</h2>
-
-        {/* Dropdown */}
-        <label className="block mb-2 font-medium">View Type:</label>
-        <select
-          value={viewType}
-          onChange={(e) => setViewType(e.target.value)}
-          className="w-full px-4 py-2 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#1e1e1e] text-black dark:text-white"
-        >
-          {options.map((opt) => (
-            <option key={opt} value={opt}>
-              {opt}
-            </option>
-          ))}
-        </select>
-
-        {/* Close Button */}
-        <button
-          onClick={onClose}
-          className="mt-6 bg-[#de3163] hover:bg-pink-600 text-white px-4 py-2 rounded-md w-full"
-        >
-          Close
-        </button>
-      </div>
-    </div>
-  );
-}
-
-// Main Component
 export default function KanjiCardsPage() {
-  const [isDark, setIsDark] = useState(false);
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [viewType, setViewType] = useState("All");
+  const [kanjiList, setKanjiList] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
   const [isSoundOn, setIsSoundOn] = useState(true);
   const [bookmarked, setBookmarked] = useState([]);
-  const cardRef = useRef(null);
-  const touchStartX = useRef(0);
+  const [isDark, setIsDark] = useState(false);
+
+  const CACHE_KEY = "cachedKanjiList";
+  const CACHE_TIME_KEY = "kanjiCacheTimestamp";
+  const CACHE_DURATION = 12 * 60 * 60 * 1000;
 
   useEffect(() => {
-    const match = window.matchMedia("(prefers-color-scheme: dark)");
-    setIsDark(match.matches);
-    const update = (e) => setIsDark(e.matches);
-    match.addEventListener("change", update);
-    return () => match.removeEventListener("change", update);
+    const mql = window.matchMedia("(prefers-color-scheme: dark)");
+    setIsDark(mql.matches);
+    const listener = (e) => setIsDark(e.matches);
+    mql.addEventListener("change", listener);
+    return () => mql.removeEventListener("change", listener);
   }, []);
 
   useEffect(() => {
-    const storedSound = localStorage.getItem("soundEnabled");
-    if (storedSound !== null) setIsSoundOn(storedSound === "true");
+    async function fetchKanji() {
+      try {
+        const response = await authFetch("https://apizenkanji.kahitoz.com/v1/flagged_kanjis");
+        const data = await response.json();
+        localStorage.setItem(CACHE_KEY, JSON.stringify(data));
+        localStorage.setItem(CACHE_TIME_KEY, Date.now().toString());
+        setKanjiList(data);
+      } catch (err) {
+        console.error("API fetch failed:", err);
+      }
+    }
 
-    const storedBookmarks = JSON.parse(localStorage.getItem("bookmarkedKanji")) || [];
-    setBookmarked(storedBookmarks);
+    const cacheTime = parseInt(localStorage.getItem(CACHE_TIME_KEY), 10);
+    const now = Date.now();
+    const cachedData = JSON.parse(localStorage.getItem(CACHE_KEY));
+
+    if (cachedData && cacheTime && now - cacheTime < CACHE_DURATION) {
+      setKanjiList(cachedData);
+    } else {
+      fetchKanji();
+    }
+  }, []);
+
+  useEffect(() => {
+    const saved = JSON.parse(localStorage.getItem("bookmarkedKanji") || "[]");
+    setBookmarked(saved);
   }, []);
 
   useEffect(() => {
     localStorage.setItem("bookmarkedKanji", JSON.stringify(bookmarked));
   }, [bookmarked]);
 
-  const toggleSound = () => {
-    setIsSoundOn((prev) => {
-      localStorage.setItem("soundEnabled", String(!prev));
-      return !prev;
-    });
-  };
+  const currentKanji = kanjiList[currentIndex] || {};
+  const themeColor = isDark ? "#FF6600" : "#de3163";
 
   const toggleBookmark = () => {
-    const currentKanjiChar = dummyKanjiList[currentIndex].kanji;
+    const k = currentKanji.kanji;
+    if (!k) return;
     setBookmarked((prev) =>
-      prev.includes(currentKanjiChar)
-        ? prev.filter((k) => k !== currentKanjiChar)
-        : [...prev, currentKanjiChar]
+      prev.includes(k) ? prev.filter((x) => x !== k) : [...prev, k]
     );
   };
 
-  const currentKanji = dummyKanjiList[currentIndex];
-
   const goNext = () => {
-    setCurrentIndex((prev) => (prev + 1) % dummyKanjiList.length);
+    setCurrentIndex((i) => (i + 1) % kanjiList.length);
     setIsFlipped(false);
   };
 
   const goBack = () => {
-    setCurrentIndex((prev) => (prev - 1 + dummyKanjiList.length) % dummyKanjiList.length);
+    setCurrentIndex((i) => (i - 1 + kanjiList.length) % kanjiList.length);
     setIsFlipped(false);
   };
 
-  const onTouchStart = (e) => (touchStartX.current = e.touches[0].clientX);
-  const onTouchEnd = (e) => {
-    const diff = e.changedTouches[0].clientX - touchStartX.current;
-    if (diff > 50) goBack();
-    else if (diff < -50) goNext();
-  };
-
-  const themeColor = isDark ? "#FF6600" : "#de3163";
-
   return (
-    <div
-      className={`min-h-screen w-screen flex items-center justify-center ${
-        isDark ? "bg-[#292b2d] text-gray-200" : "bg-white text-black"
-      }`}
-    >
-      <CherryBlossomSnowfall isDark={isDark} />
+    <div className={`min-h-screen flex flex-col items-center justify-center ${isDark ? "bg-[#292b2d] text-gray-200" : "bg-white text-black"}`}>
+      <Link href="/Learn" className="absolute top-4 left-4 text-lg font-bold">{`< BACK`}</Link>
 
-      {/* Top Left Back */}
-      <div className="absolute top-4 mt-2 left-4 z-10 flex items-center gap-2">
-        <Link
-          href="/Learn"
-          className="text-lg font-bold"
-          style={{ color: isDark ? "white" : "black" }}
-          aria-label="Back"
-        >
-          &lt; BACK
-        </Link>
-      </div>
-
-      {/* Top Right Buttons */}
-      <div className="absolute top-4 mt-2 right-4 z-10 flex items-center gap-2">
-        {/* Sound Toggle */}
-        <button
-          onClick={toggleSound}
-          className="p-2 rounded-full"
-          style={{ backgroundColor: isDark ? "white" : "#292b2d" }}
-          aria-label="Toggle Sound"
-        >
-          {isSoundOn ? (
-            <Volume2 className={`h-6 w-6 ${isDark ? "text-black" : "text-[#de3163]"}`} />
-          ) : (
-            <VolumeX className={`h-6 w-6 ${isDark ? "text-black" : "text-[#de3163]"}`} />
-          )}
+      {/* Top Controls */}
+      <div className="absolute top-4 right-4 flex gap-3">
+        <button onClick={() => setIsSoundOn(!isSoundOn)} className="p-2 rounded-full bg-gray-300 dark:bg-white">
+          {isSoundOn ? <Volume2 className="text-black" /> : <VolumeX className="text-black" />}
         </button>
-
-        {/* Bookmark Toggle */}
-        <button
-          onClick={toggleBookmark}
-          className="p-2 rounded-full"
-          style={{ backgroundColor: isDark ? "white" : "#292b2d" }}
-          aria-label="Toggle Bookmark"
-        >
-          {bookmarked.includes(currentKanji.kanji) ? (
-            <BookmarkCheck className={`h-6 w-6 ${isDark ? "text-black" : "text-[#de3163]"}`} />
-          ) : (
-            <Bookmark className={`h-6 w-6 ${isDark ? "text-black" : "text-[#de3163]"}`} />
-          )}
-        </button>
-
-        {/* Settings */}
-        <button
-          onClick={() => setIsSettingsOpen(true)}
-          className="p-2 rounded-full"
-          style={{ backgroundColor: isDark ? "white" : "#292b2d" }}
-          aria-label="Settings"
-        >
-          <Cog6ToothIcon className={`h-6 w-6 ${isDark ? "text-[#000000]" : "text-[#de3163]"}`} />
+        <button onClick={toggleBookmark} className="p-2 rounded-full bg-gray-300 dark:bg-white">
+          {bookmarked.includes(currentKanji.kanji) ? <BookmarkCheck className="text-black" /> : <Bookmark className="text-black" />}
         </button>
       </div>
 
-      {/* Card Area */}
-      <div className="relative z-10 w-full max-w-[400px] flex items-center justify-center px-4">
-        <button
-          onClick={goBack}
-          className="absolute left-0 z-20 p-2 rounded-full text-white"
-          style={{ backgroundColor: themeColor }}
-          aria-label="Previous card"
-        >
-          <ArrowLeft />
-        </button>
-
+      {/* Flip Card */}
+      <div
+        className="relative w-full max-w-[250px] h-[26rem] my-8"
+        style={{ perspective: "1000px" }}
+        onClick={() => setIsFlipped(!isFlipped)}
+      >
         <div
-          ref={cardRef}
-          onClick={() => setIsFlipped(!isFlipped)}
-          onTouchStart={onTouchStart}
-          onTouchEnd={onTouchEnd}
-          className="relative z-0 w-full max-w-[250px] h-[26rem] md:h-96 cursor-pointer [perspective:1000px]"
+          className={`relative w-full h-full transition-transform duration-500`}
+          style={{
+            transformStyle: "preserve-3d",
+            transform: isFlipped ? "rotateY(180deg)" : "rotateY(0deg)",
+          }}
         >
+          {/* FRONT */}
           <div
-            className={`relative w-full h-full transition-transform duration-500 [transform-style:preserve-3d] ${
-              isFlipped ? "[transform:rotateY(180deg)]" : ""
-            }`}
+            className="absolute w-full h-full flex items-center justify-center text-[10rem] rounded-2xl border-2"
+            style={{
+              backfaceVisibility: "hidden",
+              borderColor: themeColor,
+              backgroundColor: isDark ? "#292b2d" : "white",
+            }}
           >
-            {/* Front */}
-            <div
-              className="absolute w-full h-full backface-hidden flex flex-col justify-center items-center p-4 rounded-xl shadow-lg bg-white dark:bg-[#292b2d] text-black dark:text-gray-200"
-              style={{ border: `2px solid ${themeColor}` }}
-            >
-              <div className="text-[10rem] text-center">{currentKanji.kanji}</div>
-            </div>
+            {currentKanji.kanji || "?"}
+          </div>
 
-            {/* Back */}
-            <div
-              className="absolute w-full h-full [transform:rotateY(180deg)] backface-hidden flex flex-col justify-center items-center p-4 rounded-xl shadow-lg bg-white dark:bg-[#292b2d] text-black dark:text-gray-200"
-              style={{ border: `2px solid ${themeColor}` }}
-            >
-              <div className="text-4xl">{currentKanji.meaning}</div>
-            </div>
+          {/* BACK */}
+          <div
+            className="absolute w-full h-full flex flex-col justify-center items-center text-center p-4 rounded-2xl border-2"
+            style={{
+              backfaceVisibility: "hidden",
+              transform: "rotateY(180deg)",
+              borderColor: themeColor,
+              backgroundColor: isDark ? "#292b2d" : "white",
+            }}
+          >
+            <div className="mb-2"><strong>Onyomi:</strong> {currentKanji.onyomi ? JSON.parse(currentKanji.onyomi).join(", ") : "-"}</div>
+            <div className="mb-2"><strong>Kunyomi:</strong> {currentKanji.kunyomi ? JSON.parse(currentKanji.kunyomi).join(", ") : "-"}</div>
+            <div><strong>Meaning:</strong> {currentKanji.english || "-"}</div>
           </div>
         </div>
-
-        <button
-          onClick={goNext}
-          className="absolute right-0 z-20 p-2 rounded-full text-white"
-          style={{ backgroundColor: themeColor }}
-          aria-label="Next card"
-        >
-          <ArrowRight />
-        </button>
       </div>
 
-      {/* Number Pill */}
-      <div className="absolute bottom-28 md:bottom-24 z-10">
-        <span
-          className={`px-10 py-5 rounded-full text-2xl font-extrabold shadow-md ${
-            isDark ? "bg-[#F66538] text-white" : "bg-[#FF5274] text-white"
-          }`}
-        >
-          {currentIndex + 1} / {dummyKanjiList.length}
-        </span>
+      {/* Nav */}
+      <div className="flex justify-center items-center gap-4 mt-4">
+        <button onClick={goBack} className="bg-[#de3163] text-white p-3 rounded-full"><ArrowLeft /></button>
+        <div className="text-xl font-bold">{kanjiList.length ? `${currentIndex + 1} / ${kanjiList.length}` : "Loading..."}</div>
+        <button onClick={goNext} className="bg-[#de3163] text-white p-3 rounded-full"><ArrowRight /></button>
       </div>
-
-      {/* Settings Modal */}
-      <SettingsModal
-        isOpen={isSettingsOpen}
-        onClose={() => setIsSettingsOpen(false)}
-        viewType={viewType}
-        setViewType={setViewType}
-      />
     </div>
   );
 }
