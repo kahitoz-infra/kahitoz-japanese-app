@@ -13,6 +13,7 @@ export default function VocabCardView({ vocabList, onBookmarkToggle, sound }) {
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [face, setFace] = useState(true);
+  const [readingLoading, setReadingLoading] = useState(true);
   const prevLengthRef = useRef(vocabList.length);
   // Audio files
   const flipAudio = typeof Audio !== "undefined" ? new Audio("/sounds/flipcard.mp3") : null;
@@ -20,9 +21,13 @@ export default function VocabCardView({ vocabList, onBookmarkToggle, sound }) {
 
   // Load initial index from localStorage when vocabList or view changes
   useEffect(() => {
-    const storedIndex = parseInt(localStorage.getItem(localStorageKey), 10);
-    setCurrentIndex(isNaN(storedIndex) ? 0 : Math.min(storedIndex, vocabList.length - 1));
-  }, [vocabList, localStorageKey]);
+    if (vocabList.length > 0) {
+      const storedIndex = parseInt(localStorage.getItem(localStorageKey), 10);
+      const validIndex = isNaN(storedIndex) ? 0 : Math.min(storedIndex, vocabList.length - 1);
+      setCurrentIndex(validIndex);
+    }
+  }, [vocabList.length, localStorageKey]);
+  
 
   // Keep currentIndex valid when list length changes
   useEffect(() => {
@@ -39,11 +44,13 @@ export default function VocabCardView({ vocabList, onBookmarkToggle, sound }) {
   }, [vocabList, currentIndex]);
 
   // Persist index to localStorage
-  const updateIndex = (newIndex) => {
-    localStorage.setItem(localStorageKey, newIndex.toString());
-    setCurrentIndex(newIndex);
-    setFace(true);
-  };
+    const updateIndex = (newIndex) => {
+      localStorage.setItem(localStorageKey, newIndex.toString());
+      setCurrentIndex(newIndex);
+      setFace(true);
+      setReadingLoading(true); // <-- trigger spinner early
+    };
+  
 
   // Navigation handlers
   const handleNext = () => {
@@ -87,14 +94,16 @@ export default function VocabCardView({ vocabList, onBookmarkToggle, sound }) {
             {currentIndex + 1} / {vocabList.length}
           </p>
           <div onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
-            <VocabCard
-              vocab={currentvocab}
-              flipAudio={flipAudio}
-              face={face}
-              setFace={setFace}
-              onBookmarkToggle={onBookmarkToggle}
-              sound={sound}
-            />
+          <VocabCard
+            vocab={currentvocab}
+            flipAudio={flipAudio}
+            face={face}
+            setFace={setFace}
+            onBookmarkToggle={onBookmarkToggle}
+            sound={sound}
+            readingLoading={readingLoading}                   // pass down
+            setReadingLoading={setReadingLoading}             // pass down
+          />
           </div>
           <div className="hidden lg:flex gap-x-10 mt-4">
             <button onClick={handlePrevious} className="p-2 bg-green-500 text-white rounded-lg">
