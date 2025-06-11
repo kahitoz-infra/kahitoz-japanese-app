@@ -206,18 +206,18 @@ export default function Login() {
 
                           <Link
                               href="/Dashboard"
-                              className="w-2/3 h-12 bg-[#FF5274] dark:bg-[#F66538] text-white rounded-lg font-semibold mt-2 hover:opacity-90 transition-all flex items-center justify-center"
+                              className="px-7 h-12 bg-[#FF5274] dark:bg-[#F66538] text-white rounded-lg font-semibold mt-2 hover:opacity-90 transition-all flex items-center justify-center"
                           >
                               {activeTab === "register" ? "Create Account" : "Sign In"}
                           </Link>
-                          <div className={'mt-2'}>
+                          <div className={'mt-4'}>
                               <GoogleLogin/>
                           </div>
                       </motion.div>
                   )}
               </div>
           </div>
-      </div>):( <div className={'flex w-screen h-screen items-center justify-center'}>
+      </div>):( <div className={'flex w-screen h-screen items-center justify-center mt-2'}>
           <Image
               src="/icons/loading.svg"
               alt="loading"
