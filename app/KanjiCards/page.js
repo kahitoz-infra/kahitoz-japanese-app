@@ -1,10 +1,10 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, ArrowRight } from "lucide-react";
-import { ChevronLeftIcon, Cog6ToothIcon } from "@heroicons/react/24/solid"; // HeroIcons imported
-import SettingsModal from "@/app/components/SettingsModal";
+import { ArrowLeft, ArrowRight, Volume2, VolumeX, Bookmark, BookmarkCheck } from "lucide-react";
+import { Cog6ToothIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 
+// Dummy Kanji Data
 const dummyKanjiList = [
   { kanji: "日", meaning: "Sun" },
   { kanji: "月", meaning: "Moon" },
@@ -12,8 +12,10 @@ const dummyKanjiList = [
   { kanji: "水", meaning: "Water" },
 ];
 
+// Cherry Blossom Canvas Background
 const CherryBlossomSnowfall = ({ isDark }) => {
   const canvasRef = useRef(null);
+
   useEffect(() => {
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
@@ -51,12 +53,14 @@ const CherryBlossomSnowfall = ({ isDark }) => {
     };
 
     draw();
+
     const resize = () => {
       width = window.innerWidth;
       height = window.innerHeight;
       canvas.width = width;
       canvas.height = height;
     };
+
     window.addEventListener("resize", resize);
     return () => window.removeEventListener("resize", resize);
   }, [isDark]);
@@ -64,11 +68,52 @@ const CherryBlossomSnowfall = ({ isDark }) => {
   return <canvas ref={canvasRef} className="pointer-events-none fixed top-0 left-0 w-full h-full z-0" />;
 };
 
+// Settings Modal Component
+function SettingsModal({ isOpen, onClose, viewType, setViewType }) {
+  if (!isOpen) return null;
+
+  const options = ["All", "Bookmarked", "Random", "Level 1", "Level 2"];
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+      <div className="bg-white dark:bg-[#292b2d] text-black dark:text-white p-6 rounded-xl shadow-lg min-w-[300px] relative">
+        <h2 className="text-xl font-bold mb-4">Settings</h2>
+
+        {/* Dropdown */}
+        <label className="block mb-2 font-medium">View Type:</label>
+        <select
+          value={viewType}
+          onChange={(e) => setViewType(e.target.value)}
+          className="w-full px-4 py-2 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#1e1e1e] text-black dark:text-white"
+        >
+          {options.map((opt) => (
+            <option key={opt} value={opt}>
+              {opt}
+            </option>
+          ))}
+        </select>
+
+        {/* Close Button */}
+        <button
+          onClick={onClose}
+          className="mt-6 bg-[#de3163] hover:bg-pink-600 text-white px-4 py-2 rounded-md w-full"
+        >
+          Close
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// Main Component
 export default function KanjiCardsPage() {
   const [isDark, setIsDark] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [viewType, setViewType] = useState("All");
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
+  const [isSoundOn, setIsSoundOn] = useState(true);
+  const [bookmarked, setBookmarked] = useState([]);
   const cardRef = useRef(null);
   const touchStartX = useRef(0);
 
@@ -79,6 +124,34 @@ export default function KanjiCardsPage() {
     match.addEventListener("change", update);
     return () => match.removeEventListener("change", update);
   }, []);
+
+  useEffect(() => {
+    const storedSound = localStorage.getItem("soundEnabled");
+    if (storedSound !== null) setIsSoundOn(storedSound === "true");
+
+    const storedBookmarks = JSON.parse(localStorage.getItem("bookmarkedKanji")) || [];
+    setBookmarked(storedBookmarks);
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem("bookmarkedKanji", JSON.stringify(bookmarked));
+  }, [bookmarked]);
+
+  const toggleSound = () => {
+    setIsSoundOn((prev) => {
+      localStorage.setItem("soundEnabled", String(!prev));
+      return !prev;
+    });
+  };
+
+  const toggleBookmark = () => {
+    const currentKanjiChar = dummyKanjiList[currentIndex].kanji;
+    setBookmarked((prev) =>
+      prev.includes(currentKanjiChar)
+        ? prev.filter((k) => k !== currentKanjiChar)
+        : [...prev, currentKanjiChar]
+    );
+  };
 
   const currentKanji = dummyKanjiList[currentIndex];
 
@@ -109,32 +182,61 @@ export default function KanjiCardsPage() {
     >
       <CherryBlossomSnowfall isDark={isDark} />
 
-      {/* Top Bar */}
+      {/* Top Left Back */}
       <div className="absolute top-4 mt-2 left-4 z-10 flex items-center gap-2">
         <Link
           href="/Learn"
           className="text-lg font-bold"
-          style={{ color: isDark ? "white" : "black" }} // Back button color
+          style={{ color: isDark ? "white" : "black" }}
           aria-label="Back"
         >
           &lt; BACK
         </Link>
       </div>
 
-      <div className="absolute top-4 mt-2 right-4 z-10">
+      {/* Top Right Buttons */}
+      <div className="absolute top-4 mt-2 right-4 z-10 flex items-center gap-2">
+        {/* Sound Toggle */}
+        <button
+          onClick={toggleSound}
+          className="p-2 rounded-full"
+          style={{ backgroundColor: isDark ? "white" : "#292b2d" }}
+          aria-label="Toggle Sound"
+        >
+          {isSoundOn ? (
+            <Volume2 className={`h-6 w-6 ${isDark ? "text-black" : "text-[#de3163]"}`} />
+          ) : (
+            <VolumeX className={`h-6 w-6 ${isDark ? "text-black" : "text-[#de3163]"}`} />
+          )}
+        </button>
+
+        {/* Bookmark Toggle */}
+        <button
+          onClick={toggleBookmark}
+          className="p-2 rounded-full"
+          style={{ backgroundColor: isDark ? "white" : "#292b2d" }}
+          aria-label="Toggle Bookmark"
+        >
+          {bookmarked.includes(currentKanji.kanji) ? (
+            <BookmarkCheck className={`h-6 w-6 ${isDark ? "text-black" : "text-[#de3163]"}`} />
+          ) : (
+            <Bookmark className={`h-6 w-6 ${isDark ? "text-black" : "text-[#de3163]"}`} />
+          )}
+        </button>
+
+        {/* Settings */}
         <button
           onClick={() => setIsSettingsOpen(true)}
           className="p-2 rounded-full"
-          style={{ backgroundColor: isDark ? "white" : "#292b2d" }} // Settings circle fill color
+          style={{ backgroundColor: isDark ? "white" : "#292b2d" }}
           aria-label="Settings"
         >
           <Cog6ToothIcon className={`h-6 w-6 ${isDark ? "text-[#000000]" : "text-[#de3163]"}`} />
         </button>
       </div>
 
-      {/* Card & Arrows */}
+      {/* Card Area */}
       <div className="relative z-10 w-full max-w-[400px] flex items-center justify-center px-4">
-        {/* Left Arrow */}
         <button
           onClick={goBack}
           className="absolute left-0 z-20 p-2 rounded-full text-white"
@@ -144,7 +246,6 @@ export default function KanjiCardsPage() {
           <ArrowLeft />
         </button>
 
-        {/* Card */}
         <div
           ref={cardRef}
           onClick={() => setIsFlipped(!isFlipped)}
@@ -175,7 +276,6 @@ export default function KanjiCardsPage() {
           </div>
         </div>
 
-        {/* Right Arrow */}
         <button
           onClick={goNext}
           className="absolute right-0 z-20 p-2 rounded-full text-white"
@@ -198,7 +298,12 @@ export default function KanjiCardsPage() {
       </div>
 
       {/* Settings Modal */}
-      <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
+      <SettingsModal
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+        viewType={viewType}
+        setViewType={setViewType}
+      />
     </div>
   );
 }
