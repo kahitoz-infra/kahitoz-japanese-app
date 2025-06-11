@@ -11,6 +11,101 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { authFetch } from "../middleware";
+const KanjiAPI = process.env.NEXT_PUBLIC_API_URL
+
+// Cherry blossom particle canvas
+const CherryBlossomSnowfall = () => {
+  const canvasRef = useRef(null);
+  const [isDark, setIsDark] = useState(false);
+
+  useEffect(() => {
+    const checkDarkMode = () => {
+      const dark =
+        window.matchMedia &&
+        window.matchMedia("(prefers-color-scheme: dark)").matches;
+      setIsDark(dark);
+    };
+
+    checkDarkMode();
+
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    const handleChange = (e) => setIsDark(e.matches);
+    mediaQuery.addEventListener("change", handleChange);
+
+    return () => mediaQuery.removeEventListener("change", handleChange);
+  }, []);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext("2d");
+    let width = window.innerWidth;
+    let height = window.innerHeight;
+    canvas.width = width;
+    canvas.height = height;
+
+    const particleCount = 100;
+    const particles = [];
+
+    for (let i = 0; i < particleCount; i++) {
+      particles.push({
+        x: Math.random() * width,
+        y: Math.random() * height,
+        radius: Math.random() * 1.6 + 0.6,
+        speedY: 0.2 + Math.random() * 0.4,
+        swayAngle: Math.random() * 2 * Math.PI,
+        swaySpeed: 0.005 + Math.random() * 0.01,
+      });
+    }
+
+    const draw = () => {
+      ctx.clearRect(0, 0, width, height);
+      const color = isDark
+        ? "rgba(255, 102, 0, 0.8)"
+        : "rgba(222, 49, 99, 0.8)";
+
+      particles.forEach((p) => {
+        p.swayAngle += p.swaySpeed;
+        p.x += Math.sin(p.swayAngle) * 0.3;
+        p.y += p.speedY;
+
+        if (p.x > width) p.x = 0;
+        else if (p.x < 0) p.x = width;
+
+        if (p.y > height) {
+          p.y = 0;
+          p.x = Math.random() * width;
+        }
+
+        ctx.beginPath();
+        ctx.fillStyle = color;
+        ctx.arc(p.x, p.y, p.radius, 0, 2 * Math.PI);
+        ctx.fill();
+      });
+
+      requestAnimationFrame(draw);
+    };
+
+    draw();
+
+    const handleResize = () => {
+      width = window.innerWidth;
+      height = window.innerHeight;
+      canvas.width = width;
+      canvas.height = height;
+    };
+    window.addEventListener("resize", handleResize);
+
+    return () => window.removeEventListener("resize", handleResize);
+  }, [isDark]);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      className="pointer-events-none fixed top-0 left-0 w-full h-full z-0"
+      style={{ userSelect: "none" }}
+    />
+  );
+};
 
 export default function KanjiCardsPage() {
   const [kanjiList, setKanjiList] = useState([]);
@@ -35,7 +130,7 @@ export default function KanjiCardsPage() {
   useEffect(() => {
     async function fetchKanji() {
       try {
-        const response = await authFetch("https://apizenkanji.kahitoz.com/v1/flagged_kanjis");
+        const response = await authFetch(`${KanjiAPI}/flagged_kanjis`);
         const data = await response.json();
         localStorage.setItem(CACHE_KEY, JSON.stringify(data));
         localStorage.setItem(CACHE_TIME_KEY, Date.now().toString());
