@@ -2,6 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import Switch from '@mui/material/Switch';
 
+const LS_SELECTED_LEVELS = "vocab_selected_levels";
+
 export default function VocabConfig({ onClose, VocabData, onFilterChange }) {
     const [enableTurnSound, setEnabledTurnSound] = useState(false);
     const [enableFlipSound, setEnableFlipSound] = useState(false);
@@ -22,10 +24,18 @@ export default function VocabConfig({ onClose, VocabData, onFilterChange }) {
                 VocabData.map(item => item.level).filter(Boolean)
             )];
             setLevelOptions(uniqueLevels);
-            console.log(uniqueLevels)
-            setSelectedLevels(uniqueLevels); // Select all levels by default
+    
+            const savedLevels = JSON.parse(localStorage.getItem(LS_SELECTED_LEVELS));
+            if (Array.isArray(savedLevels) && savedLevels.length > 0) {
+                setSelectedLevels(savedLevels);
+            } else if (uniqueLevels.includes("N5")) {
+                setSelectedLevels(["N5"]);
+            } else {
+                setSelectedLevels([uniqueLevels[0]]); // fallback if N5 not in data
+            }
         }
     }, [VocabData]);
+    
 
     // Update filtered data whenever selectedLevels change
     useEffect(() => {
