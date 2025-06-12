@@ -116,6 +116,7 @@ export default function VocabularyCardsPage() {
   const [bookmarked, setBookmarked] = useState([]);
   const [isDark, setIsDark] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const CACHE_KEY = "cachedVocabList";
   const CACHE_TIME_KEY = "vocabCacheTimestamp";
@@ -137,8 +138,10 @@ export default function VocabularyCardsPage() {
         localStorage.setItem(CACHE_KEY, JSON.stringify(data));
         localStorage.setItem(CACHE_TIME_KEY, Date.now().toString());
         setVocabList(data);
+        setLoading(false);
       } catch (err) {
         console.error("API fetch failed:", err);
+        setLoading(false);
       }
     }
 
@@ -148,6 +151,7 @@ export default function VocabularyCardsPage() {
 
     if (cachedData && cacheTime && now - cacheTime < CACHE_DURATION) {
       setVocabList(cachedData);
+      setLoading(false);
     } else {
       fetchVocab();
     }
@@ -182,6 +186,21 @@ export default function VocabularyCardsPage() {
     setCurrentIndex((i) => (i - 1 + vocabList.length) % vocabList.length);
     setIsFlipped(false);
   };
+
+  if (loading) {
+    return (
+      <div className={`flex items-center justify-center min-h-screen ${isDark ? "bg-[#292b2d]" : "bg-white"}`}>
+        <div
+          className="w-16 h-16 border-4 border-dashed rounded-full animate-spin"
+          style={{
+            borderColor: isDark
+              ? "#FF6600 transparent #FF6600 transparent"
+              : "#de3163 transparent #de3163 transparent",
+          }}
+        ></div>
+      </div>
+    );
+  }
 
   return (
     <div className={`min-h-screen flex flex-col items-center justify-center ${isDark ? "bg-[#292b2d] text-gray-200" : "bg-white text-black"}`}>
@@ -238,9 +257,9 @@ export default function VocabularyCardsPage() {
             }}
           >
             <div className="text-2xl">
-                <div>
-              <strong>Meaning:</strong> {currentVocab.meaning || "-"}
-            </div>
+              <div>
+                <strong>Meaning:</strong> {currentVocab.meaning || "-"}
+              </div>
             </div>
           </div>
         </div>

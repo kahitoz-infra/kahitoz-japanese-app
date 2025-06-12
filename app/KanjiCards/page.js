@@ -193,13 +193,26 @@ export default function KanjiCardsPage() {
       </div>
 
       {/* Flip Card */}
-      {kanjiList.length === 0 ? (
-        <div className="w-full flex justify-center items-center h-[26rem] bg-white dark:bg-[#292b2d]">
-          <div className="w-12 h-12 border-4 border-t-transparent border-[#de3163] dark:border-[#FF6600] rounded-full animate-spin" />
-        </div>
-      ) : (
+{kanjiList.length === 0 ? (
+  <div className="w-full flex justify-center items-center h-[26rem] bg-white dark:bg-[#292b2d]">
+    <div className="relative w-12 h-12">
+      <div
+        className="absolute inset-0 rounded-full animate-spin"
+        style={{
+          borderWidth: "4px",
+          borderStyle: "solid",
+          borderColor: window.matchMedia("(prefers-color-scheme: dark)").matches
+            ? "rgba(255, 102, 0, 0.8)"
+            : "rgba(222, 49, 99, 0.8)",
+          borderTopColor: "transparent",
+        }}
+      />
+    </div>
+  </div>
+) : (
+
         <div
-          className="relative w-full max-w-[250px] h-[26rem] my-8"
+          className="relative w-full max-w-[360px] h-[26rem] my-8"
           style={{ perspective: "1000px" }}
           onClick={() => setIsFlipped(!isFlipped)}
         >
