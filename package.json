@@ -31,6 +31,7 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-sketch-canvas": "^6.2.0",
+    "react-swipeable": "^7.0.2",
     "react-toastify": "^11.0.3",
     "wanakana": "^5.3.1"
   },
