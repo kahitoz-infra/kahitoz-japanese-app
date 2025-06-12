@@ -4,7 +4,6 @@ import { EyeIcon, BookOpenIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import Navbar from "@/app/components/Navbar";
 
-// Cherry blossom particle canvas
 const CherryBlossomSnowfall = () => {
   const canvasRef = useRef(null);
   const [isDark, setIsDark] = useState(false);
@@ -126,15 +125,36 @@ const Learn = () => {
     return () => clearInterval(interval);
   }, []);
 
+  const boxData = [
+    {
+      title: "Kanji Cards",
+      viewLink: "/KanjiCards",
+      learnLink: "/learn/kanji",
+    },
+    {
+      title: "Vocabulary",
+      viewLink: "/VocabularyCards",
+      learnLink: "/learn/vocab",
+    },
+    {
+      title: "Grammar",
+      viewLink: "/view/grammar",
+      learnLink: "/learn/grammar",
+    },
+    {
+      title: "Sentence",
+      viewLink: "/Sentence",
+      learnLink: "/Sentence/",
+    },
+  ];
+
   return (
     <>
       <div className="flex flex-col min-h-screen w-screen pb-28 pt-8 items-center bg-[#f3f3f3] dark:bg-[#292B2D] text-black dark:text-white relative px-4">
         <CherryBlossomSnowfall />
 
-        {/* Heading */}
         <h1 className="text-2xl font-semibold mt-4 mb-2 z-10 relative">Learn Page</h1>
 
-        {/* Quote */}
         <div
           className="mb-6 text-center text-gray-700 dark:text-gray-300 text-lg font-semibold transition-opacity duration-500 z-10 relative"
           style={{
@@ -145,13 +165,11 @@ const Learn = () => {
           {quotes[quoteIndex]}
         </div>
 
-        {/* Grid with 4 boxes */}
         <div className="grid grid-cols-2 grid-rows-2 gap-x-6 gap-y-10 mt-4 relative z-10">
-          {/* X and Y axis lines */}
           <div className="absolute left-1/2 top-0 bottom-0 w-[1px] bg-gray-400 dark:bg-gray-600 transform -translate-x-1/2 pointer-events-none" />
           <div className="absolute top-1/2 left-0 right-0 h-[1px] bg-gray-400 dark:bg-gray-600 transform -translate-y-1/2 pointer-events-none" />
 
-          {[0, 1, 2, 3].map((index) => (
+          {boxData.map((box, index) => (
             <div
               key={index}
               className={`relative flex flex-col items-center transition-all duration-300 ${
@@ -162,19 +180,19 @@ const Learn = () => {
             >
               <div
                 onClick={() => handleBoxClick(index)}
-                className="w-36 h-64 bg-white dark:bg-[#1F1F1F] rounded-lg shadow-md flex items-center justify-center text-lg font-medium cursor-pointer"
+                className="w-36 h-64 bg-white dark:bg-[#1F1F1F] rounded-lg shadow-md flex items-center justify-center text-lg font-semibold text-center p-4 cursor-pointer"
               >
-                Box {index + 1}
+                {box.title}
               </div>
 
               {openBox === index && (
                 <div className="absolute top-full mt-4 flex gap-4 transition-opacity duration-1000">
-                  <Link href={index === 0 ? "/KanjiCards" : `/view/${index}`}>
+                  <Link href={box.viewLink}>
                     <div className="w-14 h-14 rounded-full bg-[#FF5274] dark:bg-[#F66538] shadow-md flex items-center justify-center cursor-pointer">
                       <EyeIcon className="w-6 h-6 text-white" />
                     </div>
                   </Link>
-                  <Link href={`/learn/${index}`}>
+                  <Link href={box.learnLink}>
                     <div className="w-14 h-14 rounded-full bg-[#FF5274] dark:bg-[#F66538] shadow-md flex items-center justify-center cursor-pointer">
                       <BookOpenIcon className="w-6 h-6 text-white" />
                     </div>
@@ -186,7 +204,6 @@ const Learn = () => {
         </div>
       </div>
 
-      {/* Sticky Navbar at Bottom */}
       <div className="fixed bottom-0 left-0 right-0 z-30">
         <Navbar />
       </div>
