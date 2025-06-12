@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ArrowLeft,
   ArrowRight,
@@ -10,8 +10,9 @@ import {
   BookmarkCheck,
 } from "lucide-react";
 import Link from "next/link";
+import { Cog6ToothIcon } from "@heroicons/react/24/solid";
 import { authFetch } from "../middleware";
-const KanjiAPI = process.env.NEXT_PUBLIC_API_URL
+const KanjiAPI = process.env.NEXT_PUBLIC_API_URL;
 
 // Cherry blossom particle canvas
 const CherryBlossomSnowfall = () => {
@@ -60,8 +61,8 @@ const CherryBlossomSnowfall = () => {
     const draw = () => {
       ctx.clearRect(0, 0, width, height);
       const color = isDark
-        ? "rgba(255, 102, 0, 0.8)"
-        : "rgba(222, 49, 99, 0.8)";
+        ? "rgba(255, 102, 255, 0.5)"
+        : "rgba(222, 49, 99, 0.5)";
 
       particles.forEach((p) => {
         p.swayAngle += p.swaySpeed;
@@ -114,6 +115,7 @@ export default function KanjiCardsPage() {
   const [isSoundOn, setIsSoundOn] = useState(true);
   const [bookmarked, setBookmarked] = useState([]);
   const [isDark, setIsDark] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
 
   const CACHE_KEY = "cachedKanjiList";
   const CACHE_TIME_KEY = "kanjiCacheTimestamp";
@@ -183,6 +185,7 @@ export default function KanjiCardsPage() {
 
   return (
     <div className={`min-h-screen flex flex-col items-center justify-center ${isDark ? "bg-[#292b2d] text-gray-200" : "bg-white text-black"}`}>
+      <CherryBlossomSnowfall />
       <Link href="/Learn" className="absolute top-4 left-4 text-lg font-bold">{`< BACK`}</Link>
 
       {/* Top Controls */}
@@ -192,6 +195,9 @@ export default function KanjiCardsPage() {
         </button>
         <button onClick={toggleBookmark} className="p-2 rounded-full bg-gray-300 dark:bg-white">
           {bookmarked.includes(currentKanji.kanji) ? <BookmarkCheck className="text-black" /> : <Bookmark className="text-black" />}
+        </button>
+        <button onClick={() => setShowSettings(true)} className="p-2 rounded-full bg-gray-300 dark:bg-white">
+          <Cog6ToothIcon className="text-black w-5 h-5" />
         </button>
       </div>
 
@@ -238,11 +244,32 @@ export default function KanjiCardsPage() {
       </div>
 
       {/* Nav */}
-      <div className="flex justify-center items-center gap-4 mt-4">
-        <button onClick={goBack} className="bg-[#de3163] text-white p-3 rounded-full"><ArrowLeft /></button>
+      <div className="flex justify-center items-center gap-8 mt-4">
+        <button onClick={goBack} className="bg-[#de3163] dark:bg-[#FF6600] text-white p-3 rounded-full"><ArrowLeft /></button>
         <div className="text-xl font-bold">{kanjiList.length ? `${currentIndex + 1} / ${kanjiList.length}` : "Loading..."}</div>
-        <button onClick={goNext} className="bg-[#de3163] text-white p-3 rounded-full"><ArrowRight /></button>
+        <button onClick={goNext} className="bg-[#de3163] dark:bg-[#FF6600] text-white p-3 rounded-full"><ArrowRight /></button>
       </div>
+
+      {/* Settings Modal */}
+      {showSettings && (
+        <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center">
+          <div className="bg-white dark:bg-[#292b2d] p-6 rounded-xl w-80 text-black dark:text-gray-200 relative">
+            <button
+              onClick={() => setShowSettings(false)}
+              className="absolute top-2 right-2 text-black dark:text-white"
+            >
+              ✕
+            </button>
+            <h2 className="text-lg font-bold mb-4">Settings</h2>
+            {/* Settings options go here */}
+            <div className="space-y-2">
+              <p>Option 1 (e.g., View Mode)</p>
+              <p>Option 2 (e.g., Shuffle Cards)</p>
+              {/* Add dropdowns, toggles, etc., as needed */}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
