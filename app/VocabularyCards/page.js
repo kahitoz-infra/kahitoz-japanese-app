@@ -12,6 +12,7 @@ import {
 import Link from "next/link";
 import { Cog6ToothIcon } from "@heroicons/react/24/solid";
 import { authFetch } from "../middleware";
+import { toHiragana } from "wanakana";
 
 const VocabAPI = process.env.NEXT_PUBLIC_API_URL;
 
@@ -135,9 +136,13 @@ export default function VocabularyCardsPage() {
       try {
         const response = await authFetch(`${VocabAPI}/flagged_vocab`);
         const data = await response.json();
-        localStorage.setItem(CACHE_KEY, JSON.stringify(data));
+        const enrichedData = data.map((item) => ({
+          ...item,
+          hiragana: toHiragana(item.word),
+        }));
+        localStorage.setItem(CACHE_KEY, JSON.stringify(enrichedData));
         localStorage.setItem(CACHE_TIME_KEY, Date.now().toString());
-        setVocabList(data);
+        setVocabList(enrichedData);
         setLoading(false);
       } catch (err) {
         console.error("API fetch failed:", err);
@@ -156,6 +161,33 @@ export default function VocabularyCardsPage() {
       fetchVocab();
     }
   }, []);
+  const touchStartX = useRef(null);
+const touchEndX = useRef(null);
+
+const handleTouchStart = (e) => {
+  touchStartX.current = e.changedTouches[0].screenX;
+};
+
+const handleTouchEnd = (e) => {
+  touchEndX.current = e.changedTouches[0].screenX;
+  handleSwipeGesture();
+};
+
+const handleSwipeGesture = () => {
+  const threshold = 50; // Minimum distance in px to be considered a swipe
+  const deltaX = touchStartX.current - touchEndX.current;
+
+  if (Math.abs(deltaX) > threshold) {
+    if (deltaX > 0) {
+      // Swiped left
+      goNext();
+    } else {
+      // Swiped right
+      goBack();
+    }
+  }
+};
+
 
   useEffect(() => {
     const saved = JSON.parse(localStorage.getItem("bookmarkedVocab") || "[]");
@@ -207,7 +239,6 @@ export default function VocabularyCardsPage() {
       <CherryBlossomSnowfall />
       <Link href="/Learn" className="absolute top-4 left-4 text-lg font-bold">{`< BACK`}</Link>
 
-      {/* Top Controls */}
       <div className="absolute top-4 right-4 flex gap-3">
         <button onClick={() => setIsSoundOn(!isSoundOn)} className="p-2 rounded-full bg-gray-300 dark:bg-white">
           {isSoundOn ? <Volume2 className="text-black" /> : <VolumeX className="text-black" />}
@@ -220,12 +251,14 @@ export default function VocabularyCardsPage() {
         </button>
       </div>
 
-      {/* Flip Card */}
       <div
-        className="relative w-screen max-w-[360px] h-[26rem] my-8"
-        style={{ perspective: "1000px" }}
-        onClick={() => setIsFlipped(!isFlipped)}
-      >
+  className="relative w-full max-w-[360px] h-[26rem] my-8"
+  style={{ perspective: "1000px" }}
+  onClick={() => setIsFlipped(!isFlipped)}
+  onTouchStart={handleTouchStart}
+  onTouchEnd={handleTouchEnd}
+>
+
         <div
           className={`relative w-full h-full transition-transform duration-500`}
           style={{
@@ -243,7 +276,7 @@ export default function VocabularyCardsPage() {
             }}
           >
             <div className="text-7xl font-bold">{currentVocab.word || "?"}</div>
-            <div className="text-xl mt-2">{currentVocab.furigana || ""}</div>
+            <div className="text-xl mt-2">{currentVocab.hiragana || ""}</div>
           </div>
 
           {/* BACK */}
@@ -256,23 +289,26 @@ export default function VocabularyCardsPage() {
               backgroundColor: isDark ? "#292b2d" : "white",
             }}
           >
-            <div className="text-2xl">
+            <div className="text-2xl space-y-2">
               <div>
                 <strong>Meaning:</strong> {currentVocab.meaning || "-"}
               </div>
+              {currentVocab.other_readings?.length > 0 && (
+                <div>
+                  <strong>Other Readings:</strong> {currentVocab.other_readings.join(", ")}
+                </div>
+              )}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Nav */}
       <div className="flex justify-center items-center gap-8 mt-4">
         <button onClick={goBack} className="bg-[#de3163] dark:bg-[#FF6600] text-white p-3 rounded-full"><ArrowLeft /></button>
         <div className="text-xl font-bold">{vocabList.length ? `${currentIndex + 1} / ${vocabList.length}` : "Loading..."}</div>
         <button onClick={goNext} className="bg-[#de3163] dark:bg-[#FF6600] text-white p-3 rounded-full"><ArrowRight /></button>
       </div>
 
-      {/* Settings Modal */}
       {showSettings && (
         <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center">
           <div className="bg-white dark:bg-[#292b2d] p-6 rounded-xl w-80 text-black dark:text-gray-200 relative">
