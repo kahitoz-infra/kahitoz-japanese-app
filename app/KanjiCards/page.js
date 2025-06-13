@@ -12,10 +12,23 @@ import {
 import Link from "next/link";
 import { Cog6ToothIcon } from "@heroicons/react/24/solid";
 import { authFetch } from "../middleware";
+import { toRomaji } from "wanakana";
 
 const KanjiAPI = process.env.NEXT_PUBLIC_API_URL;
 
-// Cherry Blossom Canvas Component
+// ✅ Helper: derive Romaji using wanakana
+const getRomaji = (onyomi, kunyomi) => {
+  const onyomiArr = onyomi ? JSON.parse(onyomi) : [];
+  const kunyomiArr = kunyomi ? JSON.parse(kunyomi) : [];
+
+  const onyomiRomaji = onyomiArr.map((s) => toRomaji(s));
+  const kunyomiRomaji = kunyomiArr.map((s) => toRomaji(s));
+
+  const merged = Array.from(new Set([...onyomiRomaji, ...kunyomiRomaji]));
+  return merged.length > 0 ? merged.join(", ") : "-";
+};
+
+// 🎴 Cherry Blossom Canvas
 const CherryBlossomSnowfall = ({ isDarkMode }) => {
   const canvasRef = useRef(null);
 
@@ -78,7 +91,7 @@ const CherryBlossomSnowfall = ({ isDarkMode }) => {
   );
 };
 
-// Main Component
+// 🌸 Main Component
 export default function KanjiCardsPage() {
   const [kanjiList, setKanjiList] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -149,6 +162,33 @@ export default function KanjiCardsPage() {
     setIsFlipped(false);
   };
 
+const touchStartX = useRef(null);
+const touchEndX = useRef(null);
+
+const handleTouchStart = (e) => {
+  touchStartX.current = e.changedTouches[0].screenX;
+};
+
+const handleTouchEnd = (e) => {
+  touchEndX.current = e.changedTouches[0].screenX;
+  handleSwipeGesture();
+};
+
+const handleSwipeGesture = () => {
+  const threshold = 50; // Minimum distance in px to be considered a swipe
+  const deltaX = touchStartX.current - touchEndX.current;
+
+  if (Math.abs(deltaX) > threshold) {
+    if (deltaX > 0) {
+      // Swiped left
+      goNext();
+    } else {
+      // Swiped right
+      goBack();
+    }
+  }
+};
+
   const spinnerBorderColor = isDarkMode
     ? "rgba(255, 102, 0, 0.8)"
     : "rgba(222, 49, 99, 0.8)";
@@ -176,25 +216,23 @@ export default function KanjiCardsPage() {
 
       {/* Flip Card or Loader */}
       {kanjiList.length === 0 ? (
-        <div className="w-full flex justify-center items-center h-[26rem] bg-white dark:bg-[#292b2d]">
-          <div className="relative w-12 h-12">
-            <div
-              className="absolute inset-0 rounded-full animate-spin"
-              style={{
-                borderWidth: "4px",
-                borderStyle: "solid",
-                borderColor: spinnerBorderColor,
-                borderTopColor: "transparent",
-              }}
-            />
-          </div>
-        </div>
+<div className="w-full flex justify-center items-center h-[26rem] bg-white dark:bg-[#292b2d]">
+  <div
+    className="w-12 h-12 border-4 rounded-full animate-spin border-b-transparent"
+    style={{
+      borderColor: spinnerBorderColor,
+      borderBottomColor: "transparent",
+    }}
+  />
+</div>
       ) : (
         <div
-          className="relative w-full max-w-[360px] h-[26rem] my-8"
-          style={{ perspective: "1000px" }}
-          onClick={() => setIsFlipped(!isFlipped)}
-        >
+  className="relative w-full max-w-[360px] h-[26rem] my-8"
+  style={{ perspective: "1000px" }}
+  onClick={() => setIsFlipped(!isFlipped)}
+  onTouchStart={handleTouchStart}
+  onTouchEnd={handleTouchEnd}
+>
           <div
             className={`relative w-full h-full transition-transform duration-500`}
             style={{
@@ -230,6 +268,9 @@ export default function KanjiCardsPage() {
                 <strong>Kunyomi:</strong>{" "}
                 {currentKanji.kunyomi ? JSON.parse(currentKanji.kunyomi).join(", ") : "-"}
               </div>
+              <div className="mb-2">
+                <strong>Romaji:</strong> {getRomaji(currentKanji.onyomi, currentKanji.kunyomi)}
+              </div>
               <div>
                 <strong>Meaning:</strong> {currentKanji.english || "-"}
               </div>
@@ -264,7 +305,6 @@ export default function KanjiCardsPage() {
             <div className="space-y-2">
               <p>Option 1: View Mode</p>
               <p>Option 2: Shuffle</p>
-              {/* Add dropdowns or toggles as needed */}
             </div>
           </div>
         </div>
