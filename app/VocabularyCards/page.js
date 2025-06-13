@@ -16,6 +16,13 @@ import { toHiragana } from "wanakana";
 
 const VocabAPI = process.env.NEXT_PUBLIC_API_URL;
 
+const LS_KEYS = {
+  selectedLabel: "selectedLabel",
+  bookmarksOnly: "bookmarksOnly",
+  randomizeMode: "randomizeMode",
+  customGroupSize: "customGroupSize",
+};
+
 const CherryBlossomSnowfall = () => {
   const canvasRef = useRef(null);
   const [isDark, setIsDark] = useState(false);
@@ -118,6 +125,11 @@ export default function VocabularyCardsPage() {
   const [isDark, setIsDark] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [tags, setTags] = useState(["N4", "N5"]);
+  const [selectedLabel, setSelectedLabel] = useState("N5");
+  const [showBookmarksOnly, setShowBookmarksOnly] = useState(false);
+  const [randomizeMode, setRandomizeMode] = useState("None");
+  const [customGroupSize, setCustomGroupSize] = useState("");
 
   const CACHE_KEY = "cachedVocabList";
   const CACHE_TIME_KEY = "vocabCacheTimestamp";
@@ -160,34 +172,14 @@ export default function VocabularyCardsPage() {
     } else {
       fetchVocab();
     }
+
+    setSelectedLabel(localStorage.getItem(LS_KEYS.selectedLabel) || "N5");
+    setShowBookmarksOnly(
+      localStorage.getItem(LS_KEYS.bookmarksOnly) === "true"
+    );
+    setRandomizeMode(localStorage.getItem(LS_KEYS.randomizeMode) || "None");
+    setCustomGroupSize(localStorage.getItem(LS_KEYS.customGroupSize) || "");
   }, []);
-  const touchStartX = useRef(null);
-const touchEndX = useRef(null);
-
-const handleTouchStart = (e) => {
-  touchStartX.current = e.changedTouches[0].screenX;
-};
-
-const handleTouchEnd = (e) => {
-  touchEndX.current = e.changedTouches[0].screenX;
-  handleSwipeGesture();
-};
-
-const handleSwipeGesture = () => {
-  const threshold = 50; // Minimum distance in px to be considered a swipe
-  const deltaX = touchStartX.current - touchEndX.current;
-
-  if (Math.abs(deltaX) > threshold) {
-    if (deltaX > 0) {
-      // Swiped left
-      goNext();
-    } else {
-      // Swiped right
-      goBack();
-    }
-  }
-};
-
 
   useEffect(() => {
     const saved = JSON.parse(localStorage.getItem("bookmarkedVocab") || "[]");
@@ -198,7 +190,18 @@ const handleSwipeGesture = () => {
     localStorage.setItem("bookmarkedVocab", JSON.stringify(bookmarked));
   }, [bookmarked]);
 
-  const currentVocab = vocabList[currentIndex] || {};
+  const filteredVocabList = vocabList.filter((item) => {
+    if (showBookmarksOnly) {
+      return bookmarked.includes(item.word);
+    }
+    return true;
+  });
+
+  useEffect(() => {
+    setCurrentIndex(0);
+  }, [showBookmarksOnly, filteredVocabList]);
+
+  const currentVocab = filteredVocabList[currentIndex] || {};
   const themeColor = isDark ? "#FF6600" : "#de3163";
 
   const toggleBookmark = () => {
@@ -210,18 +213,39 @@ const handleSwipeGesture = () => {
   };
 
   const goNext = () => {
-    setCurrentIndex((i) => (i + 1) % vocabList.length);
+    setCurrentIndex((i) => (i + 1) % filteredVocabList.length);
     setIsFlipped(false);
   };
 
   const goBack = () => {
-    setCurrentIndex((i) => (i - 1 + vocabList.length) % vocabList.length);
+    setCurrentIndex((i) => (i - 1 + filteredVocabList.length) % filteredVocabList.length);
     setIsFlipped(false);
+  };
+
+  const touchStartX = useRef(null);
+  const touchEndX = useRef(null);
+  const handleTouchStart = (e) => {
+    touchStartX.current = e.changedTouches[0].screenX;
+  };
+  const handleTouchEnd = (e) => {
+    touchEndX.current = e.changedTouches[0].screenX;
+    handleSwipeGesture();
+  };
+  const handleSwipeGesture = () => {
+    const threshold = 50;
+    const deltaX = touchStartX.current - touchEndX.current;
+    if (Math.abs(deltaX) > threshold) {
+      deltaX > 0 ? goNext() : goBack();
+    }
   };
 
   if (loading) {
     return (
-      <div className={`flex items-center justify-center min-h-screen ${isDark ? "bg-[#292b2d]" : "bg-white"}`}>
+      <div
+        className={`flex items-center justify-center min-h-screen ${
+          isDark ? "bg-[#292b2d]" : "bg-white"
+        }`}
+      >
         <div
           className="w-16 h-16 border-4 border-dashed rounded-full animate-spin"
           style={{
@@ -235,30 +259,52 @@ const handleSwipeGesture = () => {
   }
 
   return (
-    <div className={`min-h-screen flex flex-col items-center justify-center ${isDark ? "bg-[#292b2d] text-gray-200" : "bg-white text-black"}`}>
+    <div
+      className={`min-h-screen flex flex-col items-center justify-center ${
+        isDark ? "bg-[#292b2d] text-gray-200" : "bg-white text-black"
+      }`}
+    >
       <CherryBlossomSnowfall />
-      <Link href="/Learn" className="absolute top-4 left-4 text-lg font-bold">{`< BACK`}</Link>
+      <Link href="/Learn" className="absolute top-4 left-4 text-lg font-bold">
+        {`< BACK`}
+      </Link>
 
       <div className="absolute top-4 right-4 flex gap-3">
-        <button onClick={() => setIsSoundOn(!isSoundOn)} className="p-2 rounded-full bg-gray-300 dark:bg-white">
-          {isSoundOn ? <Volume2 className="text-black" /> : <VolumeX className="text-black" />}
+        <button
+          onClick={() => setIsSoundOn(!isSoundOn)}
+          className="p-2 rounded-full bg-gray-300 dark:bg-white"
+        >
+          {isSoundOn ? (
+            <Volume2 className="text-black" />
+          ) : (
+            <VolumeX className="text-black" />
+          )}
         </button>
-        <button onClick={toggleBookmark} className="p-2 rounded-full bg-gray-300 dark:bg-white">
-          {bookmarked.includes(currentVocab.word) ? <BookmarkCheck className="text-black" /> : <Bookmark className="text-black" />}
+        <button
+          onClick={toggleBookmark}
+          className="p-2 rounded-full bg-gray-300 dark:bg-white"
+        >
+          {bookmarked.includes(currentVocab.word) ? (
+            <BookmarkCheck className="text-black" />
+          ) : (
+            <Bookmark className="text-black" />
+          )}
         </button>
-        <button onClick={() => setShowSettings(true)} className="p-2 rounded-full bg-gray-300 dark:bg-white">
+        <button
+          onClick={() => setShowSettings(true)}
+          className="p-2 rounded-full bg-gray-300 dark:bg-white"
+        >
           <Cog6ToothIcon className="text-black w-5 h-5" />
         </button>
       </div>
 
       <div
-  className="relative w-full max-w-[360px] h-[26rem] my-8"
-  style={{ perspective: "1000px" }}
-  onClick={() => setIsFlipped(!isFlipped)}
-  onTouchStart={handleTouchStart}
-  onTouchEnd={handleTouchEnd}
->
-
+        className="relative w-full max-w-[360px] h-[26rem] my-8"
+        style={{ perspective: "1000px" }}
+        onClick={() => setIsFlipped(!isFlipped)}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+      >
         <div
           className={`relative w-full h-full transition-transform duration-500`}
           style={{
@@ -266,7 +312,6 @@ const handleSwipeGesture = () => {
             transform: isFlipped ? "rotateY(180deg)" : "rotateY(0deg)",
           }}
         >
-          {/* FRONT */}
           <div
             className="absolute w-full h-full flex flex-col justify-center items-center rounded-2xl border-2 px-4"
             style={{
@@ -279,7 +324,6 @@ const handleSwipeGesture = () => {
             <div className="text-xl mt-2">{currentVocab.hiragana || ""}</div>
           </div>
 
-          {/* BACK */}
           <div
             className="absolute w-full h-full flex justify-center items-center text-center p-4 rounded-2xl border-2"
             style={{
@@ -295,7 +339,8 @@ const handleSwipeGesture = () => {
               </div>
               {currentVocab.other_readings?.length > 0 && (
                 <div>
-                  <strong>Other Readings:</strong> {currentVocab.other_readings.join(", ")}
+                  <strong>Other Readings:</strong>{" "}
+                  {currentVocab.other_readings.join(", ")}
                 </div>
               )}
             </div>
@@ -304,9 +349,23 @@ const handleSwipeGesture = () => {
       </div>
 
       <div className="flex justify-center items-center gap-8 mt-4">
-        <button onClick={goBack} className="bg-[#de3163] dark:bg-[#FF6600] text-white p-3 rounded-full"><ArrowLeft /></button>
-        <div className="text-xl font-bold">{vocabList.length ? `${currentIndex + 1} / ${vocabList.length}` : "Loading..."}</div>
-        <button onClick={goNext} className="bg-[#de3163] dark:bg-[#FF6600] text-white p-3 rounded-full"><ArrowRight /></button>
+        <button
+          onClick={goBack}
+          className="bg-[#de3163] dark:bg-[#FF6600] text-white p-3 rounded-full"
+        >
+          <ArrowLeft />
+        </button>
+        <div className="text-xl font-bold">
+          {filteredVocabList.length
+            ? `${currentIndex + 1} / ${filteredVocabList.length}`
+            : "No items"}
+        </div>
+        <button
+          onClick={goNext}
+          className="bg-[#de3163] dark:bg-[#FF6600] text-white p-3 rounded-full"
+        >
+          <ArrowRight />
+        </button>
       </div>
 
       {showSettings && (
@@ -319,9 +378,90 @@ const handleSwipeGesture = () => {
               ✕
             </button>
             <h2 className="text-lg font-bold mb-4">Settings</h2>
-            <div className="space-y-2">
-              <p>Option 1 (e.g., View Mode)</p>
-              <p>Option 2 (e.g., Shuffle Cards)</p>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium">Level</label>
+                <select
+                  value={selectedLabel}
+                  onChange={(e) => {
+                    setSelectedLabel(e.target.value);
+                    localStorage.setItem(
+                      LS_KEYS.selectedLabel,
+                      e.target.value
+                    );
+                  }}
+                  className="w-full p-2 rounded bg-white dark:bg-black text-black dark:text-white"
+                >
+                  <option value="N4">N4</option>
+                  <option value="N5">N5</option>
+                  {tags
+                    .filter((tag) => !["N4", "N5"].includes(tag))
+                    .map((tag) => (
+                      <option key={tag} value={tag}>
+                        {tag}
+                      </option>
+                    ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium">Bookmarks</label>
+                <select
+                  value={showBookmarksOnly ? "Bookmarked" : "All"}
+                  onChange={(e) => {
+                    const val = e.target.value === "Bookmarked";
+                    setShowBookmarksOnly(val);
+                    localStorage.setItem(
+                      LS_KEYS.bookmarksOnly,
+                      val.toString()
+                    );
+                  }}
+                  className="w-full p-2 rounded bg-white dark:bg-black text-black dark:text-white"
+                >
+                  <option value="All">All</option>
+                  <option value="Bookmarked">Bookmarked</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium">Randomize</label>
+                <select
+                  value={randomizeMode}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setRandomizeMode(val);
+                    localStorage.setItem(LS_KEYS.randomizeMode, val);
+                    if (val !== "Custom") {
+                      setCustomGroupSize("");
+                      localStorage.removeItem(LS_KEYS.customGroupSize);
+                    }
+                  }}
+                  className="w-full p-2 rounded bg-white dark:bg-black text-black dark:text-white"
+                >
+                  <option value="None">Stop Randomization</option>
+                  <option value="All">Randomize All</option>
+                  <option value="5">Groups of 5</option>
+                  <option value="10">Groups of 10</option>
+                  <option value="15">Groups of 15</option>
+                  <option value="Custom">Custom Group</option>
+                </select>
+              </div>
+
+              {randomizeMode === "Custom" && (
+                <input
+                  type="text"
+                  placeholder="Enter group size"
+                  value={customGroupSize}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === "" || /^\d+$/.test(val)) {
+                      setCustomGroupSize(val);
+                      localStorage.setItem(LS_KEYS.customGroupSize, val);
+                    }
+                  }}
+                  className="w-full p-2 rounded bg-white dark:bg-black text-black dark:text-white"
+                />
+              )}
             </div>
           </div>
         </div>
