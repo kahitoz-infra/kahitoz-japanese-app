@@ -15,8 +15,9 @@ import { authFetch } from "../middleware";
 import { toRomaji } from "wanakana";
 
 const KanjiAPI = process.env.NEXT_PUBLIC_API_URL;
+const BOOKMARK_SYNC_API = "https://apizenkanji.kahitoz.com/v1/update_flag";
 
-// ✅ Helper: derive Romaji using wanakana
+// Helper function to derive Romaji using wanakana
 const getRomaji = (onyomi, kunyomi) => {
   const onyomiArr = onyomi ? JSON.parse(onyomi) : [];
   const kunyomiArr = kunyomi ? JSON.parse(kunyomi) : [];
@@ -28,7 +29,7 @@ const getRomaji = (onyomi, kunyomi) => {
   return merged.length > 0 ? merged.join(", ") : "-";
 };
 
-// 🎴 Cherry Blossom Canvas
+// Cherry Blossom Canvas Component
 const CherryBlossomSnowfall = ({ isDarkMode }) => {
   const canvasRef = useRef(null);
 
@@ -91,24 +92,33 @@ const CherryBlossomSnowfall = ({ isDarkMode }) => {
   );
 };
 
-// 🌸 Main Component
+// Main Kanji Cards Component
 export default function KanjiCardsPage() {
   const [kanjiList, setKanjiList] = useState([]);
+  const [filteredKanjiList, setFilteredKanjiList] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
   const [isSoundOn, setIsSoundOn] = useState(true);
   const [bookmarked, setBookmarked] = useState([]);
   const [showSettings, setShowSettings] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [jlptLevel, setJlptLevel] = useState(null);
+  const [sortOrder, setSortOrder] = useState("default");
+  const [showBookmarkedOnly, setShowBookmarkedOnly] = useState(false);
 
+  // Cache keys and duration
   const CACHE_KEY = "cachedKanjiList";
   const CACHE_TIME_KEY = "kanjiCacheTimestamp";
-  const CACHE_DURATION = 12 * 60 * 60 * 1000;
+  const BOOKMARK_CACHE_KEY = "bookmarkedKanji";
+  const BOOKMARK_SYNC_TIME_KEY = "bookmarkSyncTimestamp";
+  const CACHE_DURATION = 12 * 60 * 60 * 1000; // 12 hours
 
+  // Initialize dark mode
   useEffect(() => {
     setIsDarkMode(window.matchMedia("(prefers-color-scheme: dark)").matches);
   }, []);
 
+  // Fetch kanji data and initialize bookmarks
   useEffect(() => {
     async function fetchKanji() {
       try {
@@ -117,6 +127,7 @@ export default function KanjiCardsPage() {
         localStorage.setItem(CACHE_KEY, JSON.stringify(data));
         localStorage.setItem(CACHE_TIME_KEY, Date.now().toString());
         setKanjiList(data);
+        filterAndSortKanji(data, jlptLevel, sortOrder, showBookmarkedOnly);
       } catch (err) {
         console.error("API fetch failed:", err);
       }
@@ -128,67 +139,152 @@ export default function KanjiCardsPage() {
 
     if (cachedData && cacheTime && now - cacheTime < CACHE_DURATION) {
       setKanjiList(cachedData);
+      filterAndSortKanji(cachedData, jlptLevel, sortOrder, showBookmarkedOnly);
     } else {
       fetchKanji();
     }
-  }, []);
 
-  useEffect(() => {
-    const saved = JSON.parse(localStorage.getItem("bookmarkedKanji") || "[]");
-    setBookmarked(saved);
-  }, []);
+    // Initialize bookmarks
+    const savedBookmarks = JSON.parse(localStorage.getItem(BOOKMARK_CACHE_KEY) || "[]");
+    setBookmarked(savedBookmarks);
+    syncBookmarksWithDB(savedBookmarks);
+  }, [jlptLevel, sortOrder, showBookmarkedOnly]);
 
+  // Save bookmarks to localStorage when they change
   useEffect(() => {
-    localStorage.setItem("bookmarkedKanji", JSON.stringify(bookmarked));
+    localStorage.setItem(BOOKMARK_CACHE_KEY, JSON.stringify(bookmarked));
   }, [bookmarked]);
 
-  const currentKanji = kanjiList[currentIndex] || {};
+  // Filter and sort kanji based on JLPT level, sort order, and bookmarked status
+  const filterAndSortKanji = (kanjis, level, order, bookmarkedOnly) => {
+    let filtered = kanjis;
+    
+    // Filter by JLPT level if selected
+    if (level) {
+      filtered = kanjis.filter(kanji => kanji.jlpt_level === level);
+    }
+    
+    // Filter by bookmarked status if enabled
+    if (bookmarkedOnly) {
+      const bookmarkedSet = new Set(bookmarked);
+      filtered = filtered.filter(kanji => bookmarkedSet.has(kanji.kanji));
+    }
+    
+    // Apply sorting
+    let sorted = [...filtered];
+    if (order === "level") {
+      sorted.sort((a, b) => a.jlpt_level - b.jlpt_level);
+    } else if (order === "bookmarked") {
+      const bookmarkedSet = new Set(bookmarked);
+      sorted.sort((a, b) => {
+        const aBookmarked = bookmarkedSet.has(a.kanji) ? 1 : 0;
+        const bBookmarked = bookmarkedSet.has(b.kanji) ? 1 : 0;
+        return bBookmarked - aBookmarked;
+      });
+    }
+    
+    setFilteredKanjiList(sorted);
+    setCurrentIndex(0); // Reset to first card after filtering/sorting
+  };
 
+  // Sync bookmarks with database
+  const syncBookmarksWithDB = async (bookmarks) => {
+    const lastSync = parseInt(localStorage.getItem(BOOKMARK_SYNC_TIME_KEY), 10);
+    const now = Date.now();
+    
+    // Only sync if 12 hours have passed since last sync
+    if (lastSync && now - lastSync < CACHE_DURATION) return;
+
+    try {
+      const response = await authFetch(BOOKMARK_SYNC_API, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          bookmarks: bookmarks,
+        }),
+      });
+
+      if (response.ok) {
+        localStorage.setItem(BOOKMARK_SYNC_TIME_KEY, now.toString());
+      }
+    } catch (err) {
+      console.error("Failed to sync bookmarks:", err);
+    }
+  };
+
+  // Toggle bookmark for current kanji
   const toggleBookmark = () => {
     const k = currentKanji.kanji;
     if (!k) return;
-    setBookmarked((prev) =>
-      prev.includes(k) ? prev.filter((x) => x !== k) : [...prev, k]
-    );
+    
+    const newBookmarked = bookmarked.includes(k) 
+      ? bookmarked.filter((x) => x !== k) 
+      : [...bookmarked, k];
+    
+    setBookmarked(newBookmarked);
+    localStorage.setItem(BOOKMARK_CACHE_KEY, JSON.stringify(newBookmarked));
+    
+    // Immediately sync bookmark change with DB
+    authFetch(BOOKMARK_SYNC_API, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        kanji: k,
+        flag: !bookmarked.includes(k),
+      }),
+    }).catch(err => console.error("Failed to update bookmark:", err));
+
+    // If showing only bookmarked and this was the last one, go to first card
+    if (showBookmarkedOnly && newBookmarked.length === 0) {
+      filterAndSortKanji(kanjiList, jlptLevel, sortOrder, showBookmarkedOnly);
+    }
   };
 
+  // Navigation functions
   const goNext = () => {
-    setCurrentIndex((i) => (i + 1) % kanjiList.length);
+    setCurrentIndex((i) => (i + 1) % filteredKanjiList.length);
     setIsFlipped(false);
   };
 
   const goBack = () => {
-    setCurrentIndex((i) => (i - 1 + kanjiList.length) % kanjiList.length);
+    setCurrentIndex((i) => (i - 1 + filteredKanjiList.length) % filteredKanjiList.length);
     setIsFlipped(false);
   };
 
-const touchStartX = useRef(null);
-const touchEndX = useRef(null);
+  // Touch event handlers for swipe gestures
+  const touchStartX = useRef(null);
+  const touchEndX = useRef(null);
 
-const handleTouchStart = (e) => {
-  touchStartX.current = e.changedTouches[0].screenX;
-};
+  const handleTouchStart = (e) => {
+    touchStartX.current = e.changedTouches[0].screenX;
+  };
 
-const handleTouchEnd = (e) => {
-  touchEndX.current = e.changedTouches[0].screenX;
-  handleSwipeGesture();
-};
+  const handleTouchEnd = (e) => {
+    touchEndX.current = e.changedTouches[0].screenX;
+    handleSwipeGesture();
+  };
 
-const handleSwipeGesture = () => {
-  const threshold = 50; // Minimum distance in px to be considered a swipe
-  const deltaX = touchStartX.current - touchEndX.current;
+  const handleSwipeGesture = () => {
+    const threshold = 50;
+    const deltaX = touchStartX.current - touchEndX.current;
 
-  if (Math.abs(deltaX) > threshold) {
-    if (deltaX > 0) {
-      // Swiped left
-      goNext();
-    } else {
-      // Swiped right
-      goBack();
+    if (Math.abs(deltaX) > threshold) {
+      if (deltaX > 0) {
+        goNext();
+      } else {
+        goBack();
+      }
     }
-  }
-};
+  };
 
+  // Get current kanji
+  const currentKanji = filteredKanjiList[currentIndex] || {};
+
+  // Spinner border color based on dark mode
   const spinnerBorderColor = isDarkMode
     ? "rgba(255, 102, 0, 0.8)"
     : "rgba(222, 49, 99, 0.8)";
@@ -215,24 +311,29 @@ const handleSwipeGesture = () => {
       </div>
 
       {/* Flip Card or Loader */}
-      {kanjiList.length === 0 ? (
-<div className="w-full flex justify-center items-center h-[26rem] bg-white dark:bg-[#292b2d]">
-  <div
-    className="w-12 h-12 border-4 rounded-full animate-spin border-b-transparent"
-    style={{
-      borderColor: spinnerBorderColor,
-      borderBottomColor: "transparent",
-    }}
-  />
-</div>
+      {filteredKanjiList.length === 0 ? (
+        <div className="w-full flex justify-center items-center h-[26rem] bg-white dark:bg-[#292b2d]">
+          <div
+            className="w-12 h-12 border-4 rounded-full animate-spin border-b-transparent"
+            style={{
+              borderColor: spinnerBorderColor,
+              borderBottomColor: "transparent",
+            }}
+          />
+          {showBookmarkedOnly && bookmarked.length === 0 && (
+            <div className="absolute text-center">
+              No bookmarked kanji found. Bookmark some kanji to see them here.
+            </div>
+          )}
+        </div>
       ) : (
         <div
-  className="relative w-full max-w-[360px] h-[26rem] my-8"
-  style={{ perspective: "1000px" }}
-  onClick={() => setIsFlipped(!isFlipped)}
-  onTouchStart={handleTouchStart}
-  onTouchEnd={handleTouchEnd}
->
+          className="relative w-full max-w-[360px] h-[26rem] my-8"
+          style={{ perspective: "1000px" }}
+          onClick={() => setIsFlipped(!isFlipped)}
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+        >
           <div
             className={`relative w-full h-full transition-transform duration-500`}
             style={{
@@ -240,7 +341,7 @@ const handleSwipeGesture = () => {
               transform: isFlipped ? "rotateY(180deg)" : "rotateY(0deg)",
             }}
           >
-            {/* Front */}
+            {/* Front of Card */}
             <div
               className="absolute w-full h-full flex items-center justify-center text-[10rem] rounded-2xl border-2 bg-white dark:bg-[#292b2d]"
               style={{
@@ -252,7 +353,7 @@ const handleSwipeGesture = () => {
               {currentKanji.kanji}
             </div>
 
-            {/* Back */}
+            {/* Back of Card */}
             <div
               className="absolute w-full h-full flex flex-col justify-center items-center text-center p-4 rounded-2xl border-2 bg-white dark:bg-[#292b2d]"
               style={{
@@ -271,6 +372,9 @@ const handleSwipeGesture = () => {
               <div className="mb-2">
                 <strong>Romaji:</strong> {getRomaji(currentKanji.onyomi, currentKanji.kunyomi)}
               </div>
+              <div className="mb-2">
+                <strong>JLPT Level:</strong> {currentKanji.jlpt_level ? `N${currentKanji.jlpt_level}` : "-"}
+              </div>
               <div>
                 <strong>Meaning:</strong> {currentKanji.english || "-"}
               </div>
@@ -280,13 +384,13 @@ const handleSwipeGesture = () => {
       )}
 
       {/* Navigation Arrows */}
-      {kanjiList.length > 0 && (
+      {filteredKanjiList.length > 0 && (
         <div className="flex justify-center items-center gap-8 mt-4">
           <button onClick={goBack} className="bg-[#de3163] dark:bg-[#FF6600] text-white p-3 rounded-full">
             <ArrowLeft />
           </button>
           <div className="text-xl font-bold">
-            {`${currentIndex + 1} / ${kanjiList.length}`}
+            {`${currentIndex + 1} / ${filteredKanjiList.length}`}
           </div>
           <button onClick={goNext} className="bg-[#de3163] dark:bg-[#FF6600] text-white p-3 rounded-full">
             <ArrowRight />
@@ -302,9 +406,54 @@ const handleSwipeGesture = () => {
               ✕
             </button>
             <h2 className="text-lg font-bold mb-4">Settings</h2>
-            <div className="space-y-2">
-              <p>Option 1: View Mode</p>
-              <p>Option 2: Shuffle</p>
+            <div className="space-y-4">
+              <div>
+                <label className="block mb-2">Filter by JLPT Level:</label>
+                <select 
+                  value={jlptLevel || ''}
+                  onChange={(e) => {
+                    const level = e.target.value ? parseInt(e.target.value, 10) : null;
+                    setJlptLevel(level);
+                    filterAndSortKanji(kanjiList, level, sortOrder, showBookmarkedOnly);
+                  }}
+                  className="w-full p-2 border rounded dark:bg-[#292b2d]"
+                >
+                  <option value="">All Levels</option>
+                  <option value="5">N5</option>
+                  <option value="4">N4</option>
+                  <option value="3">N3</option>
+                  <option value="2">N2</option>
+                  <option value="1">N1</option>
+                </select>
+              </div>
+              <div>
+                <label className="block mb-2">Sort By:</label>
+                <select 
+                  value={sortOrder}
+                  onChange={(e) => {
+                    setSortOrder(e.target.value);
+                    filterAndSortKanji(kanjiList, jlptLevel, e.target.value, showBookmarkedOnly);
+                  }}
+                  className="w-full p-2 border rounded dark:bg-[#292b2d]"
+                >
+                  <option value="default">Default Order</option>
+                  <option value="level">By JLPT Level</option>
+                  <option value="bookmarked">Bookmarked First</option>
+                </select>
+              </div>
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  id="bookmarkedOnly"
+                  checked={showBookmarkedOnly}
+                  onChange={(e) => {
+                    setShowBookmarkedOnly(e.target.checked);
+                    filterAndSortKanji(kanjiList, jlptLevel, sortOrder, e.target.checked);
+                  }}
+                  className="mr-2"
+                />
+                <label htmlFor="bookmarkedOnly">Show Bookmarked Only</label>
+              </div>
             </div>
           </div>
         </div>
