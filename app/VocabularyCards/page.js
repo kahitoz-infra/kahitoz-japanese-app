@@ -16,13 +16,6 @@ import { toHiragana } from "wanakana";
 
 const VocabAPI = process.env.NEXT_PUBLIC_API_URL;
 
-const LS_KEYS = {
-  selectedLabel: "selectedLabel",
-  bookmarksOnly: "bookmarksOnly",
-  randomizeMode: "randomizeMode",
-  customGroupSize: "customGroupSize",
-};
-
 const CherryBlossomSnowfall = () => {
   const canvasRef = useRef(null);
   const [isDark, setIsDark] = useState(false);
@@ -36,11 +29,9 @@ const CherryBlossomSnowfall = () => {
     };
 
     checkDarkMode();
-
     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
     const handleChange = (e) => setIsDark(e.matches);
     mediaQuery.addEventListener("change", handleChange);
-
     return () => mediaQuery.removeEventListener("change", handleChange);
   }, []);
 
@@ -103,7 +94,6 @@ const CherryBlossomSnowfall = () => {
       canvas.height = height;
     };
     window.addEventListener("resize", handleResize);
-
     return () => window.removeEventListener("resize", handleResize);
   }, [isDark]);
 
@@ -125,15 +115,16 @@ export default function VocabularyCardsPage() {
   const [isDark, setIsDark] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [tags, setTags] = useState(["N4", "N5"]);
-  const [selectedLabel, setSelectedLabel] = useState("N5");
-  const [showBookmarksOnly, setShowBookmarksOnly] = useState(false);
-  const [randomizeMode, setRandomizeMode] = useState("None");
-  const [customGroupSize, setCustomGroupSize] = useState("");
+  const [shuffle, setShuffle] = useState("Off");
+  const [filter, setFilter] = useState("Show All");
+  const [randomOrder, setRandomOrder] = useState("Off");
 
   const CACHE_KEY = "cachedVocabList";
   const CACHE_TIME_KEY = "vocabCacheTimestamp";
   const CACHE_DURATION = 12 * 60 * 60 * 1000;
+
+  const touchStartX = useRef(null);
+  const touchEndX = useRef(null);
 
   useEffect(() => {
     const mql = window.matchMedia("(prefers-color-scheme: dark)");
@@ -172,13 +163,6 @@ export default function VocabularyCardsPage() {
     } else {
       fetchVocab();
     }
-
-    setSelectedLabel(localStorage.getItem(LS_KEYS.selectedLabel) || "N5");
-    setShowBookmarksOnly(
-      localStorage.getItem(LS_KEYS.bookmarksOnly) === "true"
-    );
-    setRandomizeMode(localStorage.getItem(LS_KEYS.randomizeMode) || "None");
-    setCustomGroupSize(localStorage.getItem(LS_KEYS.customGroupSize) || "");
   }, []);
 
   useEffect(() => {
@@ -190,18 +174,36 @@ export default function VocabularyCardsPage() {
     localStorage.setItem("bookmarkedVocab", JSON.stringify(bookmarked));
   }, [bookmarked]);
 
-  const filteredVocabList = vocabList.filter((item) => {
-    if (showBookmarksOnly) {
-      return bookmarked.includes(item.word);
-    }
-    return true;
-  });
-
   useEffect(() => {
     setCurrentIndex(0);
-  }, [showBookmarksOnly, filteredVocabList]);
+  }, [filter]);
 
-  const currentVocab = filteredVocabList[currentIndex] || {};
+  useEffect(() => {
+    if (shuffle === "On" || randomOrder === "On") {
+      const shuffled = [...vocabList].sort(() => 0.5 - Math.random());
+      setVocabList(shuffled);
+    }
+  }, [shuffle, randomOrder]);
+
+  const filteredList =
+    filter === "Only Bookmarked"
+      ? vocabList.filter((v) => bookmarked.includes(v.word))
+      : vocabList;
+
+  const handleTouchStart = (e) => {
+    touchStartX.current = e.changedTouches[0].screenX;
+  };
+
+  const handleTouchEnd = (e) => {
+    touchEndX.current = e.changedTouches[0].screenX;
+    const deltaX = touchStartX.current - touchEndX.current;
+    if (Math.abs(deltaX) > 50) {
+      if (deltaX > 0) goNext();
+      else goBack();
+    }
+  };
+
+  const currentVocab = filteredList[currentIndex] || {};
   const themeColor = isDark ? "#FF6600" : "#de3163";
 
   const toggleBookmark = () => {
@@ -213,39 +215,18 @@ export default function VocabularyCardsPage() {
   };
 
   const goNext = () => {
-    setCurrentIndex((i) => (i + 1) % filteredVocabList.length);
+    setCurrentIndex((i) => (i + 1) % filteredList.length);
     setIsFlipped(false);
   };
 
   const goBack = () => {
-    setCurrentIndex((i) => (i - 1 + filteredVocabList.length) % filteredVocabList.length);
+    setCurrentIndex((i) => (i - 1 + filteredList.length) % filteredList.length);
     setIsFlipped(false);
-  };
-
-  const touchStartX = useRef(null);
-  const touchEndX = useRef(null);
-  const handleTouchStart = (e) => {
-    touchStartX.current = e.changedTouches[0].screenX;
-  };
-  const handleTouchEnd = (e) => {
-    touchEndX.current = e.changedTouches[0].screenX;
-    handleSwipeGesture();
-  };
-  const handleSwipeGesture = () => {
-    const threshold = 50;
-    const deltaX = touchStartX.current - touchEndX.current;
-    if (Math.abs(deltaX) > threshold) {
-      deltaX > 0 ? goNext() : goBack();
-    }
   };
 
   if (loading) {
     return (
-      <div
-        className={`flex items-center justify-center min-h-screen ${
-          isDark ? "bg-[#292b2d]" : "bg-white"
-        }`}
-      >
+      <div className={`flex items-center justify-center min-h-screen ${isDark ? "bg-[#292b2d]" : "bg-white"}`}>
         <div
           className="w-16 h-16 border-4 border-dashed rounded-full animate-spin"
           style={{
@@ -259,41 +240,18 @@ export default function VocabularyCardsPage() {
   }
 
   return (
-    <div
-      className={`min-h-screen flex flex-col items-center justify-center ${
-        isDark ? "bg-[#292b2d] text-gray-200" : "bg-white text-black"
-      }`}
-    >
+    <div className={`min-h-screen flex flex-col items-center justify-center ${isDark ? "bg-[#292b2d] text-gray-200" : "bg-white text-black"}`}>
       <CherryBlossomSnowfall />
-      <Link href="/Learn" className="absolute top-4 left-4 text-lg font-bold">
-        {`< BACK`}
-      </Link>
+      <Link href="/Learn" className="absolute top-4 left-4 text-lg font-bold">{`< BACK`}</Link>
 
       <div className="absolute top-4 right-4 flex gap-3">
-        <button
-          onClick={() => setIsSoundOn(!isSoundOn)}
-          className="p-2 rounded-full bg-gray-300 dark:bg-white"
-        >
-          {isSoundOn ? (
-            <Volume2 className="text-black" />
-          ) : (
-            <VolumeX className="text-black" />
-          )}
+        <button onClick={() => setIsSoundOn(!isSoundOn)} className="p-2 rounded-full bg-gray-300 dark:bg-white">
+          {isSoundOn ? <Volume2 className="text-black" /> : <VolumeX className="text-black" />}
         </button>
-        <button
-          onClick={toggleBookmark}
-          className="p-2 rounded-full bg-gray-300 dark:bg-white"
-        >
-          {bookmarked.includes(currentVocab.word) ? (
-            <BookmarkCheck className="text-black" />
-          ) : (
-            <Bookmark className="text-black" />
-          )}
+        <button onClick={toggleBookmark} className="p-2 rounded-full bg-gray-300 dark:bg-white">
+          {bookmarked.includes(currentVocab.word) ? <BookmarkCheck className="text-black" /> : <Bookmark className="text-black" />}
         </button>
-        <button
-          onClick={() => setShowSettings(true)}
-          className="p-2 rounded-full bg-gray-300 dark:bg-white"
-        >
+        <button onClick={() => setShowSettings(true)} className="p-2 rounded-full bg-gray-300 dark:bg-white">
           <Cog6ToothIcon className="text-black w-5 h-5" />
         </button>
       </div>
@@ -334,14 +292,9 @@ export default function VocabularyCardsPage() {
             }}
           >
             <div className="text-2xl space-y-2">
-              <div>
-                <strong>Meaning:</strong> {currentVocab.meaning || "-"}
-              </div>
+              <div><strong>Meaning:</strong> {currentVocab.meaning || "-"}</div>
               {currentVocab.other_readings?.length > 0 && (
-                <div>
-                  <strong>Other Readings:</strong>{" "}
-                  {currentVocab.other_readings.join(", ")}
-                </div>
+                <div><strong>Other Readings:</strong> {currentVocab.other_readings.join(", ")}</div>
               )}
             </div>
           </div>
@@ -349,23 +302,9 @@ export default function VocabularyCardsPage() {
       </div>
 
       <div className="flex justify-center items-center gap-8 mt-4">
-        <button
-          onClick={goBack}
-          className="bg-[#de3163] dark:bg-[#FF6600] text-white p-3 rounded-full"
-        >
-          <ArrowLeft />
-        </button>
-        <div className="text-xl font-bold">
-          {filteredVocabList.length
-            ? `${currentIndex + 1} / ${filteredVocabList.length}`
-            : "No items"}
-        </div>
-        <button
-          onClick={goNext}
-          className="bg-[#de3163] dark:bg-[#FF6600] text-white p-3 rounded-full"
-        >
-          <ArrowRight />
-        </button>
+        <button onClick={goBack} className="bg-[#de3163] dark:bg-[#FF6600] text-white p-3 rounded-full"><ArrowLeft /></button>
+        <div className="text-xl font-bold">{filteredList.length ? `${currentIndex + 1} / ${filteredList.length}` : "No cards"}</div>
+        <button onClick={goNext} className="bg-[#de3163] dark:bg-[#FF6600] text-white p-3 rounded-full"><ArrowRight /></button>
       </div>
 
       {showSettings && (
@@ -380,88 +319,38 @@ export default function VocabularyCardsPage() {
             <h2 className="text-lg font-bold mb-4">Settings</h2>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium">Level</label>
+                <label className="block text-sm font-medium">Shuffle Cards</label>
                 <select
-                  value={selectedLabel}
-                  onChange={(e) => {
-                    setSelectedLabel(e.target.value);
-                    localStorage.setItem(
-                      LS_KEYS.selectedLabel,
-                      e.target.value
-                    );
-                  }}
-                  className="w-full p-2 rounded bg-white dark:bg-black text-black dark:text-white"
+                  value={shuffle}
+                  onChange={(e) => setShuffle(e.target.value)}
+                  className="w-full p-2 border border-gray-300 rounded-md dark:bg-[#1f1f1f] dark:border-gray-600"
                 >
-                  <option value="N4">N4</option>
-                  <option value="N5">N5</option>
-                  {tags
-                    .filter((tag) => !["N4", "N5"].includes(tag))
-                    .map((tag) => (
-                      <option key={tag} value={tag}>
-                        {tag}
-                      </option>
-                    ))}
+                  <option>Off</option>
+                  <option>On</option>
                 </select>
               </div>
-
               <div>
-                <label className="block text-sm font-medium">Bookmarks</label>
+                <label className="block text-sm font-medium">Bookmark Filter</label>
                 <select
-                  value={showBookmarksOnly ? "Bookmarked" : "All"}
-                  onChange={(e) => {
-                    const val = e.target.value === "Bookmarked";
-                    setShowBookmarksOnly(val);
-                    localStorage.setItem(
-                      LS_KEYS.bookmarksOnly,
-                      val.toString()
-                    );
-                  }}
-                  className="w-full p-2 rounded bg-white dark:bg-black text-black dark:text-white"
+                  value={filter}
+                  onChange={(e) => setFilter(e.target.value)}
+                  className="w-full p-2 border border-gray-300 rounded-md dark:bg-[#1f1f1f] dark:border-gray-600"
                 >
-                  <option value="All">All</option>
-                  <option value="Bookmarked">Bookmarked</option>
+                  <option>Show All</option>
+                  <option>Only Bookmarked</option>
                 </select>
               </div>
-
               <div>
-                <label className="block text-sm font-medium">Randomize</label>
+                <label className="block text-sm font-medium">Random Order</label>
                 <select
-                  value={randomizeMode}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    setRandomizeMode(val);
-                    localStorage.setItem(LS_KEYS.randomizeMode, val);
-                    if (val !== "Custom") {
-                      setCustomGroupSize("");
-                      localStorage.removeItem(LS_KEYS.customGroupSize);
-                    }
-                  }}
-                  className="w-full p-2 rounded bg-white dark:bg-black text-black dark:text-white"
+                  value={randomOrder}
+                  onChange={(e) => setRandomOrder(e.target.value)}
+                  className="w-full p-2 border border-gray-300 rounded-md dark:bg-[#1f1f1f] dark:border-gray-600"
                 >
-                  <option value="None">Stop Randomization</option>
-                  <option value="All">Randomize All</option>
-                  <option value="5">Groups of 5</option>
-                  <option value="10">Groups of 10</option>
-                  <option value="15">Groups of 15</option>
-                  <option value="Custom">Custom Group</option>
+                  <option>Off</option>
+                  <option>On</option>
                 </select>
               </div>
-
-              {randomizeMode === "Custom" && (
-                <input
-                  type="text"
-                  placeholder="Enter group size"
-                  value={customGroupSize}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    if (val === "" || /^\d+$/.test(val)) {
-                      setCustomGroupSize(val);
-                      localStorage.setItem(LS_KEYS.customGroupSize, val);
-                    }
-                  }}
-                  className="w-full p-2 rounded bg-white dark:bg-black text-black dark:text-white"
-                />
-              )}
             </div>
           </div>
         </div>
