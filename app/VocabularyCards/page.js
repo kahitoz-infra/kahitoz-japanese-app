@@ -42,42 +42,52 @@ export default function VocabularyCardsPage() {
   const syncTimeoutRef = useRef(null);
   const touchStartX = useRef(0);
 
-  const syncBookmarksWithAPI = async (wordsArray, actionType) => {
-    if (!wordsArray?.length) return;
-    if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
-
-    try {
+ async function syncBookmarksWithAPI(wordIdArray, actionType) {
+  try {
+    for (const t_id of wordIdArray) {
       const res = await authFetch(BOOKMARK_SYNC_API, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ words: wordsArray, action: actionType }),
+        body: JSON.stringify({
+          operation_type: actionType === "add", // true for add/bookmark, false for remove/unbookmark
+          t_id,
+        }),
       });
 
-      if (res.ok) {
-        localStorage.setItem("lastBookmarkSync", Date.now().toString());
-      } else {
+      if (!res.ok) {
         const txt = await res.text();
         throw new Error(`HTTP ${res.status}: ${txt}`);
       }
-    } catch (e) {
-      console.error("Bookmark sync failed:", e);
-      syncTimeoutRef.current = setTimeout(
-        () => syncBookmarksWithAPI(wordsArray, actionType),
-        5 * 60 * 1000
-      );
     }
-  };
 
-  const toggleBookmark = () => {
-    const w = currentVocab.word;
-    if (!w) return;
+    localStorage.setItem("lastBookmarkSync", Date.now().toString());
+  } catch (e) {
+    console.error("Bookmark sync failed:", e);
+    syncTimeoutRef.current = setTimeout(
+      () => syncBookmarksWithAPI(wordIdArray, actionType),
+      5 * 60 * 1000
+    );
+  }
+}
 
-    const isBook = bookmarked.includes(w);
-    const newList = isBook ? bookmarked.filter(x => x !== w) : [...bookmarked, w];
-    setBookmarked(newList);
-    localStorage.setItem("bookmarkedVocab", JSON.stringify(newList));
-    syncBookmarksWithAPI([w], isBook ? "remove" : "add");
-  };
+
+const toggleBookmark = () => {
+  const word = currentVocab.word;
+  const id = currentVocab.index;
+  if (!word || id == null) return;
+
+  const isBookmarked = bookmarked.includes(id);
+
+  const updatedList = isBookmarked
+    ? bookmarked.filter(x => x !== id)
+    : [...bookmarked, id];
+
+  setBookmarked(updatedList);
+  localStorage.setItem("bookmarkedVocab", JSON.stringify(updatedList));
+
+  syncBookmarksWithAPI([id], isBookmarked ? "remove" : "add");
+};
+
 
   const checkAndSyncBookmarks = savedList => {
     const lastSync = +localStorage.getItem("lastBookmarkSync") || 0;
@@ -252,7 +262,7 @@ export default function VocabularyCardsPage() {
           {isSoundOn ? <Volume2 className="text-black" /> : <VolumeX className="text-black" />}
         </button>
         <button onClick={toggleBookmark} className="p-2 rounded-full bg-gray-300 dark:bg-white">
-          {bookmarked.includes(currentVocab.word) ? (
+          {bookmarked.includes(currentVocab.index) ? (
             <BookmarkCheck className="text-black" />
           ) : (
             <Bookmark className="text-black" />
@@ -346,6 +356,8 @@ export default function VocabularyCardsPage() {
         </div>
       )}
 
+
+     
       <div
         className="relative w-full max-w-xs h-96 my-8"
         style={{ perspective: "1000px" }}
@@ -392,8 +404,10 @@ export default function VocabularyCardsPage() {
               </div>
             </div>
           </div>
+          
         </div>
       </div>
+
 
       {/* Navigation / Controls */}
       <div className="flex items-center gap-8 mt-4">
