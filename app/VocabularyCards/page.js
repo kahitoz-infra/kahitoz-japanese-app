@@ -8,25 +8,22 @@ import {
   VolumeX,
   Bookmark,
   BookmarkCheck,
+  Shuffle,
 } from "lucide-react";
 import Link from "next/link";
 import { Cog6ToothIcon } from "@heroicons/react/24/solid";
 import { authFetch } from "../middleware";
-import { toHiragana } from "wanakana";
 
 const VocabAPI = process.env.NEXT_PUBLIC_API_URL;
 const BOOKMARK_SYNC_API = "https://apizenkanji.kahitoz.com/v1/update_vocab_flag";
-const BOOKMARK_SYNC_INTERVAL = 12 * 60 * 60 * 1000; // 12 hours
 const CACHE_KEY = "cachedVocabList";
 const CACHE_TIME_KEY = "vocabCacheTimestamp";
 const CACHE_DURATION = 12 * 60 * 60 * 1000;
-
-const CherryBlossomSnowfall = () => {
-  // ... (CherryBlossomSnowfall component remains exactly the same)
-};
+const BOOKMARK_SYNC_INTERVAL = CACHE_DURATION;
 
 export default function VocabularyCardsPage() {
   const [vocabList, setVocabList] = useState([]);
+  const [filteredVocabList, setFilteredVocabList] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
   const [isSoundOn, setIsSoundOn] = useState(true);
@@ -34,79 +31,174 @@ export default function VocabularyCardsPage() {
   const [isDark, setIsDark] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [shuffle, setShuffle] = useState("Off");
-  const [filter, setFilter] = useState("Show All");
-  const [randomOrder, setRandomOrder] = useState("Off");
-  const [jlptLevel, setJlptLevel] = useState("All");
+
+  const [jlptFilters, setJlptFilters] = useState(["N5", "N4", "N3", "N2", "N1"]);
   const [sortBy, setSortBy] = useState("Default");
-  const [lastSyncTime, setLastSyncTime] = useState(0);
+  const [showBookmarkedOnly, setShowBookmarkedOnly] = useState(false);
+  const [randomizeLimit, setRandomizeLimit] = useState(null);
+  const [customLimit, setCustomLimit] = useState("");
+  const [isRandomized, setIsRandomized] = useState(false);
+
   const syncTimeoutRef = useRef(null);
+  const touchStartX = useRef(0);
 
-  const touchStartX = useRef(null);
-  const touchEndX = useRef(null);
+  const syncBookmarksWithAPI = async (wordsArray, actionType) => {
+    if (!wordsArray?.length) return;
+    if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
 
-  // Calculate filtered list first
-  const filteredList = vocabList
-    .filter((v) => {
-      if (filter === "Only Bookmarked") return bookmarked.includes(v.word);
-      return true;
-    })
-    .filter((v) => {
-      if (jlptLevel === "All") return true;
-      return v.jlpt_level === parseInt(jlptLevel);
-    })
-    .sort((a, b) => {
-      if (sortBy === "Default") return 0;
-      if (sortBy === "JLPT Level") return (a.jlpt_level || 0) - (b.jlpt_level || 0);
-      if (sortBy === "Alphabetical") return a.word.localeCompare(b.word);
-      if (sortBy === "Bookmarked First") {
-        const aBookmarked = bookmarked.includes(a.word);
-        const bBookmarked = bookmarked.includes(b.word);
-        return aBookmarked === bBookmarked ? 0 : aBookmarked ? -1 : 1;
+    try {
+      const res = await authFetch(BOOKMARK_SYNC_API, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ words: wordsArray, action: actionType }),
+      });
+
+      if (res.ok) {
+        localStorage.setItem("lastBookmarkSync", Date.now().toString());
+      } else {
+        const txt = await res.text();
+        throw new Error(`HTTP ${res.status}: ${txt}`);
       }
-      return 0;
-    });
+    } catch (e) {
+      console.error("Bookmark sync failed:", e);
+      syncTimeoutRef.current = setTimeout(
+        () => syncBookmarksWithAPI(wordsArray, actionType),
+        5 * 60 * 1000
+      );
+    }
+  };
 
-  const currentVocab = filteredList[currentIndex] || {};
+  const toggleBookmark = () => {
+    const w = currentVocab.word;
+    if (!w) return;
+
+    const isBook = bookmarked.includes(w);
+    const newList = isBook ? bookmarked.filter(x => x !== w) : [...bookmarked, w];
+    setBookmarked(newList);
+    localStorage.setItem("bookmarkedVocab", JSON.stringify(newList));
+    syncBookmarksWithAPI([w], isBook ? "remove" : "add");
+  };
+
+  const checkAndSyncBookmarks = savedList => {
+    const lastSync = +localStorage.getItem("lastBookmarkSync") || 0;
+    if (Date.now() - lastSync > BOOKMARK_SYNC_INTERVAL && savedList.length) {
+      syncBookmarksWithAPI(savedList, "add");
+    }
+  };
+
+  const toggleRandomize = () => setIsRandomized(v => !v);
+
+  const applyCustomLimit = () => {
+    const x = parseInt(customLimit, 10);
+    if (!isNaN(x) && x > 0) {
+      setRandomizeLimit(x);
+    }
+    setCustomLimit("");
+  };
+
+  const handleJlptCheckbox = level =>
+    setJlptFilters(fs =>
+      fs.includes(level) ? fs.filter(x => x !== level) : [...fs, level]
+    );
+
+  const handleTouchStart = e => (touchStartX.current = e.changedTouches[0].screenX);
+  const handleTouchEnd = e => {
+    const delta = touchStartX.current - e.changedTouches[0].screenX;
+    if (Math.abs(delta) > 50) (delta > 0 ? goNext : goBack)();
+  };
+
+  const goNext = () => {
+    setCurrentIndex(i => (i + 1) % filteredVocabList.length);
+    setIsFlipped(false);
+  };
+
+  const goBack = () => {
+    setCurrentIndex(i => (i - 1 + filteredVocabList.length) % filteredVocabList.length);
+    setIsFlipped(false);
+  };
+
+  useEffect(() => {
+    let arr = [...vocabList];
+
+    if (showBookmarkedOnly) {
+      const setB = new Set(bookmarked);
+      arr = arr.filter(v => setB.has(v.word));
+    }
+
+    if (jlptFilters.length) {
+      arr = arr.filter(v => jlptFilters.includes(v.level));
+    }
+
+    if (sortBy === "By Level") {
+      const order = { N5: 5, N4: 4, N3: 3, N2: 2, N1: 1 };
+      arr.sort((a, b) => (order[b.level] || 0) - (order[a.level] || 0));
+    } else if (sortBy === "Bookmarked First") {
+      const setB = new Set(bookmarked);
+      arr.sort((a, b) => (setB.has(b.word) ? 1 : 0) - (setB.has(a.word) ? 1 : 0));
+    }
+
+    if (isRandomized && randomizeLimit) {
+      const firstPart = arr.slice(0, randomizeLimit);
+      const rest = arr.slice(randomizeLimit);
+      for (let i = firstPart.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [firstPart[i], firstPart[j]] = [firstPart[j], firstPart[i]];
+      }
+      arr = [...firstPart, ...rest];
+    }
+
+    setFilteredVocabList(arr);
+    setCurrentIndex(0);
+  }, [
+    vocabList,
+    bookmarked,
+    showBookmarkedOnly,
+    jlptFilters,
+    sortBy,
+    isRandomized,
+    randomizeLimit,
+  ]);
+
+  const currentVocab = filteredVocabList[currentIndex] || {};
   const themeColor = isDark ? "#FF6600" : "#de3163";
 
-  // All useEffect hooks
   useEffect(() => {
     const mql = window.matchMedia("(prefers-color-scheme: dark)");
     setIsDark(mql.matches);
-    const listener = (e) => setIsDark(e.matches);
+    const listener = e => setIsDark(e.matches);
     mql.addEventListener("change", listener);
     return () => mql.removeEventListener("change", listener);
   }, []);
 
   useEffect(() => {
-    async function fetchVocab() {
+    async function load() {
       try {
-        const response = await authFetch(`${VocabAPI}/flagged_vocab`);
-        const data = await response.json();
-        const enrichedData = data.map((item) => ({
-          ...item,
-          hiragana: toHiragana(item.word),
+        const resp = await authFetch(`${VocabAPI}/flagged_vocab`);
+        const data = await resp.json();
+        const enriched = data.map(item => ({
+          word: item.word,
+          level: item.level,
+          meaning: item.meaning,
+          furigana: item.furigana,
         }));
-        localStorage.setItem(CACHE_KEY, JSON.stringify(enrichedData));
-        localStorage.setItem(CACHE_TIME_KEY, Date.now().toString());
-        setVocabList(enrichedData);
-        setLoading(false);
-      } catch (err) {
-        console.error("API fetch failed:", err);
-        setLoading(false);
+        localStorage.setItem(CACHE_KEY, JSON.stringify(enriched));
+        localStorage.setItem(CACHE_TIME_KEY, `${Date.now()}`);
+        setVocabList(enriched);
+      } catch (e) {
+        console.error("Fetch vocab failed:", e);
+        const cached = JSON.parse(localStorage.getItem(CACHE_KEY) || "[]");
+        setVocabList(cached);
       }
+      setLoading(false);
     }
 
-    const cacheTime = parseInt(localStorage.getItem(CACHE_TIME_KEY), 10);
-    const now = Date.now();
-    const cachedData = JSON.parse(localStorage.getItem(CACHE_KEY));
-
-    if (cachedData && cacheTime && now - cacheTime < CACHE_DURATION) {
-      setVocabList(cachedData);
+    const ct = +localStorage.getItem(CACHE_TIME_KEY) || 0;
+    if (Date.now() - ct < CACHE_DURATION) {
+      const cached = JSON.parse(localStorage.getItem(CACHE_KEY) || "[]");
+      setVocabList(cached);
       setLoading(false);
     } else {
-      fetchVocab();
+      load();
     }
   }, []);
 
@@ -118,129 +210,18 @@ export default function VocabularyCardsPage() {
 
   useEffect(() => {
     localStorage.setItem("bookmarkedVocab", JSON.stringify(bookmarked));
-    
-    if (bookmarked.length > 0 || lastSyncTime > 0) {
-      syncBookmarksWithAPI();
+    if (bookmarked.length) {
+      syncBookmarksWithAPI(bookmarked, "add");
     }
   }, [bookmarked]);
 
-  useEffect(() => {
-    setCurrentIndex(0);
-  }, [filter, jlptLevel, sortBy]);
-
-  useEffect(() => {
-    if (shuffle === "On" || randomOrder === "On") {
-      const shuffled = [...vocabList].sort(() => 0.5 - Math.random());
-      setVocabList(shuffled);
-    }
-  }, [shuffle, randomOrder]);
-
-  // Helper functions
-  const checkAndSyncBookmarks = (localBookmarks) => {
-    const lastSync = parseInt(localStorage.getItem("lastBookmarkSync") || "0", 10);
-    setLastSyncTime(lastSync);
-    const now = Date.now();
-    
-    if (now - lastSync > BOOKMARK_SYNC_INTERVAL) {
-      syncBookmarksWithAPI(localBookmarks);
-    }
-  };
-
-  const syncBookmarksWithAPI = async (bookmarksToSync = null) => {
-    const bookmarks = bookmarksToSync || bookmarked;
-    
-    if (bookmarks.length === 0) return;
-
-    if (syncTimeoutRef.current) {
-      clearTimeout(syncTimeoutRef.current);
-    }
-
-    try {
-      const response = await authFetch(BOOKMARK_SYNC_API, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          words: bookmarks,
-        }),
-      });
-
-      if (response.ok) {
-        const now = Date.now();
-        localStorage.setItem("lastBookmarkSync", now.toString());
-        setLastSyncTime(now);
-      } else {
-        syncTimeoutRef.current = setTimeout(() => {
-          syncBookmarksWithAPI(bookmarks);
-        }, 5 * 60 * 1000);
-      }
-    } catch (error) {
-      console.error("Bookmark sync failed:", error);
-      syncTimeoutRef.current = setTimeout(() => {
-        syncBookmarksWithAPI(bookmarks);
-      }, 5 * 60 * 1000);
-    }
-  };
-
-  const toggleBookmark = async () => {
-    const v = currentVocab.word;
-    if (!v) return;
-    
-    const newBookmarks = bookmarked.includes(v)
-      ? bookmarked.filter((x) => x !== v)
-      : [...bookmarked, v];
-    
-    setBookmarked(newBookmarks);
-
-    try {
-      const response = await authFetch(BOOKMARK_SYNC_API, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          words: [v],
-          action: bookmarked.includes(v) ? "remove" : "add",
-        }),
-      });
-
-      if (response.ok) {
-        const now = Date.now();
-        localStorage.setItem("lastBookmarkSync", now.toString());
-        setLastSyncTime(now);
-      }
-    } catch (error) {
-      console.error("Immediate bookmark update failed:", error);
-    }
-  };
-
-  const handleTouchStart = (e) => {
-    touchStartX.current = e.changedTouches[0].screenX;
-  };
-
-  const handleTouchEnd = (e) => {
-    touchEndX.current = e.changedTouches[0].screenX;
-    const deltaX = touchStartX.current - touchEndX.current;
-    if (Math.abs(deltaX) > 50) {
-      if (deltaX > 0) goNext();
-      else goBack();
-    }
-  };
-
-  const goNext = () => {
-    setCurrentIndex((i) => (i + 1) % filteredList.length);
-    setIsFlipped(false);
-  };
-
-  const goBack = () => {
-    setCurrentIndex((i) => (i - 1 + filteredList.length) % filteredList.length);
-    setIsFlipped(false);
-  };
-
   if (loading) {
     return (
-      <div className={`flex items-center justify-center min-h-screen ${isDark ? "bg-[#292b2d]" : "bg-white"}`}>
+      <div
+        className={`flex items-center justify-center min-h-screen ${
+          isDark ? "bg-[#292b2d]" : "bg-white"
+        }`}
+      >
         <div
           className="w-16 h-16 border-4 border-dashed rounded-full animate-spin"
           style={{
@@ -248,43 +229,138 @@ export default function VocabularyCardsPage() {
               ? "#FF6600 transparent #FF6600 transparent"
               : "#de3163 transparent #de3163 transparent",
           }}
-        ></div>
+        />
       </div>
     );
   }
 
-  // JSX return
   return (
-    <div className={`min-h-screen flex flex-col items-center justify-center ${isDark ? "bg-[#292b2d] text-gray-200" : "bg-white text-black"}`}>
-      <CherryBlossomSnowfall />
-      <Link href="/Learn" className="absolute top-4 left-4 text-lg font-bold">{`< BACK`}</Link>
-
+    <div
+      className={`min-h-screen flex flex-col items-center justify-center ${
+        isDark ? "bg-[#292b2d] text-gray-200" : "bg-white text-black"
+      }`}
+    >
+      <canvas /* Cherry blossoms in the background */ />
+      <Link href="/Learn" className="absolute top-4 left-4 text-lg font-bold">
+        &lt; BACK
+      </Link>
       <div className="absolute top-4 right-4 flex gap-3">
-        <button onClick={() => setIsSoundOn(!isSoundOn)} className="p-2 rounded-full bg-gray-300 dark:bg-white">
+        <button
+          onClick={() => setIsSoundOn(v => !v)}
+          className="p-2 rounded-full bg-gray-300 dark:bg-white"
+        >
           {isSoundOn ? <Volume2 className="text-black" /> : <VolumeX className="text-black" />}
         </button>
         <button onClick={toggleBookmark} className="p-2 rounded-full bg-gray-300 dark:bg-white">
-          {bookmarked.includes(currentVocab.word) ? <BookmarkCheck className="text-black" /> : <Bookmark className="text-black" />}
+          {bookmarked.includes(currentVocab.word) ? (
+            <BookmarkCheck className="text-black" />
+          ) : (
+            <Bookmark className="text-black" />
+          )}
+        </button>
+        <button
+          onClick={toggleRandomize}
+          className={`p-2 rounded-full ${
+            isRandomized ? "bg-[#de3163] dark:bg-[#FF6600]" : "bg-gray-300 dark:bg-white"
+          }`}
+        >
+          <Shuffle className={isRandomized ? "text-white" : "text-black"} />
         </button>
         <button onClick={() => setShowSettings(true)} className="p-2 rounded-full bg-gray-300 dark:bg-white">
           <Cog6ToothIcon className="text-black w-5 h-5" />
         </button>
       </div>
 
+      {showSettings && (
+        <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center">
+          <div className="bg-white dark:bg-[#292b2d] p-6 rounded-xl w-80 dark:text-gray-200 relative">
+            <button onClick={() => setShowSettings(false)} className="absolute top-2 right-2 text-black dark:text-white">
+              ✕
+            </button>
+            <h2 className="text-lg font-bold mb-4">Settings</h2>
+
+            <div className="space-y-4">
+              <div>
+                <span className="block font-medium">Filter by JLPT:</span>
+                {["N5", "N4", "N3", "N2", "N1"].map(lvl => (
+                  <label key={lvl} className="inline-flex items-center mr-2">
+                    <input
+                      type="checkbox"
+                      checked={jlptFilters.includes(lvl)}
+                      onChange={() => handleJlptCheckbox(lvl)}
+                      className="mr-1"
+                    />
+                    {lvl}
+                  </label>
+                ))}
+              </div>
+              <div>
+                <label className="block text-sm font-medium">Sort by</label>
+                <select
+                  value={sortBy}
+                  onChange={e => setSortBy(e.target.value)}
+                  className="w-full p-2 border rounded-md dark:bg-[#1f1f1f] dark:border-gray-600"
+                >
+                  <option>Default</option>
+                  <option>By Level</option>
+                  <option>Bookmarked First</option>
+                </select>
+              </div>
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  checked={showBookmarkedOnly}
+                  onChange={() => setShowBookmarkedOnly(v => !v)}
+                  className="mr-2"
+                />
+                <label>Show Bookmarked Only</label>
+              </div>
+              <div>
+                <span className="block font-medium">Randomize First N</span>
+                {[5, 10, 15].map(n => (
+                  <button
+                    key={n}
+                    onClick={() => setRandomizeLimit(n)}
+                    className={`mr-2 px-2 py-1 rounded ${
+                      randomizeLimit === n ? "bg-[#de3163] text-white" : "bg-gray-200"
+                    }`}
+                  >
+                    {n}
+                  </button>
+                ))}
+                <div className="mt-2 flex">
+                  <input
+                    type="number"
+                    value={customLimit}
+                    onChange={e => setCustomLimit(e.target.value)}
+                    placeholder="Custom"
+                    className="w-20 p-1 border rounded dark:bg-[#292b2d]"
+                  />
+                  <button onClick={applyCustomLimit} className="ml-2 px-2 py-1 bg-[#de3163] text-white rounded">
+                    Set
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div
-        className="relative w-full max-w-[360px] h-[26rem] my-8"
+        className="relative w-full max-w-xs h-96 my-8"
         style={{ perspective: "1000px" }}
-        onClick={() => setIsFlipped(!isFlipped)}
+        onClick={() => setIsFlipped(f => !f)}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
         <div
-          className={`relative w-full h-full transition-transform duration-500`}
+          className="relative w-full h-full transition-transform duration-500"
           style={{
             transformStyle: "preserve-3d",
             transform: isFlipped ? "rotateY(180deg)" : "rotateY(0deg)",
           }}
         >
+          {/* Front side */}
           <div
             className="absolute w-full h-full flex flex-col justify-center items-center rounded-2xl border-2 px-4"
             style={{
@@ -294,9 +370,10 @@ export default function VocabularyCardsPage() {
             }}
           >
             <div className="text-7xl font-bold">{currentVocab.word || "?"}</div>
-            <div className="text-xl mt-2">{currentVocab.hiragana || ""}</div>
+            <div className="text-xl mt-2">{currentVocab.furigana || ""}</div>
           </div>
 
+          {/* Back side */}
           <div
             className="absolute w-full h-full flex justify-center items-center text-center p-4 rounded-2xl border-2"
             style={{
@@ -307,100 +384,29 @@ export default function VocabularyCardsPage() {
             }}
           >
             <div className="text-2xl space-y-2">
-              <div><strong>Meaning:</strong> {currentVocab.meaning || "-"}</div>
-              {currentVocab.other_readings?.length > 0 && (
-                <div><strong>Other Readings:</strong> {currentVocab.other_readings.join(", ")}</div>
-              )}
-              {currentVocab.jlpt_level && (
-                <div><strong>JLPT Level:</strong> N{currentVocab.jlpt_level}</div>
-              )}
+              <div>
+                <strong>Meaning:</strong> {currentVocab.meaning || "-"}
+              </div>
+              <div>
+                <strong>Level:</strong> {currentVocab.level || "-"}
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="flex justify-center items-center gap-8 mt-4">
-        <button onClick={goBack} className="bg-[#de3163] dark:bg-[#FF6600] text-white p-3 rounded-full"><ArrowLeft /></button>
-        <div className="text-xl font-bold">{filteredList.length ? `${currentIndex + 1} / ${filteredList.length}` : "No cards"}</div>
-        <button onClick={goNext} className="bg-[#de3163] dark:bg-[#FF6600] text-white p-3 rounded-full"><ArrowRight /></button>
-      </div>
-
-      {showSettings && (
-        <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center">
-          <div className="bg-white dark:bg-[#292b2d] p-6 rounded-xl w-80 text-black dark:text-gray-200 relative">
-            <button
-              onClick={() => setShowSettings(false)}
-              className="absolute top-2 right-2 text-black dark:text-white"
-            >
-              ✕
-            </button>
-            <h2 className="text-lg font-bold mb-4">Settings</h2>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium">Shuffle Cards</label>
-                <select
-                  value={shuffle}
-                  onChange={(e) => setShuffle(e.target.value)}
-                  className="w-full p-2 border border-gray-300 rounded-md dark:bg-[#1f1f1f] dark:border-gray-600"
-                >
-                  <option>Off</option>
-                  <option>On</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium">Bookmark Filter</label>
-                <select
-                  value={filter}
-                  onChange={(e) => setFilter(e.target.value)}
-                  className="w-full p-2 border border-gray-300 rounded-md dark:bg-[#1f1f1f] dark:border-gray-600"
-                >
-                  <option>Show All</option>
-                  <option>Only Bookmarked</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium">JLPT Level</label>
-                <select
-                  value={jlptLevel}
-                  onChange={(e) => setJlptLevel(e.target.value)}
-                  className="w-full p-2 border border-gray-300 rounded-md dark:bg-[#1f1f1f] dark:border-gray-600"
-                >
-                  <option>All</option>
-                  <option>5</option>
-                  <option>4</option>
-                  <option>3</option>
-                  <option>2</option>
-                  <option>1</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium">Sort By</label>
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
-                  className="w-full p-2 border border-gray-300 rounded-md dark:bg-[#1f1f1f] dark:border-gray-600"
-                >
-                  <option>Default</option>
-                  <option>JLPT Level</option>
-                  <option>Alphabetical</option>
-                  <option>Bookmarked First</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium">Random Order</label>
-                <select
-                  value={randomOrder}
-                  onChange={(e) => setRandomOrder(e.target.value)}
-                  className="w-full p-2 border border-gray-300 rounded-md dark:bg-[#1f1f1f] dark:border-gray-600"
-                >
-                  <option>Off</option>
-                  <option>On</option>
-                </select>
-              </div>
-            </div>
-          </div>
+      {/* Navigation / Controls */}
+      <div className="flex items-center gap-8 mt-4">
+        <button onClick={goBack} className="bg-[#de3163] dark:bg-[#FF6600] text-white p-3 rounded-full">
+          <ArrowLeft />
+        </button>
+        <div className="text-xl font-bold">
+          {filteredVocabList.length ? `${currentIndex + 1} / ${filteredVocabList.length}` : "No cards"}
         </div>
-      )}
+        <button onClick={goNext} className="bg-[#de3163] dark:bg-[#FF6600] text-white p-3 rounded-full">
+          <ArrowRight />
+        </button>
+      </div>
     </div>
   );
 }
