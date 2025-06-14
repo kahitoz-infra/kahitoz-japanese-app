@@ -8,6 +8,7 @@ import {
   VolumeX,
   Bookmark,
   BookmarkCheck,
+  Shuffle,
 } from "lucide-react";
 import Link from "next/link";
 import { Cog6ToothIcon } from "@heroicons/react/24/solid";
@@ -105,6 +106,9 @@ export default function KanjiCardsPage() {
   const [jlptLevel, setJlptLevel] = useState(null);
   const [sortOrder, setSortOrder] = useState("default");
   const [showBookmarkedOnly, setShowBookmarkedOnly] = useState(false);
+  const [isRandomized, setIsRandomized] = useState(false);
+  const [cardLimit, setCardLimit] = useState(null);
+  const [customLimit, setCustomLimit] = useState("");
 
   // Cache keys and duration
   const CACHE_KEY = "cachedKanjiList";
@@ -127,7 +131,7 @@ export default function KanjiCardsPage() {
         localStorage.setItem(CACHE_KEY, JSON.stringify(data));
         localStorage.setItem(CACHE_TIME_KEY, Date.now().toString());
         setKanjiList(data);
-        filterAndSortKanji(data, jlptLevel, sortOrder, showBookmarkedOnly);
+        filterAndSortKanji(data, jlptLevel, sortOrder, showBookmarkedOnly, isRandomized, cardLimit);
       } catch (err) {
         console.error("API fetch failed:", err);
       }
@@ -139,7 +143,7 @@ export default function KanjiCardsPage() {
 
     if (cachedData && cacheTime && now - cacheTime < CACHE_DURATION) {
       setKanjiList(cachedData);
-      filterAndSortKanji(cachedData, jlptLevel, sortOrder, showBookmarkedOnly);
+      filterAndSortKanji(cachedData, jlptLevel, sortOrder, showBookmarkedOnly, isRandomized, cardLimit);
     } else {
       fetchKanji();
     }
@@ -148,15 +152,15 @@ export default function KanjiCardsPage() {
     const savedBookmarks = JSON.parse(localStorage.getItem(BOOKMARK_CACHE_KEY) || "[]");
     setBookmarked(savedBookmarks);
     syncBookmarksWithDB(savedBookmarks);
-  }, [jlptLevel, sortOrder, showBookmarkedOnly]);
+  }, [jlptLevel, sortOrder, showBookmarkedOnly, isRandomized, cardLimit]);
 
   // Save bookmarks to localStorage when they change
   useEffect(() => {
     localStorage.setItem(BOOKMARK_CACHE_KEY, JSON.stringify(bookmarked));
   }, [bookmarked]);
 
-  // Filter and sort kanji based on JLPT level, sort order, and bookmarked status
-  const filterAndSortKanji = (kanjis, level, order, bookmarkedOnly) => {
+  // Filter, sort, randomize, and limit kanji
+  const filterAndSortKanji = (kanjis, level, order, bookmarkedOnly, randomize, limit) => {
     let filtered = kanjis;
     
     // Filter by JLPT level if selected
@@ -181,6 +185,19 @@ export default function KanjiCardsPage() {
         const bBookmarked = bookmarkedSet.has(b.kanji) ? 1 : 0;
         return bBookmarked - aBookmarked;
       });
+    }
+    
+    // Apply randomization
+    if (randomize) {
+      for (let i = sorted.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [sorted[i], sorted[j]] = [sorted[j], sorted[i]];
+      }
+    }
+    
+    // Apply card limit
+    if (limit) {
+      sorted = sorted.slice(0, limit);
     }
     
     setFilteredKanjiList(sorted);
@@ -240,7 +257,29 @@ export default function KanjiCardsPage() {
 
     // If showing only bookmarked and this was the last one, go to first card
     if (showBookmarkedOnly && newBookmarked.length === 0) {
-      filterAndSortKanji(kanjiList, jlptLevel, sortOrder, showBookmarkedOnly);
+      filterAndSortKanji(kanjiList, jlptLevel, sortOrder, showBookmarkedOnly, isRandomized, cardLimit);
+    }
+  };
+
+  // Toggle randomization
+  const toggleRandomize = () => {
+    const newRandomized = !isRandomized;
+    setIsRandomized(newRandomized);
+    filterAndSortKanji(kanjiList, jlptLevel, sortOrder, showBookmarkedOnly, newRandomized, cardLimit);
+  };
+
+  // Set card limit
+  const setLimit = (limit) => {
+    setCardLimit(limit);
+    filterAndSortKanji(kanjiList, jlptLevel, sortOrder, showBookmarkedOnly, isRandomized, limit);
+  };
+
+  // Set custom limit
+  const handleCustomLimit = () => {
+    const limit = parseInt(customLimit, 10);
+    if (!isNaN(limit) && limit > 0) {
+      setLimit(limit);
+      setCustomLimit("");
     }
   };
 
@@ -304,6 +343,12 @@ export default function KanjiCardsPage() {
         </button>
         <button onClick={toggleBookmark} className="p-2 rounded-full bg-gray-300 dark:bg-white">
           {bookmarked.includes(currentKanji.kanji) ? <BookmarkCheck className="text-black" /> : <Bookmark className="text-black" />}
+        </button>
+        <button 
+          onClick={toggleRandomize} 
+          className={`p-2 rounded-full ${isRandomized ? 'bg-[#de3163] dark:bg-[#FF6600]' : 'bg-gray-300 dark:bg-white'}`}
+        >
+          <Shuffle className={`${isRandomized ? 'text-white' : 'text-black'}`} />
         </button>
         <button onClick={() => setShowSettings(true)} className="p-2 rounded-full bg-gray-300 dark:bg-white">
           <Cog6ToothIcon className="text-black w-5 h-5" />
@@ -414,7 +459,7 @@ export default function KanjiCardsPage() {
                   onChange={(e) => {
                     const level = e.target.value ? parseInt(e.target.value, 10) : null;
                     setJlptLevel(level);
-                    filterAndSortKanji(kanjiList, level, sortOrder, showBookmarkedOnly);
+                    filterAndSortKanji(kanjiList, level, sortOrder, showBookmarkedOnly, isRandomized, cardLimit);
                   }}
                   className="w-full p-2 border rounded dark:bg-[#292b2d]"
                 >
@@ -432,7 +477,7 @@ export default function KanjiCardsPage() {
                   value={sortOrder}
                   onChange={(e) => {
                     setSortOrder(e.target.value);
-                    filterAndSortKanji(kanjiList, jlptLevel, e.target.value, showBookmarkedOnly);
+                    filterAndSortKanji(kanjiList, jlptLevel, e.target.value, showBookmarkedOnly, isRandomized, cardLimit);
                   }}
                   className="w-full p-2 border rounded dark:bg-[#292b2d]"
                 >
@@ -448,11 +493,69 @@ export default function KanjiCardsPage() {
                   checked={showBookmarkedOnly}
                   onChange={(e) => {
                     setShowBookmarkedOnly(e.target.checked);
-                    filterAndSortKanji(kanjiList, jlptLevel, sortOrder, e.target.checked);
+                    filterAndSortKanji(kanjiList, jlptLevel, sortOrder, e.target.checked, isRandomized, cardLimit);
                   }}
                   className="mr-2"
                 />
                 <label htmlFor="bookmarkedOnly">Show Bookmarked Only</label>
+              </div>
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  id="randomize"
+                  checked={isRandomized}
+                  onChange={(e) => {
+                    setIsRandomized(e.target.checked);
+                    filterAndSortKanji(kanjiList, jlptLevel, sortOrder, showBookmarkedOnly, e.target.checked, cardLimit);
+                  }}
+                  className="mr-2"
+                />
+                <label htmlFor="randomize">Randomize Order</label>
+              </div>
+              <div>
+                <label className="block mb-2">Card Limit:</label>
+                <div className="flex gap-2 mb-2">
+                  <button 
+                    onClick={() => setLimit(5)} 
+                    className={`px-3 py-1 rounded ${cardLimit === 5 ? 'bg-[#de3163] dark:bg-[#FF6600] text-white' : 'bg-gray-200 dark:bg-gray-700'}`}
+                  >
+                    5
+                  </button>
+                  <button 
+                    onClick={() => setLimit(10)} 
+                    className={`px-3 py-1 rounded ${cardLimit === 10 ? 'bg-[#de3163] dark:bg-[#FF6600] text-white' : 'bg-gray-200 dark:bg-gray-700'}`}
+                  >
+                    10
+                  </button>
+                  <button 
+                    onClick={() => setLimit(15)} 
+                    className={`px-3 py-1 rounded ${cardLimit === 15 ? 'bg-[#de3163] dark:bg-[#FF6600] text-white' : 'bg-gray-200 dark:bg-gray-700'}`}
+                  >
+                    15
+                  </button>
+                  <button 
+                    onClick={() => setLimit(null)} 
+                    className={`px-3 py-1 rounded ${cardLimit === null ? 'bg-[#de3163] dark:bg-[#FF6600] text-white' : 'bg-gray-200 dark:bg-gray-700'}`}
+                  >
+                    All
+                  </button>
+                </div>
+                <div className="flex gap-2">
+                  <input
+                    type="number"
+                    value={customLimit}
+                    onChange={(e) => setCustomLimit(e.target.value)}
+                    placeholder="Custom number"
+                    className="flex-1 p-2 border rounded dark:bg-[#292b2d]"
+                    min="1"
+                  />
+                  <button 
+                    onClick={handleCustomLimit}
+                    className="px-3 py-2 bg-[#de3163] dark:bg-[#FF6600] text-white rounded"
+                  >
+                    Set
+                  </button>
+                </div>
               </div>
             </div>
           </div>
