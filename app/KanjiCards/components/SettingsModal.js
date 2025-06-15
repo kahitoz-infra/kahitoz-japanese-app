@@ -2,8 +2,6 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 
-const BOOKMARK_CACHE_KEY = "bookmarkedKanji";
-
 export default function SettingsModal({
   isOpen,
   onClose,
@@ -16,17 +14,14 @@ export default function SettingsModal({
   const [isRandomized, setIsRandomized] = useState(false);
   const [cardLimit, setCardLimit] = useState(null);
   const [customLimit, setCustomLimit] = useState("");
-  const [internalBookmarked, setInternalBookmarked] = useState([]);
   const [filteredKanjiList, setFilteredKanjiList] = useState([]);
 
-useEffect(() => {
-  if (rawKanjiList.length > 0 && filteredKanjiList.length === 0) {
-    // Default to showing all
-    setFilteredKanjiList(rawKanjiList);
-  }
-}, [rawKanjiList, filteredKanjiList]);
+  useEffect(() => {
+    if (rawKanjiList.length > 0 && filteredKanjiList.length === 0) {
+      setFilteredKanjiList(rawKanjiList);
+    }
+  }, [rawKanjiList, filteredKanjiList]);
 
-  // Load saved settings when modal opens
   useEffect(() => {
     if (isOpen) {
       const savedSettings = JSON.parse(localStorage.getItem("kanjiCardSettings") || "{}");
@@ -38,9 +33,6 @@ useEffect(() => {
       setShowBookmarkedOnly(savedSettings.showBookmarkedOnly || false);
       setIsRandomized(savedSettings.isRandomized || false);
       setCardLimit(savedSettings.cardLimit || null);
-
-      const bm = JSON.parse(localStorage.getItem(BOOKMARK_CACHE_KEY) || "[]");
-      setInternalBookmarked(bm);
     }
   }, [isOpen]);
 
@@ -51,54 +43,57 @@ useEffect(() => {
   }, []);
 
   const applyFiltersAndSort = useCallback(() => {
-    let arr = [...rawKanjiList];
+  const localRaw = JSON.parse(localStorage.getItem("cachedKanjiList") || "[]");
+  let arr = [...localRaw]; // Use freshly loaded data, not stale prop
+  // JLPT level filtering
+  if (jlptLevels.length) {
+    const S = new Set(jlptLevels);
+    arr = arr.filter(k => {
+      const tags = k.tags ? k.tags.split(",").map(t => t.trim()) : [];
+      return tags.some(t => S.has(t));
+    });
+  }
 
-    if (jlptLevels.length) {
-      const S = new Set(jlptLevels);
-      arr = arr.filter(k => {
-        const tags = k.tags ? k.tags.split(",").map(t => t.trim()) : [];
-        return tags.some(t => S.has(t));
-      });
+  // Bookmarked only
+  if (showBookmarkedOnly) {
+    arr = arr.filter(k => k.marked === true);
+  }
+
+  // Sorting
+  if (sortOrder === "level") {
+    const getMin = tags => {
+      const nums = tags.split(",").map(t => parseInt(t.replace("N", ""), 10));
+      return isNaN(nums[0]) ? 99 : Math.min(...nums);
+    };
+    arr.sort((a, b) => {
+      const levelA = a.tags ? getMin(a.tags) : 99;
+      const levelB = b.tags ? getMin(b.tags) : 99;
+      return levelA - levelB;
+    });
+  } else if (sortOrder === "bookmarked") {
+    arr.sort((a, b) => (b.marked === true ? -1 : 1) - (a.marked === true ? -1 : 1));
+  }
+
+  // Shuffle
+  if (isRandomized) {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
     }
+  }
 
-    if (showBookmarkedOnly) {
-      const B = new Set(internalBookmarked);
-      arr = arr.filter(k => B.has(k.kanji));
-    }
+  // Limit
+  if (cardLimit && cardLimit > 0) {
+    arr = arr.slice(0, cardLimit);
+  }
 
-    if (sortOrder === "level") {
-      arr.sort((a, b) => {
-        const getMin = tags => {
-          const nums = tags.split(",").map(t => parseInt(t.replace("N", ""), 10));
-          return isNaN(nums[0]) ? 99 : Math.min(...nums);
-        };
-        const levelA = a.tags ? getMin(a.tags) : 99;
-        const levelB = b.tags ? getMin(b.tags) : 99;
-        return levelA - levelB;
-      });
-    } else if (sortOrder === "bookmarked") {
-      const B = new Set(internalBookmarked);
-      arr.sort((a, b) => (B.has(b.kanji) ? -1 : 1) - (B.has(a.kanji) ? -1 : 1));
-    }
+  // Save settings
+  localStorage.setItem("kanjiCardSettings", JSON.stringify({
+    jlptLevels, sortOrder, showBookmarkedOnly, isRandomized, cardLimit
+  }));
+  onApply(arr);
+}, [jlptLevels, sortOrder, showBookmarkedOnly, isRandomized, cardLimit, onApply]);
 
-    if (isRandomized) {
-      for (let i = arr.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [arr[i], arr[j]] = [arr[j], arr[i]];
-      }
-    }
-
-    if (cardLimit && cardLimit > 0) {
-      arr = arr.slice(0, cardLimit);
-    }
-
-    // Save settings
-    localStorage.setItem("kanjiCardSettings", JSON.stringify({
-      jlptLevels, sortOrder, showBookmarkedOnly, isRandomized, cardLimit
-    }));
-
-    onApply(arr);
-  }, [rawKanjiList, jlptLevels, sortOrder, showBookmarkedOnly, isRandomized, cardLimit, internalBookmarked, onApply]);
 
   const handleCustomLimitChange = useCallback((e) => {
     setCustomLimit(e.target.value);
@@ -182,7 +177,6 @@ useEffect(() => {
             </div>
           </div>
 
-          {/* ✅ Apply Button */}
           <div className="flex justify-end mt-4">
             <button
               onClick={applyFiltersAndSort}
