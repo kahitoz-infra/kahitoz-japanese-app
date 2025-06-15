@@ -50,55 +50,60 @@ useEffect(() => {
     );
   }, []);
 
-  const applyFiltersAndSort = useCallback(() => {
-    let arr = [...rawVocabList];
+ const applyFiltersAndSort = useCallback(() => {
+  const localRaw = JSON.parse(localStorage.getItem("cachedVocabList") || "[]");
+  let arr = [...localRaw];
 
-    if (jlptLevels.length) {
-      const S = new Set(jlptLevels);
-      arr = arr.filter(k => {
-        const level = k.level ? k.level.split(",").map(t => t.trim()) : [];
-        return level.some(t => S.has(t));
-      });
+  // JLPT level filtering
+  if (jlptLevels.length) {
+    const S = new Set(jlptLevels);
+    arr = arr.filter(k => {
+      const levels = k.level ? k.level.split(",").map(t => t.trim()) : [];
+      return levels.some(t => S.has(t));
+    });
+  }
+
+  // Bookmarked only
+  if (showBookmarkedOnly) {
+    arr = arr.filter(k => k.marked === true);
+  }
+
+  // Sorting
+  if (sortOrder === "level") {
+    const getMin = level => {
+      const nums = level.split(",").map(t => parseInt(t.replace("N", ""), 10));
+      return isNaN(nums[0]) ? 99 : Math.min(...nums);
+    };
+    arr.sort((a, b) => {
+      const levelA = a.level ? getMin(a.level) : 99;
+      const levelB = b.level ? getMin(b.level) : 99;
+      return levelA - levelB;
+    });
+  } else if (sortOrder === "bookmarked") {
+    arr.sort((a, b) => (b.marked === true ? -1 : 1) - (a.marked === true ? -1 : 1));
+  }
+
+  // Shuffle
+  if (isRandomized) {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
     }
+  }
 
-    if (showBookmarkedOnly) {
-      const B = new Set(internalBookmarked);
-      arr = arr.filter(k => B.has(k.vocab));
-    }
+  // Limit
+  if (cardLimit && cardLimit > 0) {
+    arr = arr.slice(0, cardLimit);
+  }
 
-    if (sortOrder === "level") {
-      arr.sort((a, b) => {
-        const getMin = level => {
-          const nums = level.split(",").map(t => parseInt(t.replace("N", ""), 10));
-          return isNaN(nums[0]) ? 99 : Math.min(...nums);
-        };
-        const levelA = a.level ? getMin(a.level) : 99;
-        const levelB = b.level ? getMin(b.level) : 99;
-        return levelA - levelB;
-      });
-    } else if (sortOrder === "bookmarked") {
-      const B = new Set(internalBookmarked);
-      arr.sort((a, b) => (B.has(b.vocab) ? -1 : 1) - (B.has(a.vocab) ? -1 : 1));
-    }
+  // Save settings
+  localStorage.setItem("vocabCardSettings", JSON.stringify({
+    jlptLevels, sortOrder, showBookmarkedOnly, isRandomized, cardLimit
+  }));
 
-    if (isRandomized) {
-      for (let i = arr.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [arr[i], arr[j]] = [arr[j], arr[i]];
-      }
-    }
+  onApply(arr);
+}, [jlptLevels, sortOrder, showBookmarkedOnly, isRandomized, cardLimit, onApply]);
 
-    if (cardLimit && cardLimit > 0) {
-      arr = arr.slice(0, cardLimit);
-    }
-
-    // Save settings
-    localStorage.setItem("vocabCardSettings", JSON.stringify({
-      jlptLevels, sortOrder, showBookmarkedOnly, isRandomized, cardLimit
-    }));
-
-    onApply(arr);
-  }, [rawVocabList, jlptLevels, sortOrder, showBookmarkedOnly, isRandomized, cardLimit, internalBookmarked, onApply]);
 
   const handleCustomLimitChange = useCallback((e) => {
     setCustomLimit(e.target.value);
