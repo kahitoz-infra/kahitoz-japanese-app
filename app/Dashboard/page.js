@@ -6,6 +6,7 @@ import Link from "next/link";
 import Navbar from "@/app/components/Navbar";
 import { refresh_auth_token } from "../middleware"; // Ensure this is named correctly
 import Cookies from "js-cookie";
+import CherryBlossomSnowfall from "../common_components/CherryBlossomSnowfall";
 
 const parseJwt = (token) => {
   try {
@@ -57,20 +58,20 @@ const Dashboard = () => {
     initializeUser();
   }, [router]);
 
-    if (isLoading) {
-        return (
-            <div className="flex min-h-screen items-center justify-center bg-[#f3f3f3] dark:bg-[#292B2D]">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-600 dark:border-[#F66538]"></div>
-            </div>
-        );
-    }
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#f3f3f3] dark:bg-[#292B2D]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-600 dark:border-[#F66538]"></div>
+      </div>
+    );
+  }
 
 
-    const courseProgress = [
-        { label: "View Kanji", percent: 69, link: "/ViewKanji", src: "/banner/View_Kanji.png" },
-        { label: "View Vocabulary", percent: 33, link: "/ViewVocabulary", src: "/banner/View_Vocabulary.png"},
-        { label: "View Grammar", percent: 86, link: "/Dashboard",  src: "/banner/View_Grammar.png"},
-    ];
+  const courseProgress = [
+    { label: "View Kanji", percent: 69, link: "/KanjiCards", src: "/banner/View_Kanji.png" },
+    { label: "View Vocabulary", percent: 33, link: "/VocabularyCards", src: "/banner/View_Vocabulary.png" },
+    { label: "View Grammar", percent: 86, link: "/Dashboard", src: "/banner/View_Grammar.png" },
+  ];
 
   // Updated color scale from dark red to dark green
   const getStrokeColor = (percent) => {
@@ -86,33 +87,39 @@ const Dashboard = () => {
 
   const hasCourses = courseProgress.length > 0;
 
-    return (
-        <>
-            <div
-                className="flex flex-col min-h-screen w-screen pb-28 pt-8 items-center
+  return (
+    <>
+      <div
+        className="flex flex-col min-h-screen w-screen pb-28 pt-8 items-center
           bg-[#f3f3f3] dark:bg-[#292B2D]
           text-black dark:text-white
           relative px-4"
-            >
-                {/* Profile Icon */}
-                <div className="mt-2 w-20 sm:w-24 h-20 sm:h-24 rounded-full overflow-hidden mb-6 border border-black dark:border-white">
+      >
+        <div className="dark:hidden">
+          <CherryBlossomSnowfall isDarkMode={false} />
+        </div>
+        <div className="dark:block">
+          <CherryBlossomSnowfall isDarkMode={true} />
+        </div>
+        {/* Profile Icon */}
+        <div className="mt-2 w-20 sm:w-24 h-20 sm:h-24 rounded-full overflow-hidden mb-6 border border-black dark:border-white">
 
-                    <img
-                        src={photo}
-                        alt="Profile"
-                        className="object-cover w-24 h-24"
-                        width={96}
-                        height={96}
-                    />
-                </div>
+          <img
+            src={photo}
+            alt="Profile"
+            className="object-cover w-24 h-24"
+            width={96}
+            height={96}
+          />
+        </div>
 
-                {/* Greeting */}
-                <h1 className="text-2xl sm:text-2xl font-bold text-center mb-1">
-                    Welcome back {userName}!
-                </h1>
-                <p className="text-xl sm:text-sm text-center text-black dark:text-gray-200">
-                    Be Better Everyday!
-                </p>
+        {/* Greeting */}
+        <h1 className="text-2xl sm:text-2xl font-bold text-center mb-1">
+          Welcome back {userName}!
+        </h1>
+        <p className="text-xl sm:text-sm text-center text-black dark:text-gray-200">
+          Be Better Everyday!
+        </p>
 
         {/* Concentric Semi-Circles */}
         {hasCourses && (
@@ -159,61 +166,61 @@ const Dashboard = () => {
           </div>
         )}
 
-                {/* Consistent Days */}
-                <p className="text-xl sm:text-2xl font-semibold text-center mt-4 mb-8">
-                    Consistent for{" "}
-                    <span className="text-pink-600 dark:text-[#F66538]">3 Days</span>
-                </p>
+        {/* Consistent Days */}
+        <p className="text-xl sm:text-2xl font-semibold text-center mt-4 mb-8">
+          Consistent for{" "}
+          <span className="text-pink-600 dark:text-[#F66538]">3 Days</span>
+        </p>
 
-                <div className="max-w-3xl mx-auto grid grid-cols-2 gap-6">
-                    {courseProgress.map(({ label, percent, link, src }, index) => {
-                        const isLastOddSingle = courseProgress.length % 2 === 1 && index === courseProgress.length - 1;
+        <div className="max-w-3xl mx-auto grid grid-cols-2 gap-6">
+          {courseProgress.map(({ label, percent, link, src }, index) => {
+            const isLastOddSingle = courseProgress.length % 2 === 1 && index === courseProgress.length - 1;
 
-                        return (
-                            <Link
-                                key={label}
-                                href={link}
-                                className={`relative rounded-lg overflow-hidden shadow-lg
+            return (
+              <Link
+                key={label}
+                href={link}
+                className={`relative rounded-lg overflow-hidden shadow-lg
               ${isLastOddSingle ? "col-span-2 max-w-xl mx-auto" : ""}
               block h-48`}
-                                aria-label={label}
-                            >
-                                {/* Full image covering the card */}
-                                <Image
-                                    src={src}
-                                    alt={label}
-                                    width={200}
-                                    height={100}
-                                    // layout="fill"
-                                    // objectFit="cover"
-                                    // priority={true}
-                                />
+                aria-label={label}
+              >
+                {/* Full image covering the card */}
+                <Image
+                  src={src}
+                  alt={label}
+                  width={200}
+                  height={100}
+                // layout="fill"
+                // objectFit="cover"
+                // priority={true}
+                />
 
-                                {/* Overlay label (optional) */}
-                                <div className="absolute top-3 left-3 text-white font-semibold text-lg drop-shadow-lg">
-                                    {label}
-                                </div>
-
-                                {/* Thin progress bar fixed at bottom */}
-                                <div className="absolute bottom-0 left-0 w-full h-1 bg-gray-300">
-                                    <div
-                                        className="h-1 bg-green-500"
-                                        style={{ width: `${percent}%` }}
-                                    />
-                                </div>
-                            </Link>
-                        );
-                    })}
+                {/* Overlay label (optional) */}
+                <div className="absolute top-3 left-3 text-white font-semibold text-lg drop-shadow-lg">
+                  {label}
                 </div>
 
-            </div>
+                {/* Thin progress bar fixed at bottom */}
+                <div className="absolute bottom-0 left-0 w-full h-1 bg-gray-300">
+                  <div
+                    className="h-1 bg-green-500"
+                    style={{ width: `${percent}%` }}
+                  />
+                </div>
+              </Link>
+            );
+          })}
+        </div>
 
-            {/* Bottom Navbar */}
-            <div className="fixed bottom-0 left-0 right-0 z-30">
-                <Navbar />
-            </div>
-        </>
-    );
+      </div>
+
+      {/* Bottom Navbar */}
+      <div className="fixed bottom-0 left-0 right-0 z-30">
+        <Navbar />
+      </div>
+    </>
+  );
 };
 
 export default Dashboard;
