@@ -8,16 +8,18 @@ import { useVocabPageLogic } from "./components/userVocabPageLogic";
 
 export default function VocabCardsPage() {
   const {
-    rawVocabList,
-    displayVocabList,
-    isDarkMode,
-    showSettingsModal,
-    currentVocabForTopBar,
-    handleSettingsApply,
-    handleCurrentVocabChange,
-    setShowSettingsModal,
-    loading,
-  } = useVocabPageLogic();
+  rawVocabList,
+  displayVocabList,
+  isDarkMode,
+  showSettingsModal,
+  currentVocabForTopBar,
+  handleSettingsApply,
+  handleCurrentVocabChange,
+  setShowSettingsModal,
+  handleToggleBookmark, // ✅ add this line
+  loading,
+} = useVocabPageLogic();
+
 
 
   return (
@@ -26,8 +28,11 @@ export default function VocabCardsPage() {
 
       <TopBar
         currentVocab={currentVocabForTopBar}
+        setCurrentVocab={handleCurrentVocabChange}
         setShowSettingsModal={setShowSettingsModal}
+        handleToggleBookmark={handleToggleBookmark} // ✅ Add this line
       />
+
 
       {loading ? (
         <div
