@@ -88,9 +88,8 @@ export default function KanjiCard({ kanjiList, onCurrentKanjiChange }) {
           </div>
           {/* Back of the card */}
           <div className="absolute w-full h-full flex flex-col justify-center items-center text-center p-4 rounded-2xl border-2 bg-white dark:bg-[#292b2d]" style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}>
-            <div className="mb-2"><strong>Onyomi:</strong> {currentKanji.onyomi ? JSON.parse(currentKanji.onyomi).join(", ") : "-"}</div>
-            <div className="mb-2"><strong>Kunyomi:</strong> {currentKanji.kunyomi ? JSON.parse(currentKanji.kunyomi).join(", ") : "-"}</div>
-            <div className="mb-2"><strong>Romaji:</strong> {getRomaji(currentKanji.onyomi, currentKanji.kunyomi)}</div>
+            <div className="mb-2"><strong>Onyomi:</strong> {currentKanji.onyomi ? JSON.parse(currentKanji.onyomi).join(", ") : "-"} - {getRomaji(currentKanji.onyomi)}</div>
+            <div className="mb-2"><strong>Kunyomi:</strong> {currentKanji.kunyomi ? JSON.parse(currentKanji.kunyomi).join(", ") : "-"} - {getRomaji(currentKanji.kunyomi)}</div>
             <div className="mb-2"><strong>JLPT:</strong> {currentKanji.tags ? currentKanji.tags.split(",")[0] : "-"}</div>
             <div><strong>Meaning:</strong> {currentKanji.english || "-"}</div>
           </div>
