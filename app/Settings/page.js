@@ -1,11 +1,19 @@
 "use client";
 import Navbar from "@/app/components/Navbar";
+import CherryBlossomSnowfall from "../common_components/CherryBlossomSnowfall";
 
 const Settings = () => {
   return (
     <>
       {/* Empty Page Content */}
       <div className="flex flex-col min-h-screen w-screen pb-28 pt-8 items-center bg-[#f3f3f3] dark:bg-[#292B2D] text-black dark:text-white relative px-4">
+        <div className="dark:hidden">
+              <CherryBlossomSnowfall isDarkMode={false}/>
+        </div>
+        <div className="dark:block">
+            <CherryBlossomSnowfall isDarkMode={true}/>
+        </div>
+       
         Settings Page
       </div>
 
