@@ -40,30 +40,46 @@ export default function TopBar({
 
   // Toggle bookmark
   const toggleBookmark = useCallback(() => {
-    const uid = currentKanji?.uid;
-    if (uid === undefined) return;
+  const uid = currentKanji?.uid;
+  if (uid === undefined) return;
 
-    // Update local toggle override
-    setLocalToggles(prev => {
-      const newToggles = new Set(prev);
-      if (newToggles.has(uid)) {
-        newToggles.delete(uid);
-      } else {
-        newToggles.add(uid);
-      }
-      return newToggles;
-    });
+  const updatedMarked = !(currentKanji.marked ?? false);
 
-    // Send API call with correct flag
-    authFetch(BOOKMARK_SYNC_API, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        operation_type: !(currentKanji.marked ?? false),
-        t_id: uid,
-      }),
-    }).catch(console.error);
-  }, [currentKanji]);
+  // ✅ 1. Update localStorage `cachedKanjiList`
+  const cached = JSON.parse(localStorage.getItem("cachedKanjiList") || "[]");
+  const updated = cached.map(k => {
+    if (k.uid === uid) {
+      return { ...k, marked: updatedMarked };
+    }
+    return k;
+  });
+  localStorage.setItem("cachedKanjiList", JSON.stringify(updated));
+
+  // ✅ 2. Optionally update currentKanji.marked if passed as prop (not shown)
+  // You could emit a callback to parent to refresh `currentKanji` if needed.
+
+  // ✅ 3. Send sync API call
+  authFetch(BOOKMARK_SYNC_API, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      operation_type: updatedMarked,
+      t_id: uid,
+    }),
+  }).catch(console.error);
+
+  // ✅ 4. Update localToggles just to re-render icon instantly
+  setLocalToggles(prev => {
+    const newToggles = new Set(prev);
+    if (newToggles.has(uid)) {
+      newToggles.delete(uid);
+    } else {
+      newToggles.add(uid);
+    }
+    return newToggles;
+  });
+}, [currentKanji]);
+
 
   // Derive current bookmark state (with local override if toggled)
   const isCurrentKanjiBookmarked = (() => {
