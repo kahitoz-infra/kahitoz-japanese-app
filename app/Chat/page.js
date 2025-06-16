@@ -1,5 +1,5 @@
 "use client";
-import Navbar from "@/app/components/Navbar";
+import Navbar from "@/app/common_components/Navbar";
 import CherryBlossomSnowfall from "../common_components/CherryBlossomSnowfall";
 
 const Chat = () => {
