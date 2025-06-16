@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import { EyeIcon, BookOpenIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
-import Navbar from "@/app/components/Navbar";
+import Navbar from "@/app/common_components/Navbar";
 
 const CherryBlossomSnowfall = () => {
   const canvasRef = useRef(null);
