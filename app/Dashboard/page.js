@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import Navbar from "@/app/components/Navbar";
+import Navbar from "@/app/common_components/Navbar";
 import { refresh_auth_token } from "../middleware"; // Ensure this is named correctly
 import Cookies from "js-cookie";
 import CherryBlossomSnowfall from "../common_components/CherryBlossomSnowfall";
@@ -66,20 +66,34 @@ const Dashboard = () => {
     );
   }
 
-
   const courseProgress = [
-    { label: "View Kanji", percent: 69, link: "/KanjiCards", src: "/banner/View_Kanji.png" },
-    { label: "View Vocabulary", percent: 33, link: "/VocabularyCards", src: "/banner/View_Vocabulary.png" },
-    { label: "View Grammar", percent: 86, link: "/Dashboard", src: "/banner/View_Grammar.png" },
+    {
+      label: "View Kanji",
+      percent: 69,
+      link: "/ViewAll",
+      src: "/banner/View_Kanji.png",
+    },
+    {
+      label: "View Vocabulary",
+      percent: 33,
+      link: "/ViewAll",
+      src: "/banner/View_Vocabulary.png",
+    },
+    {
+      label: "View Grammar",
+      percent: 86,
+      link: "/ViewAll",
+      src: "/banner/View_Grammar.png",
+    },
   ];
 
   // Updated color scale from dark red to dark green
   const getStrokeColor = (percent) => {
-    if (percent < 20) return "#8B0000";        // Dark Red
-    if (percent < 40) return "#FF4C4C";         // Light Red
-    if (percent < 60) return "#FFA500";         // Dark Yellow
-    if (percent < 80) return "#90EE90";         // Light Green
-    return "#006400";                           // Dark Green
+    if (percent < 20) return "#8B0000"; // Dark Red
+    if (percent < 40) return "#FF4C4C"; // Light Red
+    if (percent < 60) return "#FFA500"; // Dark Yellow
+    if (percent < 80) return "#90EE90"; // Light Green
+    return "#006400"; // Dark Green
   };
 
   const truncateLabel = (label, max = 15) =>
@@ -103,7 +117,6 @@ const Dashboard = () => {
         </div>
         {/* Profile Icon */}
         <div className="mt-2 w-20 sm:w-24 h-20 sm:h-24 rounded-full overflow-hidden mb-6 border border-black dark:border-white">
-
           <img
             src={photo}
             alt="Profile"
@@ -124,7 +137,12 @@ const Dashboard = () => {
         {/* Concentric Semi-Circles */}
         {hasCourses && (
           <div className="relative w-full max-w-[440px] h-[250px] mb-2">
-            <svg width="100%" height="100%" viewBox="0 0 500 250" className="mx-auto">
+            <svg
+              width="100%"
+              height="100%"
+              viewBox="0 0 500 250"
+              className="mx-auto"
+            >
               {courseProgress.map((course, i) => {
                 const radius = 210 - i * 30;
                 const cx = 250;
@@ -152,7 +170,9 @@ const Dashboard = () => {
 
             {/* Centered Progress Text */}
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[30%] text-center mt-12 px-2">
-              <p className="text-base sm:text-lg font-bold mb-2">Your Progress</p>
+              <p className="text-base sm:text-lg font-bold mb-2">
+                Your Progress
+              </p>
               {courseProgress.map((course, idx) => (
                 <p key={idx} className="text-xs sm:text-sm">
                   {truncateLabel(course.label)} ={" "}
@@ -174,7 +194,9 @@ const Dashboard = () => {
 
         <div className="max-w-3xl mx-auto grid grid-cols-2 gap-6">
           {courseProgress.map(({ label, percent, link, src }, index) => {
-            const isLastOddSingle = courseProgress.length % 2 === 1 && index === courseProgress.length - 1;
+            const isLastOddSingle =
+              courseProgress.length % 2 === 1 &&
+              index === courseProgress.length - 1;
 
             return (
               <Link
@@ -191,9 +213,9 @@ const Dashboard = () => {
                   alt={label}
                   width={200}
                   height={100}
-                // layout="fill"
-                // objectFit="cover"
-                // priority={true}
+                  // layout="fill"
+                  // objectFit="cover"
+                  // priority={true}
                 />
 
                 {/* Overlay label (optional) */}
@@ -212,7 +234,6 @@ const Dashboard = () => {
             );
           })}
         </div>
-
       </div>
 
       {/* Bottom Navbar */}
