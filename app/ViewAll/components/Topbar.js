@@ -1,0 +1,53 @@
+"use client"
+import { useState, useEffect } from 'react';
+
+export default function TopBar({ onSelect }) {
+    const items = ['Kanji', 'Vocabulary', 'Grammar', 'Verbs'];
+    const [activeIndex, setActiveIndex] = useState(null);
+
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const storedPreference = localStorage.getItem('TopBarPreference');
+            let initialIndex = null;
+
+            if (storedPreference) {
+                initialIndex = items.indexOf(storedPreference);
+                if (initialIndex === -1) {
+                    initialIndex = items.indexOf('Vocabulary');
+                    localStorage.setItem('TopBarPreference', 'Vocabulary');
+                }
+            } else {
+                initialIndex = items.indexOf('Vocabulary');
+                localStorage.setItem('TopBarPreference', 'Vocabulary');
+            }
+            setActiveIndex(initialIndex);
+            if (onSelect) onSelect(items[initialIndex]);
+        }
+    }, []);
+
+    const handleItemClick = (index) => {
+        setActiveIndex(index);
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('TopBarPreference', items[index]);
+        }
+        if (onSelect) onSelect(items[index]);
+    };
+
+    return (
+        <div className="flex items-center justify-center">
+            <ul className="flex gap-x-4  px-4 py-2 rounded-xl dark:bg-[#2F2F2F]">
+                {items.map((item, index) => (
+                    <li
+                        key={index}
+                        className={`px-2 py-1 rounded cursor-pointer ${
+                            activeIndex === index ? 'bg-orange-500 text-white' : ''
+                        }`}
+                        onClick={() => handleItemClick(index)}
+                    >
+                        {item}
+                    </li>
+                ))}
+            </ul>
+        </div>
+    );
+}
