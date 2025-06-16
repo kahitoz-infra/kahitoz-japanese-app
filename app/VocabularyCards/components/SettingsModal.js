@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 
 const BOOKMARK_CACHE_KEY = "bookmarkedVocab";
+const SETTINGS_CACHE_KEY = "vocabCardSettings"; // New constant for settings key
 
 export default function SettingsModal({
   isOpen,
@@ -10,39 +11,83 @@ export default function SettingsModal({
   rawVocabList,
   onApply,
 }) {
-  const [jlptLevels, setJlptLevels] = useState([]);
-  const [sortOrder, setSortOrder] = useState("default");
-  const [showBookmarkedOnly, setShowBookmarkedOnly] = useState(false);
-  const [isRandomized, setIsRandomized] = useState(false);
-  const [cardLimit, setCardLimit] = useState(null);
+  // Initialize state with values from localStorage, or sensible defaults
+  const [jlptLevels, setJlptLevels] = useState(() => {
+    if (typeof window !== "undefined") {
+      const savedSettings = JSON.parse(localStorage.getItem(SETTINGS_CACHE_KEY) || "{}");
+      const savedJlpt = savedSettings.jlptLevels;
+      return savedJlpt && savedJlpt.length ? savedJlpt : ["N5"];
+    }
+    return ["N5"]; // Default for server-side rendering
+  });
+
+  const [sortOrder, setSortOrder] = useState(() => {
+    if (typeof window !== "undefined") {
+      const savedSettings = JSON.parse(localStorage.getItem(SETTINGS_CACHE_KEY) || "{}");
+      return savedSettings.sortOrder || "default";
+    }
+    return "default";
+  });
+
+  const [showBookmarkedOnly, setShowBookmarkedOnly] = useState(() => {
+    if (typeof window !== "undefined") {
+      const savedSettings = JSON.parse(localStorage.getItem(SETTINGS_CACHE_KEY) || "{}");
+      return savedSettings.showBookmarkedOnly || false;
+    }
+    return false;
+  });
+
+  const [isRandomized, setIsRandomized] = useState(() => {
+    if (typeof window !== "undefined") {
+      const savedSettings = JSON.parse(localStorage.getItem(SETTINGS_CACHE_KEY) || "{}");
+      return savedSettings.isRandomized || false;
+    }
+    return false;
+  });
+
+  const [cardLimit, setCardLimit] = useState(() => {
+    if (typeof window !== "undefined") {
+      const savedSettings = JSON.parse(localStorage.getItem(SETTINGS_CACHE_KEY) || "{}");
+      return savedSettings.cardLimit || null;
+    }
+    return null;
+  });
+
   const [customLimit, setCustomLimit] = useState("");
-  const [internalBookmarked, setInternalBookmarked] = useState([]);
+  const [internalBookmarked, setInternalBookmarked] = useState(() => {
+    if (typeof window !== "undefined") {
+      return JSON.parse(localStorage.getItem(BOOKMARK_CACHE_KEY) || "[]");
+    }
+    return [];
+  });
   const [filteredVocabList, setFilteredVocabList] = useState([]);
 
-useEffect(() => {
-  if (rawVocabList.length > 0 && filteredVocabList.length === 0) {
-    // Default to showing all
-    setFilteredVocabList(rawVocabList);
-  }
-}, [rawVocabList, filteredVocabList]);
-
-  // Load saved settings when modal opens
+  // Effect to set initial filteredVocabList if rawVocabList is available
   useEffect(() => {
-    if (isOpen) {
-      const savedSettings = JSON.parse(localStorage.getItem("vocabCardSettings") || "{}");
-
-      const savedJlpt = savedSettings.jlptLevels;
-      setJlptLevels(savedJlpt && savedJlpt.length ? savedJlpt : ["N5"]);
-
-      setSortOrder(savedSettings.sortOrder || "default");
-      setShowBookmarkedOnly(savedSettings.showBookmarkedOnly || false);
-      setIsRandomized(savedSettings.isRandomized || false);
-      setCardLimit(savedSettings.cardLimit || null);
-
-      const bm = JSON.parse(localStorage.getItem(BOOKMARK_CACHE_KEY) || "[]");
-      setInternalBookmarked(bm);
+    if (rawVocabList.length > 0 && filteredVocabList.length === 0) {
+      // Default to showing all
+      setFilteredVocabList(rawVocabList);
     }
-  }, [isOpen]);
+  }, [rawVocabList, filteredVocabList]);
+
+  // Effects to save state items to localStorage whenever they change
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem(SETTINGS_CACHE_KEY, JSON.stringify({
+        jlptLevels,
+        sortOrder,
+        showBookmarkedOnly,
+        isRandomized,
+        cardLimit,
+      }));
+    }
+  }, [jlptLevels, sortOrder, showBookmarkedOnly, isRandomized, cardLimit]);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem(BOOKMARK_CACHE_KEY, JSON.stringify(internalBookmarked));
+    }
+  }, [internalBookmarked]);
 
   const toggleJLPTLevel = useCallback((lvl) => {
     setJlptLevels(prev =>
@@ -50,60 +95,55 @@ useEffect(() => {
     );
   }, []);
 
- const applyFiltersAndSort = useCallback(() => {
-  const localRaw = JSON.parse(localStorage.getItem("cachedVocabList") || "[]");
-  let arr = [...localRaw];
+  const applyFiltersAndSort = useCallback(() => {
+    // Ensure rawVocabList is used, or a cached version if applicable
+    const localRaw = rawVocabList.length > 0 ? rawVocabList : JSON.parse(localStorage.getItem("cachedVocabList") || "[]");
+    let arr = [...localRaw];
 
-  // JLPT level filtering
-  if (jlptLevels.length) {
-    const S = new Set(jlptLevels);
-    arr = arr.filter(k => {
-      const levels = k.level ? k.level.split(",").map(t => t.trim()) : [];
-      return levels.some(t => S.has(t));
-    });
-  }
-
-  // Bookmarked only
-  if (showBookmarkedOnly) {
-    arr = arr.filter(k => k.marked === true);
-  }
-
-  // Sorting
-  if (sortOrder === "level") {
-    const getMin = level => {
-      const nums = level.split(",").map(t => parseInt(t.replace("N", ""), 10));
-      return isNaN(nums[0]) ? 99 : Math.min(...nums);
-    };
-    arr.sort((a, b) => {
-      const levelA = a.level ? getMin(a.level) : 99;
-      const levelB = b.level ? getMin(b.level) : 99;
-      return levelA - levelB;
-    });
-  } else if (sortOrder === "bookmarked") {
-    arr.sort((a, b) => (b.marked === true ? -1 : 1) - (a.marked === true ? -1 : 1));
-  }
-
-  // Shuffle
-  if (isRandomized) {
-    for (let i = arr.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [arr[i], arr[j]] = [arr[j], arr[i]];
+    // JLPT level filtering
+    if (jlptLevels.length) {
+      const S = new Set(jlptLevels);
+      arr = arr.filter(k => {
+        const levels = k.level ? k.level.split(",").map(t => t.trim()) : [];
+        return levels.some(t => S.has(t));
+      });
     }
-  }
 
-  // Limit
-  if (cardLimit && cardLimit > 0) {
-    arr = arr.slice(0, cardLimit);
-  }
+    // Bookmarked only
+    if (showBookmarkedOnly) {
+      arr = arr.filter(k => k.marked === true);
+    }
 
-  // Save settings
-  localStorage.setItem("vocabCardSettings", JSON.stringify({
-    jlptLevels, sortOrder, showBookmarkedOnly, isRandomized, cardLimit
-  }));
+    // Sorting
+    if (sortOrder === "level") {
+      const getMin = level => {
+        const nums = level.split(",").map(t => parseInt(t.replace("N", ""), 10));
+        return isNaN(nums[0]) ? 99 : Math.min(...nums);
+      };
+      arr.sort((a, b) => {
+        const levelA = a.level ? getMin(a.level) : 99;
+        const levelB = b.level ? getMin(b.level) : 99;
+        return levelA - levelB;
+      });
+    } else if (sortOrder === "bookmarked") {
+      arr.sort((a, b) => (b.marked === true ? -1 : 1) - (a.marked === true ? -1 : 1));
+    }
 
-  onApply(arr);
-}, [jlptLevels, sortOrder, showBookmarkedOnly, isRandomized, cardLimit, onApply]);
+    // Shuffle
+    if (isRandomized) {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+    }
 
+    // Limit
+    if (cardLimit && cardLimit > 0) {
+      arr = arr.slice(0, cardLimit);
+    }
+
+    onApply(arr);
+  }, [jlptLevels, sortOrder, showBookmarkedOnly, isRandomized, cardLimit, onApply, rawVocabList]); // Added rawVocabList to dependencies
 
   const handleCustomLimitChange = useCallback((e) => {
     setCustomLimit(e.target.value);
@@ -111,7 +151,7 @@ useEffect(() => {
 
   const setCustomCardLimit = useCallback(() => {
     const x = parseInt(customLimit, 10);
-    if (x > 0) setCardLimit(x);
+    if (!isNaN(x) && x > 0) setCardLimit(x); // Check for NaN
     setCustomLimit("");
   }, [customLimit]);
 
