@@ -24,9 +24,11 @@ export default function ControlBar({
             title="Shuffle"
           >
             <Shuffle
-            size={25}
+              size={25}
               className={`${
-                isShuffled ? "text-black dark: text-black" : "text-black dark:text-white"
+                isShuffled
+                  ? "text-black dark: text-black"
+                  : "text-black dark:text-white"
               }`}
             />
           </button>

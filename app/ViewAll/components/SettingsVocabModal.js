@@ -1,11 +1,14 @@
-"use client"
+"use client";
 import React, { useState, useEffect } from "react";
 
-export default function SettingsVocabModal({ setOpenModal, setFilteredData, setBookmark }) {
+export default function SettingsVocabModal({
+  setOpenModal,
+  setFilteredData,
+  setBookmark,
+}) {
   const [levels, setLevels] = useState([]);
-  const [vocabSelectedLevels, setSelectedLevels] = useState([])
+  const [vocabSelectedLevels, setSelectedLevels] = useState([]);
   const [vocabBookMarkCheck, setVocabBookMarkCheck] = useState(false);
-
 
   useEffect(() => {
     const localVocabData = localStorage.getItem("cacheVocab");
@@ -28,40 +31,38 @@ export default function SettingsVocabModal({ setOpenModal, setFilteredData, setB
   }, []);
 
   const applyFiltersAndReturnData = () => {
-  const localVocabData = localStorage.getItem("cacheVocab");
-  if (!localVocabData) return [];
+    const localVocabData = localStorage.getItem("cacheVocab");
+    if (!localVocabData) return [];
 
-  let parsedData = JSON.parse(localVocabData);
-  console.log("Initial data count:", parsedData.length);
+    let parsedData = JSON.parse(localVocabData);
+    console.log("Initial data count:", parsedData.length);
 
-  // If bookmark filter is checked
-  if (vocabBookMarkCheck) {
-    parsedData = parsedData.filter(item => item.marked === true);
-    console.log("After bookmark filter:", parsedData.length);
+    // If bookmark filter is checked
+    if (vocabBookMarkCheck) {
+      parsedData = parsedData.filter((item) => item.marked === true);
+      console.log("After bookmark filter:", parsedData.length);
 
-    // Then also apply level filtering if levels are selected
-    if (vocabSelectedLevels.length > 0) {
-      parsedData = parsedData.filter(item =>
-        vocabSelectedLevels.includes(item.level)
-      );
-      console.log("After bookmark + level filter:", parsedData.length);
+      // Then also apply level filtering if levels are selected
+      if (vocabSelectedLevels.length > 0) {
+        parsedData = parsedData.filter((item) =>
+          vocabSelectedLevels.includes(item.level)
+        );
+        console.log("After bookmark + level filter:", parsedData.length);
+      }
+    } else {
+      // Bookmark is NOT checked → Apply only level filtering if selected
+      if (vocabSelectedLevels.length > 0) {
+        parsedData = parsedData.filter((item) =>
+          vocabSelectedLevels.includes(item.level)
+        );
+        console.log("After level-only filter:", parsedData.length);
+      }
     }
-  } else {
-    // Bookmark is NOT checked → Apply only level filtering if selected
-    if (vocabSelectedLevels.length > 0) {
-      parsedData = parsedData.filter(item =>
-        vocabSelectedLevels.includes(item.level)
-      );
-      console.log("After level-only filter:", parsedData.length);
-    }
-  }
 
-  console.log("This is the parsed data -",parsedData)
+    console.log("This is the parsed data -", parsedData);
 
-  return parsedData;
-};
-
-
+    return parsedData;
+  };
 
   return (
     <div className="fixed inset-0 z-[9999] bg-black bg-opacity-50 flex items-center justify-center">
@@ -83,10 +84,11 @@ export default function SettingsVocabModal({ setOpenModal, setFilteredData, setB
                 return (
                   <button
                     key={lvl}
-                    className={`px-3 py-1 rounded ${isSelected
-                      ? "bg-[#de3163] dark:bg-[#FF6600] text-white"
-                      : "bg-gray-200 dark:bg-gray-700 text-black dark:text-white"
-                      }`}
+                    className={`px-3 py-1 rounded ${
+                      isSelected
+                        ? "bg-[#de3163] dark:bg-[#FF6600] text-white"
+                        : "bg-gray-200 dark:bg-gray-700 text-black dark:text-white"
+                    }`}
                     onClick={() => {
                       setSelectedLevels((prev) =>
                         prev.includes(lvl)
@@ -99,7 +101,6 @@ export default function SettingsVocabModal({ setOpenModal, setFilteredData, setB
                   </button>
                 );
               })}
-
             </div>
           </div>
 
@@ -141,15 +142,18 @@ export default function SettingsVocabModal({ setOpenModal, setFilteredData, setB
               {[5, 10, 15].map((n, i) => (
                 <button
                   key={n}
-                  className={`px-3 py-1 rounded ${n === 10
-                    ? "bg-[#de3163] dark:bg-[#FF6600] text-white"
-                    : "bg-gray-200 dark:bg-gray-700"
-                    }`}
+                  className={`px-3 py-1 rounded ${
+                    n === 10
+                      ? "bg-[#de3163] dark:bg-[#FF6600] text-white"
+                      : "bg-gray-200 dark:bg-gray-700"
+                  }`}
                 >
                   {n}
                 </button>
               ))}
-              <button className="px-3 py-1 rounded bg-gray-200 dark:bg-gray-700">All</button>
+              <button className="px-3 py-1 rounded bg-gray-200 dark:bg-gray-700">
+                All
+              </button>
             </div>
             <div className="flex gap-2">
               <input
@@ -175,9 +179,8 @@ export default function SettingsVocabModal({ setOpenModal, setFilteredData, setB
                 localStorage.setItem(
                   "vocabBookMarkChecked",
                   vocabBookMarkCheck.toString()
-                  
                 );
-                setBookmark(vocabBookMarkCheck)
+                setBookmark(vocabBookMarkCheck);
 
                 const filtered = applyFiltersAndReturnData();
                 setFilteredData(filtered);
@@ -188,22 +191,25 @@ export default function SettingsVocabModal({ setOpenModal, setFilteredData, setB
 
                   // Filter by selected levels (if any)
                   if (vocabSelectedLevels.length > 0) {
-                    parsed = parsed.filter(item => vocabSelectedLevels.includes(item.level));
+                    parsed = parsed.filter((item) =>
+                      vocabSelectedLevels.includes(item.level)
+                    );
                   }
 
                   // Filter by bookmark if checked
                   if (vocabBookMarkCheck) {
-                    parsed = parsed.filter(item => item.bookmarked === true);
+                    parsed = parsed.filter((item) => item.bookmarked === true);
                   }
                 }
-                localStorage.setItem("filteredVocabData", JSON.stringify(filtered));
+                localStorage.setItem(
+                  "filteredVocabData",
+                  JSON.stringify(filtered)
+                );
                 setOpenModal(false);
-
               }}
             >
               Apply
             </button>
-
           </div>
         </div>
       </div>
