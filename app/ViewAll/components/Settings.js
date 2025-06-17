@@ -1,19 +1,14 @@
 "use client";
-import Image from "next/image";
+import { Settings as SettingsIcon } from "lucide-react";
 
-export default function Settings({ onClick }) {
+export default function SettingsButton({ onClick }) {
   return (
     <div
-      className="flex gap-x-2 items-center mb-2 cursor-pointer"
+      className="flex gap-x-2 items-center mb-3 cursor-pointer font-bold text-black dark:text-white"
       onClick={onClick}
     >
-      <Image
-        src={"/icons/settings.svg"}
-        width={24}
-        height={24}
-        alt="settings"
-      />
-      <p>Settings</p>
+      <SettingsIcon size={24} />
+      <p>SETTINGS</p>
     </div>
   );
 }

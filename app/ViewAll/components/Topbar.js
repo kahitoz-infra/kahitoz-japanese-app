@@ -35,12 +35,12 @@ export default function TopBar({ onSelect }) {
 
     return (
         <div className="flex items-center justify-center">
-            <ul className="flex gap-x-4  px-4 py-2 rounded-xl dark:bg-[#2F2F2F]">
+            <ul className="flex gap-x-4  px-4 py-2 rounded-xl font-bold bg-[#f5f5f5] dark:bg-[#2F2F2F]">
                 {items.map((item, index) => (
                     <li
                         key={index}
-                        className={`px-2 py-1 rounded cursor-pointer ${
-                            activeIndex === index ? 'bg-orange-500 text-white' : ''
+                        className={`px-2 py-1 rounded-2xl cursor-pointer ${
+                            activeIndex === index ? 'bg-[#FF6E8A] dark:bg-[#FF9270] font-bold text-white dark:text-black' : ''
                         }`}
                         onClick={() => handleItemClick(index)}
                     >
