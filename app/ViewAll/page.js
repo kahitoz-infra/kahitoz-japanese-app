@@ -20,7 +20,7 @@ import {
 
 export default function ViewAll() {
   const [loading, setLoading] = useState(true);
-  const [selectedCategory, setSelectedCategory] = useState("Vocabulary");
+  const [selectedCategory, setSelectedCategory] = useState("Kanji");
   const [openVocabModal, setOpenVocabModal] = useState(false);
   const [openKanjiModal, setOpenKanjiModal] = useState(false);
 
