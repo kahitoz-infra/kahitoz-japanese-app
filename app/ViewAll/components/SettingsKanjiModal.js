@@ -9,11 +9,19 @@ export default function SettingsKanjiModal({
   const [levels, setLevels] = useState([]);
   const [kanjiSelectedLevels, setSelectedLevels] = useState([]);
   const [kanjiBookMarkCheck, setKanjiBookMarkCheck] = useState(false);
+  const [kanjiIncludeBookmarks, setKanjiIncludeBookMarks] = useState(true)
+
+  useEffect(() => {
+    if (kanjiBookMarkCheck) {
+      setKanjiIncludeBookMarks(false);
+    }
+  }, [kanjiBookMarkCheck]);
 
   useEffect(() => {
     const localKanjiData = localStorage.getItem("cacheKanji");
     const savedSelected = localStorage.getItem("kanjiSelectedLevels");
     const saveBookMark = localStorage.getItem("kanjiBookMarkChecked");
+    const includeBookMark = localStorage.getItem("kanjiBookMarkInclude");
 
     if (localKanjiData) {
       const data = JSON.parse(localKanjiData);
@@ -28,6 +36,10 @@ export default function SettingsKanjiModal({
     if (saveBookMark !== null) {
       setKanjiBookMarkCheck(saveBookMark === "true");
     }
+
+    if (includeBookMark !== null) {
+      setKanjiIncludeBookMarks(includeBookMark === "true");
+    }
   }, []);
 
   const applyFiltersAndReturnData = () => {
@@ -37,29 +49,27 @@ export default function SettingsKanjiModal({
     let parsedData = JSON.parse(localKanjiData);
     console.log("Initial data count:", parsedData.length);
 
-    // If bookmark filter is checked
+    // If "Show Bookmarks Only" is checked
     if (kanjiBookMarkCheck) {
       parsedData = parsedData.filter((item) => item.marked === true);
       console.log("After bookmark filter:", parsedData.length);
-
-      // Then also apply tags filtering if levels are selected
-      if (kanjiSelectedLevels.length > 0) {
-        parsedData = parsedData.filter((item) =>
-          kanjiSelectedLevels.includes(item.tags)
-        );
-        console.log("After bookmark + tags filter:", parsedData.length);
-      }
     } else {
-      // Bookmark is NOT checked → Apply only tags filtering if selected
-      if (kanjiSelectedLevels.length > 0) {
-        parsedData = parsedData.filter((item) =>
-          kanjiSelectedLevels.includes(item.tags)
-        );
-        console.log("After tags-only filter:", parsedData.length);
+      // If "Include Bookmarks" is NOT checked, exclude bookmarked items
+      if (!kanjiIncludeBookmarks) {
+        parsedData = parsedData.filter((item) => !item.marked);
+        console.log("After excluding bookmarks:", parsedData.length);
       }
     }
 
-    console.log("This is the parsed data -", parsedData);
+    // Apply level filtering if any level is selected
+    if (kanjiSelectedLevels.length > 0) {
+      parsedData = parsedData.filter((item) =>
+        kanjiSelectedLevels.includes(item.tags)
+      );
+      console.log("After level filter:", parsedData.length);
+    }
+
+    console.log("Final parsed data:", parsedData);
 
     return parsedData;
   };
@@ -102,6 +112,16 @@ export default function SettingsKanjiModal({
                 );
               })}
             </div>
+          </div>
+
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              checked={kanjiIncludeBookmarks}
+              onChange={(e) => setKanjiIncludeBookMarks(e.target.checked)}
+              className="mr-2"
+            />
+            <label>Include Bookmarks</label>
           </div>
 
           {/* Sort Order */}
@@ -181,6 +201,11 @@ export default function SettingsKanjiModal({
                   kanjiBookMarkCheck.toString()
                 );
                 setBookmark(kanjiBookMarkCheck);
+
+                localStorage.setItem(
+                  "kanjiBookMarkInclude",
+                  kanjiIncludeBookmarks.toString()
+                )
 
                 const filtered = applyFiltersAndReturnData();
                 setFilteredData(filtered);
