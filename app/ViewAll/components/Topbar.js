@@ -13,12 +13,12 @@ export default function TopBar({ onSelect }) {
       if (storedPreference) {
         initialIndex = items.indexOf(storedPreference);
         if (initialIndex === -1) {
-          initialIndex = items.indexOf("Vocabulary");
-          localStorage.setItem("TopBarPreference", "Vocabulary");
+          initialIndex = items.indexOf("Kanji");
+          localStorage.setItem("TopBarPreference", "Kanji");
         }
       } else {
-        initialIndex = items.indexOf("Vocabulary");
-        localStorage.setItem("TopBarPreference", "Vocabulary");
+        initialIndex = items.indexOf("Kanji");
+        localStorage.setItem("TopBarPreference", "kanji");
       }
       setActiveIndex(initialIndex);
       if (onSelect) onSelect(items[initialIndex]);
