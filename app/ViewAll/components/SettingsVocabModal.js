@@ -9,11 +9,19 @@ export default function SettingsVocabModal({
   const [levels, setLevels] = useState([]);
   const [vocabSelectedLevels, setSelectedLevels] = useState([]);
   const [vocabBookMarkCheck, setVocabBookMarkCheck] = useState(false);
+  const [vocabIncludeBookmarks, setVocabIncludeBookMarks] = useState(true)
+
+  useEffect(() => {
+    if (vocabBookMarkCheck) {
+      setVocabIncludeBookMarks(false);
+    }
+  }, [vocabBookMarkCheck]);
 
   useEffect(() => {
     const localVocabData = localStorage.getItem("cacheVocab");
     const savedSelected = localStorage.getItem("vocabSelectedLevels");
     const saveBookMark = localStorage.getItem("vocabBookMarkChecked");
+    const includeBookMark = localStorage.getItem("vocabBookMarkInclude");
 
     if (localVocabData) {
       const data = JSON.parse(localVocabData);
@@ -28,6 +36,10 @@ export default function SettingsVocabModal({
     if (saveBookMark !== null) {
       setVocabBookMarkCheck(saveBookMark === "true");
     }
+
+    if (includeBookMark !== null) {
+      setVocabIncludeBookMarks(includeBookMark === "true");
+    }
   }, []);
 
   const applyFiltersAndReturnData = () => {
@@ -41,23 +53,23 @@ export default function SettingsVocabModal({
     if (vocabBookMarkCheck) {
       parsedData = parsedData.filter((item) => item.marked === true);
       console.log("After bookmark filter:", parsedData.length);
-
-      // Then also apply level filtering if levels are selected
-      if (vocabSelectedLevels.length > 0) {
-        parsedData = parsedData.filter((item) =>
-          vocabSelectedLevels.includes(item.level)
-        );
-        console.log("After bookmark + level filter:", parsedData.length);
-      }
     } else {
-      // Bookmark is NOT checked → Apply only level filtering if selected
-      if (vocabSelectedLevels.length > 0) {
-        parsedData = parsedData.filter((item) =>
-          vocabSelectedLevels.includes(item.level)
-        );
-        console.log("After level-only filter:", parsedData.length);
+      // If "Include Bookmarks" is NOT checked, exclude bookmarked items
+      if (!vocabIncludeBookmarks) {
+        parsedData = parsedData.filter((item) => !item.marked);
+        console.log("After excluding bookmarks:", parsedData.length);
       }
     }
+
+    // Apply level filtering if any level is selected
+    if (vocabSelectedLevels.length > 0) {
+      parsedData = parsedData.filter((item) =>
+        vocabSelectedLevels.includes(item.level)
+      );
+      console.log("After level filter:", parsedData.length);
+    }
+
+    console.log("Final parsed data:", parsedData);
 
     console.log("This is the parsed data -", parsedData);
 
@@ -102,6 +114,16 @@ export default function SettingsVocabModal({
                 );
               })}
             </div>
+          </div>
+
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              checked={vocabIncludeBookmarks}
+              onChange={(e) => setVocabIncludeBookMarks(e.target.checked)}
+              className="mr-2"
+            />
+            <label>Include Bookmarks</label>
           </div>
 
           {/* Sort Order */}
@@ -181,6 +203,11 @@ export default function SettingsVocabModal({
                   vocabBookMarkCheck.toString()
                 );
                 setBookmark(vocabBookMarkCheck);
+
+                localStorage.setItem(
+                  "vocabBookMarkInclude",
+                  vocabIncludeBookmarks.toString()
+                )
 
                 const filtered = applyFiltersAndReturnData();
                 setFilteredData(filtered);
