@@ -1,9 +1,12 @@
 'use client';
 import Link from 'next/link';
 
-export default function CustomButton({ text, href, disabled = false }) {
+export default function CustomButton({ text, href = '', disabled = false }) {
+  // Fallback to '#' if href is not defined or empty when not disabled
+  const safeHref = disabled || !href ? '#' : href;
+
   return (
-    <Link href={disabled ? '#' : href} onClick={(e) => disabled && e.preventDefault()}>
+    <Link href={safeHref} onClick={(e) => disabled && e.preventDefault()}>
       <button
         disabled={disabled}
         className={`
