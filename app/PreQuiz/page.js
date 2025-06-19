@@ -16,7 +16,7 @@ export default function JLPTQuizSetupPage() {
       </div>
 
       {/* JLPT Level Selector */}
-      <div className="mt-10">
+      <div className="mt-1">
         <JLPTLevelSelector />
 
         {/* The page is scrollable in case of more options on the screen*/}
