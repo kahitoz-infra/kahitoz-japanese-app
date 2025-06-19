@@ -19,6 +19,9 @@ export default function JLPTQuizSetupPage() {
       <div className="mt-10">
         <JLPTLevelSelector />
 
+        {/* The page is scrollable in case of more options on the screen*/}
+      <div className="flex-1 overflow-auto min-h-0 px-4 pb-32 mt-10"></div>
+
         {/* Bottom Navbar */}
               <Navbar />
       </div>
