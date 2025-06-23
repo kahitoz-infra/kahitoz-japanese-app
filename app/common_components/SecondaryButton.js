@@ -14,7 +14,7 @@ export default function SecondaryButton({ text, href = '', disabled = false }) {
           ${
             disabled
               ? 'border-gray-400 text-gray-400 cursor-not-allowed'
-              : 'border-[#FF3A60] text-[#FF3A60] dark:border-[#FF5E2C] dark:text-[#FF5E2C] hover:opacity-80'
+              : 'border-[#FF3A60] text-[#FF3A60] dark:border-[#FF5E2C] bg-white dark:bg-[#333333] dark:text-[#FF5E2C] hover:opacity-80'
           }
         `}
       >
