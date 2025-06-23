@@ -7,7 +7,7 @@ export default function SetBlock({
   status = "not attempted",
   score = null,
   onClick = () => {},
-  lastAttempted = null, // new prop
+  lastAttempted = null,
 }) {
   const statusColors = {
     completed: "bg-green-100 text-green-800 border-green-400",
@@ -23,21 +23,19 @@ export default function SetBlock({
       className={`p-4 border rounded-xl shadow-sm ${colorClass} transition-transform duration-200 w-full relative`}
     >
       <h3 className="text-lg font-bold mb-2">Set {setNo}</h3>
-      <p className="text-sm font-medium capitalize">Status: {status || "Not Attempted"}</p>
+      <p className="text-sm font-medium capitalize">Status: {status}</p>
 
-      {/* Show Score if completed */}
       {safeStatus === 'completed' && (
         <p className="text-sm mt-1 font-semibold">Score: {score}</p>
       )}
 
-      {/* Show Attempt Date if attempted or completed */}
       {["attempted", "completed"].includes(safeStatus) && lastAttempted && (
-        <p className="text-sm mt-1 text-gray-600 dark:text-gray-400">
-          Last Attempted: {new Date(lastAttempted).toLocaleDateString()}
-        </p>
-      )}
+  <p className="text-sm mt-1 text-gray-600 dark:text-gray-400">
+    Last Attempted: {new Date(lastAttempted).toISOString().split('T')[0]}
+  </p>
+)}
 
-      {/* Start Button */}
+
       <div className="mt-4 flex justify-end">
         <button
           onClick={onClick}
