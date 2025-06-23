@@ -36,6 +36,39 @@ export default function ViewAll() {
   const currentIndex = currentCategory.index;
   const currentItem = currentList[currentIndex];
 
+  const handleJumpToIndex = useCallback(
+    (newIndex) => {
+      if (newIndex < 1 || newIndex > currentList.length) return;
+  
+      const indexToSet = newIndex - 1;
+  
+      // Save new index to localStorage
+      if (selectedCategory === "Vocabulary") {
+        const bookmarkChecked =
+          localStorage.getItem("vocabBookMarkChecked") === "true";
+        const indexKey = bookmarkChecked ? "bookmarkIndex" : "normalIndex";
+        localStorage.setItem(indexKey, indexToSet.toString());
+      } else if (selectedCategory === "Kanji") {
+        const bookmarkChecked =
+          localStorage.getItem("kanjiBookMarkChecked") === "true";
+        const indexKey = bookmarkChecked
+          ? "bookmarkKanjiIndex"
+          : "normalKanjiIndex";
+        localStorage.setItem(indexKey, indexToSet.toString());
+      }
+  
+      setCategoryState((prev) => ({
+        ...prev,
+        [selectedCategory]: {
+          ...prev[selectedCategory],
+          index: indexToSet,
+        },
+      }));
+    },
+    [selectedCategory, currentList.length]
+  );
+  
+
   useEffect(() => {
     const load = async () => {
       setLoading(true);
@@ -356,12 +389,13 @@ export default function ViewAll() {
         </div>
 
         <div className="w-96 px-4 mt-4">
-          <ControlBar
-            current={currentIndex + 1}
-            total={currentList.length}
-            bookmarked={currentItem?.marked}
-            onBookmarkToggle={handleBookmarkToggle}
-          />
+        <ControlBar
+          current={currentIndex + 1}
+          total={currentList.length}
+          bookmarked={currentItem?.marked}
+          onBookmarkToggle={handleBookmarkToggle}
+          onJumpTo={handleJumpToIndex}
+        />
         </div>
       </div>
 
