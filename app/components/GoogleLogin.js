@@ -83,7 +83,7 @@ export default function UnifiedGoogleLoginToken() {
 
     const renderLoginButton = () =>
         isNative ? (
-            <div className='flex justify-center items-center gap-x-2 dark:bg-white dark:text-black p-2 rounded-xl bg-blue-400 text-white'>
+            <div className='flex justify-center items-center gap-x-2 dark:bg-white dark:text-black p-2 rounded-xl bg-gray-400 text-black'>
                 <Image src="/google-logo.webp" width={30} height={30} alt="google" />
                 <button onClick={nativeSignIn} className='' disabled={loading}>
                     Sign in with Google
