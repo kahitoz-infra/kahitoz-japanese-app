@@ -1,18 +1,18 @@
 'use client';
-
+ 
 import { useState, useEffect } from 'react';
 import CustomButton from '@/app/common_components/CustomButton';
 import { authFetch } from '@/app/middleware';
-
+ 
 const quizTypes = ['Vocab', 'Kanji'];
 const info_api = process.env.NEXT_PUBLIC_API_URL + "/level_info";
 const CACHE_EXPIRY = 24 * 60 * 60 * 1000; // 24 hours
-
+ 
 function buildRangesFromUIDs(start, end, chunkSize = 100) {
   const ranges = [];
   let index = 1;
   let currentStartUID = start;
-
+ 
   while (currentStartUID <= end) {
     const currentEndUID = Math.min(currentStartUID + chunkSize - 1, end);
     ranges.push({
@@ -20,15 +20,15 @@ function buildRangesFromUIDs(start, end, chunkSize = 100) {
       uidStart: currentStartUID,
       uidEnd: currentEndUID,
     });
-
+ 
     index += currentEndUID - currentStartUID + 1;
     currentStartUID = currentEndUID + 1;
   }
-
+ 
   return ranges;
 }
-
-
+ 
+ 
 export default function JLPTLevelSelector() {
   const [selectedType, setSelectedType] = useState('');
   const [levelInfo, setLevelInfo] = useState([]);
@@ -36,21 +36,21 @@ export default function JLPTLevelSelector() {
   const [rangesByLevel, setRangesByLevel] = useState({});
   const [selectedRanges, setSelectedRanges] = useState({});
   const [chunkSize, setChunkSize] = useState(100);
-
-
+ 
+ 
   useEffect(() => {
     const fetchLevelInfo = async () => {
       if (!selectedType) return;
-
+ 
       const key = `level_info_${selectedType.toLowerCase()}`;
       const cached = localStorage.getItem(key);
       const cachedTime = localStorage.getItem(`${key}_timestamp`);
-
+ 
       if (cached && cachedTime && Date.now() - parseInt(cachedTime) < CACHE_EXPIRY) {
         setLevelInfo(JSON.parse(cached));
         return;
       }
-
+ 
       try {
         const res = await authFetch(`${info_api}?type=${selectedType.toLowerCase()}`);
         const data = await res.json();
@@ -61,10 +61,10 @@ export default function JLPTLevelSelector() {
         console.error('API fetch failed:', err);
       }
     };
-
+ 
     fetchLevelInfo();
   }, [selectedType]);
-
+ 
   useEffect(() => {
     if (!levelInfo.length) return;
     const mapped = {};
@@ -73,8 +73,8 @@ export default function JLPTLevelSelector() {
     }
     setRangesByLevel(mapped);
   }, [levelInfo, chunkSize]); // re-run when chunkSize changes
-  
-
+ 
+ 
   const toggleType = (type) => {
     if (type === selectedType) {
       setSelectedType('');
@@ -88,23 +88,23 @@ export default function JLPTLevelSelector() {
       setSelectedRanges({});
     }
   };
-
+ 
   const toggleLevel = (level) => {
     setSelectedLevels((prev) => {
       const updated = prev.includes(level)
         ? prev.filter((l) => l !== level)
         : [...prev, level];
-
+ 
       if (prev.includes(level)) {
         const updatedRanges = { ...selectedRanges };
         delete updatedRanges[level];
         setSelectedRanges(updatedRanges);
       }
-
+ 
       return updated;
     });
   };
-
+ 
   const toggleRange = (level, rangeLabel) => {
     setSelectedRanges((prev) => {
       const current = prev[level] || [];
@@ -114,24 +114,23 @@ export default function JLPTLevelSelector() {
       return { ...prev, [level]: updated };
     });
   };
-
-
-
+ 
+ 
+ 
   const hasValidSelection =
-    modes.length > 0 &&
     selectedLevels.length > 0 &&
     Object.values(selectedRanges).some((r) => r.length > 0);
-
+ 
   const handleStartQuiz = () => {
     const uids = [];
-
+ 
     for (const level of selectedLevels) {
       const levelData = levelInfo.find((entry) => entry[0] === level);
       if (!levelData) continue;
-
+ 
       const [_, uidStart, uidEnd] = levelData;
       const selectedLabels = selectedRanges[level] || [];
-
+ 
       for (const label of selectedLabels) {
         if (label.startsWith('Custom')) {
           const match = label.match(/Custom (\d+)-(\d+)/);
@@ -150,20 +149,20 @@ export default function JLPTLevelSelector() {
         }
       }
     }
-
+ 
     const uniqueUIDs = Array.from(new Set(uids));
     localStorage.setItem('selected_uids', JSON.stringify(uniqueUIDs));
-
+ 
     // Navigate
     window.location.href = '/Quiz';
   };
-
+ 
   return (
     <div className="flex flex-col items-center gap-6 py-8">
       <h2 className="text-xl md:text-2xl font-semibold text-center">
         Please select the Quiz Type
       </h2>
-
+ 
       <div className="flex gap-4 flex-wrap justify-center">
         {quizTypes.map((type) => (
           <button
@@ -181,13 +180,13 @@ export default function JLPTLevelSelector() {
           </button>
         ))}
       </div>
-
+ 
       {selectedType && (
         <>
           <h2 className="text-xl md:text-2xl font-semibold text-center">
             Please select the JLPT Levels
           </h2>
-
+ 
           <div className="flex flex-col items-center">
             <label className="font-medium mb-1">Select Range Chunk Size:</label>
             <input
@@ -198,8 +197,8 @@ export default function JLPTLevelSelector() {
               className="border px-2 py-1 rounded text-center w-24 dark:text-black"
             />
           </div>
-
-
+ 
+ 
           <div className="flex gap-4 flex-wrap justify-center">
             {Object.keys(rangesByLevel).map((level) => (
               <button
@@ -217,7 +216,7 @@ export default function JLPTLevelSelector() {
               </button>
             ))}
           </div>
-
+ 
           {selectedLevels.map((level) => (
             <div key={level} className="flex flex-col gap-2 w-full max-w-4xl px-4">
               <span className="font-semibold text-lg">{level} Ranges:</span>
@@ -245,13 +244,13 @@ export default function JLPTLevelSelector() {
           ))}
         </>
       )}
-
+ 
       <div>
         <button
           disabled={!hasValidSelection}
           onClick={handleStartQuiz}
           className={`
-            mt-6 px-6 py-2 rounded-lg font-semibold text-white
+            px-6 py-2 rounded-lg font-semibold text-white
             ${hasValidSelection ? 'bg-green-500 hover:bg-green-600' : 'bg-gray-400 cursor-not-allowed'}
           `}
         >
@@ -261,3 +260,4 @@ export default function JLPTLevelSelector() {
     </div>
   );
 }
+ 
