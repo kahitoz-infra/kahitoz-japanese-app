@@ -78,6 +78,8 @@ export default function SetsPage() {
               status={set.completed ? "completed" : (set.quiz_score ? "attempted" : "not attempted")}
               score={set.quiz_score ? `${set.quiz_score}/30` : null}
               lastAttempted={set.last_attempted}
+              type={quizType}
+              quiz_number={quizName.charAt(quizName.length - 1)}
               onClick={() => {
                 // Navigate to quiz screen here if needed
                 console.log("Start quiz for", set.set_key);
