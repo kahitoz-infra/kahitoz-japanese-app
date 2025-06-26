@@ -12,8 +12,8 @@ export default function Navbar() {
     }, []);
 
     const items = [
-        { lightIcon: "/icons/learn.svg", darkIcon: "/icons/learnwhite.svg", label: "Learn", path: "/Learn" },
-        { lightIcon: "/icons/progress.svg", darkIcon: "/icons/progresswhite.svg", label: "Streak", path: "/Streak" },
+        { lightIcon: "/icons/learn.svg", darkIcon: "/icons/learnwhite.svg", label: "Learn", path: "/ViewAll" },
+        { lightIcon: "/icons/progress.svg", darkIcon: "/icons/progresswhite.svg", label: "Quiz", path: "/PreQuiz" },
         { lightIcon: "/icons/chat.svg", darkIcon: "/icons/chatwhite.svg", label: "AI Chat", path: "/Chat" },
         { lightIcon: "/icons/profile.svg", darkIcon: "/icons/profilewhite.svg", label: "Profile", path: "/Settings" },
     ];
@@ -22,7 +22,7 @@ export default function Navbar() {
         lightIcon: "/icons/home.svg",
         darkIcon: "/icons/home.svg",
         label: "HOME",
-        path: "/Dashboard"
+        path: "/Dashboardv2"
     };
 
     const navItems = [items[0], items[1], centerButton, items[2], items[3]];

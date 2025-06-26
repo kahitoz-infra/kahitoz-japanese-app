@@ -205,7 +205,7 @@ export default function Login() {
                           {/* Main Button */}
 
                           <Link
-                              href="/Dashboard"
+                              href="/Dashboardv2"
                               className="px-7 h-12 bg-[#FF5274] dark:bg-[#F66538] text-white rounded-lg font-semibold mt-2 hover:opacity-90 transition-all flex items-center justify-center"
                           >
                               {activeTab === "register" ? "Create Account" : "Sign In"}
