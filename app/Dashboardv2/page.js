@@ -117,16 +117,17 @@ const Dashboard = () => {
           <MotivationalQuotes />
         </div>
 
+        <div
+            className="flex-1 min-w-[250px] bg-white dark:bg-[#2f2f2f] rounded-lg shadow-md p-4"
+          >
+            <h3 className="text-lg font-semibold mb-2 border:border-black">Your Progress</h3>
+            <ProgressBar />
+          </div>
+
         {/* Recap Block + Progress Bar */}
         <div className="flex justify-between items-start flex-wrap gap-4 mb-6">
           <div className="flex-1 min-w-[250px]">
             <RecapBlock kanji="日" meaning="Sun / Day" reading="にち / ひ" />
-          </div>
-          <div
-            className="flex-1 min-w-[250px] bg-white dark:bg-[#1e1e1e] rounded-lg shadow-md p-4"
-          >
-            <h3 className="text-lg font-semibold mb-2">Your Progress</h3>
-            <ProgressBar />
           </div>
         </div>
 

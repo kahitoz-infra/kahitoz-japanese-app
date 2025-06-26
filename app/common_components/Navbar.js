@@ -22,7 +22,7 @@ export default function Navbar() {
         lightIcon: "/icons/home.svg",
         darkIcon: "/icons/home.svg",
         label: "HOME",
-        path: "/Dashboard"
+        path: "/Dashboardv2"
     };
 
     const navItems = [items[0], items[1], centerButton, items[2], items[3]];
