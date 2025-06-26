@@ -6,27 +6,32 @@ export default function MotivationalQuotes() {
     "Keep going, you're doing great!",
     "Every step counts!",
     "Believe in yourself.",
-    "Stay positive, work hard.",
+    "Today, we will be better.",
   ];
 
   const [quoteIndex, setQuoteIndex] = useState(0);
-  const [visible, setVisible] = useState(true);
+  const [fade, setFade] = useState('in');
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setVisible(false);
+      setFade('out'); // Start fade-out
       setTimeout(() => {
+        // After fade-out, change quote and fade-in
         setQuoteIndex((prev) => (prev + 1) % quotes.length);
-        setVisible(true);
-      }, 500); // fade out time
-    }, 5000); // quote interval
+        setFade('in');
+      }, 500); // match fade-out duration
+    }, 3000); // change every 3s
 
     return () => clearInterval(interval);
   }, []);
 
   return (
-    <div className="text-center text-lg font-bold text-gray-700 dark:text-gray-200 mt-6 h-6 transition-opacity duration-500">
-      <span className={visible ? 'opacity-100' : 'opacity-0 transition-opacity duration-500'}>
+    <div className="text-center text-lg font-bold text-black dark:text-black h-6">
+      <span
+        className={`inline-block transition-opacity duration-500 ${
+          fade === 'in' ? 'opacity-100' : 'opacity-0'
+        }`}
+      >
         {quotes[quoteIndex]}
       </span>
     </div>
