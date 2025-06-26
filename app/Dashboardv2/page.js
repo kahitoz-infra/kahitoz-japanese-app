@@ -31,7 +31,7 @@ export default function Dashboard() {
         {/* 🌞 Greeting */}
         <div style={{ textAlign: 'center', marginBottom: '10px' }}>
           <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 'bold' }}> Welcome Back!</h2>
-          <p style={{ margin: 0, fontSize: '1.2rem', color: '#666', fontWeight:'bold' }}>おかえり</p>
+          <p style={{ margin: 0, fontSize: '1.2rem', fontWeight:'bold' }}>おかえり</p>
         </div>
 
         {/* 💬 Motivational Quote inside styled box */}

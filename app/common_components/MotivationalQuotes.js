@@ -26,7 +26,7 @@ export default function MotivationalQuotes() {
   }, []);
 
   return (
-    <div className="text-center text-lg font-bold text-gray-700 dark:text-gray-200 h-6">
+    <div className="text-center text-lg font-bold text-black dark:text-black h-6">
       <span
         className={`inline-block transition-opacity duration-500 ${
           fade === 'in' ? 'opacity-100' : 'opacity-0'
