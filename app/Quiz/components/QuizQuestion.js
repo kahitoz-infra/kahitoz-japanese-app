@@ -1,28 +1,13 @@
 'use client';
 
 import { useState } from 'react';
+import { formatOption } from '../utils/formatOption';
 
 export default function QuizQuestion({ question = "", options = [], name = "quiz", selectedOption, onSelect, type }) {
 
 
   const [selected, setSelected] = useState(null);
 
-  // ✅ Format function for options like ["ショウ"] | ["ちい・さい"]
-  const formatOption = (optionStr, type) => {
-    if (type === 'onyo_kunyo_to_kanji' || type === 'onyomi_kunyomi_to_kanji') {
-      try {
-        const [onyomiRaw, kunyomiRaw] = optionStr.split('|').map(part => JSON.parse(part.trim()));
-        const onyomi = onyomiRaw.length ? onyomiRaw.join(', ') : '—';
-        const kunyomi = kunyomiRaw.length ? kunyomiRaw.join(', ') : '—';
-        return `Onyomi: ${onyomi} | Kunyomi: ${kunyomi}`;
-      } catch {
-        return optionStr;
-      }
-    }
-    return optionStr;
-  };
-  
-  
 
   return (
     <div className="mt-8 flex flex-col items-center px-4">
