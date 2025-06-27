@@ -6,6 +6,7 @@ import QuizQuestion from './components/QuizQuestion';
 import ProgressBar from '../common_components/ProgressBar';
 import CustomButton from '@/app/common_components/CustomButton';
 import { authFetch } from '../middleware';
+import { formatOption } from './utils/formatOption';
 
 export default function QuizPage() {
   const router = useRouter();
