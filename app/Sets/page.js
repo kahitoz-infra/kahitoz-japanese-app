@@ -48,7 +48,7 @@ export default function SetsPage() {
   }, [quizName, quizType]);
 
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-black text-black dark:text-white relative">
+    <div className="min-h-screen bg-gray-100 dark:bg-[#333333] text-black dark:text-white relative">
       {/* Header */}
       <div className="w-full h-[20vh] bg-[#fbfbfb] dark:bg-[#2F2F2F] border-b-4 border-[#FF5274] dark:border-[#F66538] rounded-b-xl flex items-center justify-center relative z-0">
         <h1 className="text-2xl font-bold text-center z-10">

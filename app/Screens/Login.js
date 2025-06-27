@@ -26,7 +26,7 @@ export default function Login() {
             }
             else{
                 setLoading(false)
-                router.push("/Dashboard");
+                router.push("/Dashboardv2");
             }
 
         };

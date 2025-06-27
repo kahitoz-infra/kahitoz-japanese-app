@@ -58,18 +58,26 @@ export default function CustomKanjiQuizBlock() {
     <div>
       {/* Type Switch Buttons */}
       <div className="flex w-full justify-center gap-x-4 items-center mb-4">
-        <button
-          className={`${type === 'kanji' ? 'bg-orange-500' : 'bg-gray-500'} text-white px-4 py-2 rounded-lg`}
-          onClick={() => handleTypeChange('kanji')}
-        >
-          Kanji
-        </button>
-        <button
-          className={`${type === 'vocab' ? 'bg-orange-500' : 'bg-gray-500'} text-white px-4 py-2 rounded-lg`}
-          onClick={() => handleTypeChange('vocab')}
-        >
-          Vocab
-        </button>
+              <button
+      className={`${
+        type === 'kanji'
+          ? 'bg-[#FFB8C6] dark:bg-[#FF9D7E]'
+          : 'bg-white dark:bg-white'
+      } text-black dark:text-black font-bold px-4 py-2 rounded-lg`}
+      onClick={() => handleTypeChange('kanji')}
+    >
+      Kanji
+    </button>
+    <button
+      className={`${
+        type === 'vocab'
+          ? 'bg-[#FFB8C6] dark:bg-[#FF9D7E]'
+          : 'bg-white dark:bg-white'
+      } text-black dark:text-black font-bold px-4 py-2 rounded-lg`}
+      onClick={() => handleTypeChange('vocab')}
+    >
+      Vocab
+    </button>
       </div>
 
       {/* Loader */}

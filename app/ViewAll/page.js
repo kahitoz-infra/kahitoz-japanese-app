@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import Link from "next/link";
 import CherryBlossomSnowfall from "../common_components/CherryBlossomSnowfall";
 import Navbar from "../common_components/Navbar";
 import VocabCard from "./components/VocabCards";
@@ -358,16 +359,32 @@ export default function ViewAll() {
 
       <div className="flex flex-col w-full h-screen items-center justify-center">
         <div className="w-96">
-          <Settings
-            onClick={() => {
-              if (selectedCategory === "Vocabulary") {
-                setOpenVocabModal(true);
-              } else if (selectedCategory === "Kanji") {
-                setOpenKanjiModal(true);
-              }
-              // TODO: Add modals for Kanji, Grammar, Verb
-            }}
-          />
+          <div className="flex justify-between items-center mb-2">
+    {/* Left: Settings */}
+            <Settings
+              onClick={() => {
+                if (selectedCategory === "Vocabulary") {
+                  setOpenVocabModal(true);
+                } else if (selectedCategory === "Kanji") {
+                  setOpenKanjiModal(true);
+                }
+                // TODO: Add modals for Kanji, Grammar, Verb
+              }}
+            />
+
+            {/* Right: Learn Now Button */}
+            <Link href="/CustomQuiz">
+            <button
+              onClick={() => {
+                console.log("Navigate to quiz section");
+              }}
+              className="px-3 py-1 mb-2 rounded-full text-black font-medium transition
+                        bg-[#FFB8C6] dark:bg-[#FF9D7E] hover:opacity-90"
+            >
+              Learn Now
+            </button>
+            </Link>
+          </div>
           <TopBar onSelect={setSelectedCategory} />
         </div>
 
