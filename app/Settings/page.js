@@ -12,7 +12,6 @@ export default function Settings() {
 
   useEffect(() => {
     const loadPreferences = async () => {
-      const { value: savedUsername } = await Preferences.get({ key: "username" });
       const { value: savedDarkMode } = await Preferences.get({ key: "darkMode" });
       const { value: savedBlossom } = await Preferences.get({ key: "cherryBlossom" });
 
