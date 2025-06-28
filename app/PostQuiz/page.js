@@ -10,10 +10,24 @@ import Image from 'next/image';
 import { useEffect, useState } from 'react';
 
 export default function PostQuizPage() {
-  const correct = 7;
-  const incorrect = 3;
 
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [responses, setResponses] = useState([]);
+  const [correct, setCorrect] = useState(0);
+  const [incorrect, setIncorrect] = useState(0);
+
+useEffect(() => {
+  const raw = localStorage.getItem('quizResponses');
+  if (raw) {
+    const parsed = JSON.parse(raw);
+    setResponses(parsed);
+    const correctCount = parsed.filter(r => r.correct).length;
+    const incorrectCount = parsed.filter(r => !r.correct).length;
+    setCorrect(correctCount);
+    setIncorrect(incorrectCount);
+  }
+}, []);
+
 
   useEffect(() => {
     // Detect dark mode using matchMedia
