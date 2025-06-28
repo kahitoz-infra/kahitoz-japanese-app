@@ -263,7 +263,7 @@ export default function JLPTLevelSelector() {
                       key={range.label}
                       onClick={() => toggleRange(level, range.label)}
                       className={`
-                        px-3 py-1 rounded-md border text-sm font-medium transition-colors duration-200
+                        px-3 py-3 rounded-md border text-sm font-medium transition-colors duration-200
                         ${isActive
                           ? 'bg-[#FFB8C6] dark:bg-[#FF9D7E]'
                           : 'bg-[#FAF9F6] dark:bg-white'}
@@ -286,7 +286,7 @@ export default function JLPTLevelSelector() {
           onClick={handleStartQuiz}
           className={`
             px-6 py-2 rounded-lg font-semibold text-white
-            ${hasValidSelection ? 'bg-green-500 hover:bg-green-600' : 'bg-gray-400 cursor-not-allowed'}
+            ${hasValidSelection ? 'bg-[#FF3A60] dark:bg-[#FF5E2C]' : 'bg-gray-400 cursor-not-allowed'}
           `}
         >
           Start Quiz

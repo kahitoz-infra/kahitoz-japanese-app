@@ -4,7 +4,6 @@ import ProgressCard from './components/ProgressCard';
 import CustomButton from '@/app/common_components/CustomButton';
 import SecondaryButton from '@/app/common_components/SecondaryButton';
 import Navbar from '@/app/common_components/Navbar';
-import MotivationalQuotes from '@/app/common_components/MotivationalQuotes';
 import CherryBlossomSnowfall from '@/app/common_components/CherryBlossomSnowfall';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
@@ -72,10 +71,6 @@ useEffect(() => {
           <SecondaryButton text="Try Again" href="/Quiz" />
         </div>
 
-        {/* Motivational Quotes */}
-        <div className="mt-1">
-          <MotivationalQuotes />
-        </div>
       </div>
 
       {/* Bottom Navbar */}
