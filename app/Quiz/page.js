@@ -6,7 +6,7 @@ import QuizQuestion from './components/QuizQuestion';
 import ProgressBar from '../common_components/ProgressBar';
 import CustomButton from '@/app/common_components/CustomButton';
 import { authFetch } from '../middleware';
-import { formatOption } from './utils/formatOption';
+import { formatOption, formatQuestion } from './utils/formatOption';
 
 export default function QuizPage() {
   const router = useRouter();
@@ -17,6 +17,7 @@ export default function QuizPage() {
   const quizNumber = searchParams.get('quiz_number');
 
   const [questions, setQuestions] = useState([]);
+  const [responses, setResponses] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState(null);
   const [showFeedback, setShowFeedback] = useState(false);
@@ -27,8 +28,46 @@ export default function QuizPage() {
   const totalQuestions = questions.length;
 
   useEffect(() => {
-    const fetchQuestions = async () => {
-      if (!setNo || !type || !quizNumber) return;
+    const loadQuestions = async () => {
+      const apiLoadParam = searchParams.get('api_load');
+
+      if (apiLoadParam === 'false') {
+        const quizDataRaw = localStorage.getItem('quizData');
+
+        if (quizDataRaw) {
+          try {
+            const parsed = JSON.parse(quizDataRaw);
+            let loadedQuestions = [];
+
+            if (Array.isArray(parsed)) {
+              loadedQuestions = parsed;
+            } else if (parsed?.questions) {
+              loadedQuestions = parsed.questions;
+            } else if (parsed?.next_set?.questions) {
+              loadedQuestions = parsed.next_set.questions;
+            }
+
+            if (loadedQuestions.length > 0) {
+              setQuestions(loadedQuestions);
+            } else {
+              console.error('No questions found in quizData');
+            }
+
+          } catch (err) {
+            console.error('Failed to parse quizData from localStorage:', err);
+          }
+        } else {
+          console.error('No quizData found in localStorage');
+        }
+        setLoading(false);
+        return;
+      }
+
+      // Otherwise, load from API as usual
+      if (!setNo || !type || !quizNumber) {
+        setLoading(false);
+        return;
+      }
 
       try {
         const res = await authFetch(
@@ -48,8 +87,10 @@ export default function QuizPage() {
       }
     };
 
-    fetchQuestions();
-  }, []);
+    loadQuestions();
+  }, [searchParams, setNo, type, quizNumber]);
+
+
 
   const handleOptionClick = (option) => {
     if (showFeedback) return;
@@ -58,25 +99,33 @@ export default function QuizPage() {
 
   const handleNext = () => {
     if (!selectedOption) return;
-
-    // If feedback not shown yet, evaluate and stop
+  
     if (!showFeedback) {
       const correct = selectedOption === currentQuestion.correct_option;
       setIsCorrect(correct);
       setShowFeedback(true);
+  
+      // Store user response
+      const newResponse = {
+        q_id: currentQuestion.id,
+        correct: correct
+      };
+      setResponses((prev) => [...prev, newResponse]);
+  
       return;
     }
-
-    // If feedback was already shown, move to next question
+  
     if (currentIndex < totalQuestions - 1) {
       setCurrentIndex(currentIndex + 1);
       setSelectedOption(null);
       setShowFeedback(false);
     } else {
-      alert("Quiz complete!");
-      router.push("/CustomQuiz");
+      // Save to localStorage to pass to PostQuizPage
+      localStorage.setItem('quizResponses', JSON.stringify(responses));
+      router.push("/PostQuiz");
     }
   };
+  
 
 
 
