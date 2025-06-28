@@ -1,149 +1,109 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import CherryBlossomSnowfall from "../common_components/CherryBlossomSnowfall";
-import Navbar from "../common_components/Navbar";
+import { useState } from 'react';
+import Link from 'next/link';
+import {
+  User,Crown,CreditCard,KeyRound,BookOpen,Flower,Moon,Music,ShieldCheck,LogOut,ArrowLeft} from 'lucide-react';
 
-export default function Settings() {
-  const [username, setUsername] = useState("Guest");
-  const [darkMode, setDarkMode] = useState(false);
-  const [cherryBlossom, setCherryBlossom] = useState(true);
-  const [appVersion, setAppVersion] = useState("1.0.0");
+export default function SettingsPage() {
+  const [cherryBlossom, setCherryBlossom] = useState(false);
+  const [themeDark, setThemeDark] = useState(false);
+  const [soundEffects, setSoundEffects] = useState(true);
 
-  useEffect(() => {
-    const loadPreferences = async () => {
-      const { value: savedDarkMode } = await Preferences.get({ key: "darkMode" });
-      const { value: savedBlossom } = await Preferences.get({ key: "cherryBlossom" });
-
-      if (savedUsername) setUsername(savedUsername);
-      if (savedDarkMode) setDarkMode(savedDarkMode === "true");
-      if (savedBlossom !== null) setCherryBlossom(savedBlossom === "true");
-    };
-
-    loadPreferences();
-  }, []);
-
-  const updatePreference = async (key, value, setter) => {
-    await Preferences.set({ key, value: value.toString() });
-    setter(value);
-  };
-
-  const handleUsernameChange = async () => {
-    const newUsername = prompt("Enter new username", username);
-    if (newUsername) {
-      await Preferences.set({ key: "username", value: newUsername });
-      setUsername(newUsername);
-    }
-  };
-
-  const openExternal = (url) => {
-    window.open(url, "_blank");
-  };
+  const staticLinks = [
+    { label: 'Profile', href: '/profile', icon: <User size={20} /> },
+    { label: 'Subscription Settings', href: '/subscription-settings', icon: <Crown size={20} /> },
+    { label: 'Payment Settings', href: '/payment-settings', icon: <CreditCard size={20} /> },
+    { label: 'Change Password', href: '/change-password', icon: <KeyRound size={20} /> },
+    { label: 'App Guide', href: '/app-guide', icon: <BookOpen size={20} /> },
+    { label: 'Privacy Policy', href: '/privacy-policy', icon: <ShieldCheck size={20} /> },
+  ];
 
   return (
-    <div className="flex flex-col h-screen w-full items-center justify-start p-4 bg-white dark:bg-black">
-      {/* Blossom Background */}
-      {cherryBlossom && (
-        <div className="absolute w-full top-0 z-[-1] pointer-events-none">
-          <CherryBlossomSnowfall isDarkMode={darkMode} />
-        </div>
-      )}
+    <div className="min-h-screen px-6 py-6 bg-white text-black flex flex-col justify-between font-sans">
+      {/* Back Button */}
+      <div>
+        <Link href="/" className="text-sm flex items-center font-medium text-black mb-6">
+          <ArrowLeft className="mr-2" size={18} /> Back
+        </Link>
 
-      {/* Header */}
-      <h1 className="text-2xl font-bold mt-6 mb-4 text-center text-gray-900 dark:text-white">
-        Settings
-      </h1>
+        <h1 className="text-xl font-bold mb-6 text-center w-fit mx-auto border-b-2 border-pink-400">
+        SETTINGS
+        </h1>
 
-      {/* Settings List */}
-      <div className="w-full max-w-md space-y-6">
+        {/* Static Settings */}
+        <ul className="space-y-4">
+          {staticLinks.map(({ label, href, icon }) => (
+            <li key={label}>
+              <Link href={href} className="flex items-center text-md font-medium hover:opacity-80 transition">
+                <span className="text-lg mr-4">{icon}</span>
+                {label}
+              </Link>
+            </li>
+          ))}
 
-        {/* Profile Section */}
-        <section className="bg-gray-100 dark:bg-gray-800 rounded-lg p-4">
-          <h2 className="text-lg font-semibold mb-2 text-gray-800 dark:text-gray-200">Profile</h2>
-          <p className="text-sm mb-2 text-gray-700 dark:text-gray-300">Username: {username}</p>
-          <button
-            onClick={handleUsernameChange}
-            className="text-sm text-blue-500 underline"
-          >
-            Edit Username
-          </button>
-        </section>
+          {/* Toggles */}
+          <li className="flex justify-between items-center mt-2">
+            <div className="flex items-center text-md font-medium">
+              <Flower size={20} className="mr-4" />
+              Cherry Blossom Effect
+            </div>
+            <Toggle enabled={cherryBlossom} setEnabled={setCherryBlossom} />
+          </li>
 
-        {/* Payment Section */}
-        <section className="bg-gray-100 dark:bg-gray-800 rounded-lg p-4">
-          <h2 className="text-lg font-semibold mb-2 text-gray-800 dark:text-gray-200">Payment</h2>
-          <p className="text-sm text-gray-700 dark:text-gray-300">Free Plan</p>
-          <button
-            onClick={() => openExternal("https://yourapp.com/upgrade")}
-            className="mt-2 px-4 py-2 bg-pink-400 dark:bg-pink-600 text-white rounded hover:opacity-90"
-          >
-            Upgrade Plan
-          </button>
-        </section>
+          <li className="flex justify-between items-center">
+            <div className="flex items-center text-md font-medium">
+              <Moon size={20} className="mr-4" />
+              Theme
+            </div>
+            <Toggle enabled={themeDark} setEnabled={setThemeDark} />
+          </li>
 
-        {/* Display Settings */}
-        <section className="bg-gray-100 dark:bg-gray-800 rounded-lg p-4 space-y-3">
-          <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200">Display</h2>
+          <li className="flex justify-between items-center">
+            <div className="flex items-center text-md font-medium">
+              <Music size={20} className="mr-4" />
+              Sound Effects
+            </div>
+            <Toggle enabled={soundEffects} setEnabled={setSoundEffects} />
+          </li>
 
-          <div className="flex justify-between items-center">
-            <span className="text-sm text-gray-700 dark:text-gray-300">Dark Mode</span>
-            <input
-              type="checkbox"
-              checked={darkMode}
-              onChange={() => updatePreference("darkMode", !darkMode, setDarkMode)}
-            />
-          </div>
-
-          <div className="flex justify-between items-center">
-            <span className="text-sm text-gray-700 dark:text-gray-300">Cherry Blossoms</span>
-            <input
-              type="checkbox"
-              checked={cherryBlossom}
-              onChange={() => updatePreference("cherryBlossom", !cherryBlossom, setCherryBlossom)}
-            />
-          </div>
-        </section>
-
-        {/* Help & Info */}
-        <section className="bg-gray-100 dark:bg-gray-800 rounded-lg p-4 space-y-2">
-          <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200">Help & Info</h2>
-          <button
-            onClick={() => openExternal("/guide")}
-            className="text-sm text-blue-500 underline"
-          >
-            App Guide
-          </button>
-          <button
-            onClick={() => openExternal("/help")}
-            className="text-sm text-blue-500 underline"
-          >
-            Help / FAQ
-          </button>
-          <button
-            onClick={() => openExternal("/terms")}
-            className="text-sm text-blue-500 underline"
-          >
-            Terms & Conditions
-          </button>
-          <button
-            onClick={() => openExternal("/privacy")}
-            className="text-sm text-blue-500 underline"
-          >
-            Privacy Policy
-          </button>
-        </section>
-
-        {/* App Info */}
-        <section className="bg-gray-100 dark:bg-gray-800 rounded-lg p-4">
-          <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200">App Info</h2>
-          <p className="text-sm text-gray-700 dark:text-gray-300">Version: {appVersion}</p>
-        </section>
+          {/* Logout */}
+          <li className="flex items-center text-md font-bold text-[#ff4970] mt-4">
+            <Link href="/logout" className="flex items-center hover:opacity-80 transition">
+              <LogOut size={20} className="mr-4" />
+              Log Out
+            </Link>
+          </li>
+        </ul>
       </div>
 
-      {/* Bottom Navbar */}
-      <div className="fixed bottom-0 w-full">
-        <Navbar />
+      {/* Footer */}
+      <div className="text-center text-xs text-gray-500 mt-8">
+        <p>
+          <Link href="/terms" className="hover:underline">Terms & Conditions</Link>
+          <span className="mx-1">|</span>
+          <Link href="/support" className="hover:underline">Help & Support</Link>
+        </p>
+        <p className="mt-1">App Version 0.0000</p>
       </div>
     </div>
+  );
+}
+
+// Reusable Toggle Component
+function Toggle({ enabled, setEnabled }) {
+  return (
+    <button
+      className={`w-11 h-6 flex items-center rounded-full px-1 transition-colors duration-300 ${
+        enabled ? 'bg-pink-500' : 'bg-gray-300'
+      }`}
+      onClick={() => setEnabled(!enabled)}
+    >
+      <div
+        className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform ${
+          enabled ? 'translate-x-5' : 'translate-x-0'
+        }`}
+      />
+    </button>
   );
 }
