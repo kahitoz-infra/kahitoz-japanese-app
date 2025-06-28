@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { formatOption } from '../utils/formatOption';
+import { formatOption, formatQuestion } from '../utils/formatOption';
 
 export default function QuizQuestion({ question = "", options = [], name = "quiz", selectedOption, onSelect, type }) {
 
@@ -12,9 +12,7 @@ export default function QuizQuestion({ question = "", options = [], name = "quiz
   return (
     <div className="mt-8 flex flex-col items-center px-4">
       {/* Question */}
-      <h2 className="text-xl md:text-2xl font-bold text-center mb-6 text-black dark:text-white">
-        {question}
-      </h2>
+      {formatQuestion(question, type)}
 
       {/* Options */}
       <div className="space-y-4 w-full max-w-xl">
