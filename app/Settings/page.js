@@ -20,14 +20,18 @@ export default function SettingsPage() {
   ];
 
   return (
-    <div className="min-h-screen px-6 py-6 bg-white text-black flex flex-col justify-between font-sans">
+
+
+    
+
+    <div className="min-h-screen px-6 py-6 font-bold bg-white dark:bg-[#333333] text-black flex flex-col justify-between font-sans">
       {/* Back Button */}
       <div>
-        <Link href="/" className="text-sm flex items-center font-medium text-black mb-6">
+        <Link href="/" className="text-sm flex items-center font-medium text-black dark:text-white mb-6">
           <ArrowLeft className="mr-2" size={18} /> Back
         </Link>
 
-        <h1 className="text-xl font-bold mb-6 text-center w-fit mx-auto border-b-2 border-pink-400">
+        <h1 className="text-xl font-bold mb-6 text-center dark:text-white w-fit mx-auto border-b-2 border-pink-400 dark:border-[#FF5E2C]">
         SETTINGS
         </h1>
 
@@ -35,7 +39,7 @@ export default function SettingsPage() {
         <ul className="space-y-4">
           {staticLinks.map(({ label, href, icon }) => (
             <li key={label}>
-              <Link href={href} className="flex items-center text-md font-medium hover:opacity-80 transition">
+              <Link href={href} className="flex items-center text-md dark:text-white font-bold transition">
                 <span className="text-lg mr-4">{icon}</span>
                 {label}
               </Link>
@@ -43,7 +47,7 @@ export default function SettingsPage() {
           ))}
 
           {/* Toggles */}
-          <li className="flex justify-between items-center mt-2">
+          <li className="flex justify-between items-center mt-2  dark:text-white">
             <div className="flex items-center text-md font-medium">
               <Flower size={20} className="mr-4" />
               Cherry Blossom Effect
@@ -51,7 +55,7 @@ export default function SettingsPage() {
             <Toggle enabled={cherryBlossom} setEnabled={setCherryBlossom} />
           </li>
 
-          <li className="flex justify-between items-center">
+          <li className="flex justify-between items-center dark:text-white">
             <div className="flex items-center text-md font-medium">
               <Moon size={20} className="mr-4" />
               Theme
@@ -59,7 +63,7 @@ export default function SettingsPage() {
             <Toggle enabled={themeDark} setEnabled={setThemeDark} />
           </li>
 
-          <li className="flex justify-between items-center">
+          <li className="flex justify-between items-center dark:text-white">
             <div className="flex items-center text-md font-medium">
               <Music size={20} className="mr-4" />
               Sound Effects
@@ -67,8 +71,9 @@ export default function SettingsPage() {
             <Toggle enabled={soundEffects} setEnabled={setSoundEffects} />
           </li>
 
+
           {/* Logout */}
-          <li className="flex items-center text-md font-bold text-[#ff4970] mt-4">
+          <li className="flex items-center text-md font-bold text-[#ff4970] mt-4 dark:text-[#FF5E2C]">
             <Link href="/logout" className="flex items-center hover:opacity-80 transition">
               <LogOut size={20} className="mr-4" />
               Log Out
@@ -78,7 +83,7 @@ export default function SettingsPage() {
       </div>
 
       {/* Footer */}
-      <div className="text-center text-xs text-gray-500 mt-8">
+      <div className="text-center text-xs text-gray-500 dark:text-gray-200 mt-8">
         <p>
           <Link href="/terms" className="hover:underline">Terms & Conditions</Link>
           <span className="mx-1">|</span>
@@ -95,14 +100,17 @@ function Toggle({ enabled, setEnabled }) {
   return (
     <button
       className={`w-11 h-6 flex items-center rounded-full px-1 transition-colors duration-300 ${
-        enabled ? 'bg-pink-500' : 'bg-gray-300'
-      }`}
+        enabled ? 'bg-pink-500 dark:bg-orange-500'
+                : 'bg-gray-300 dark:bg-gray-600'}
+      `}
       onClick={() => setEnabled(!enabled)}
     >
       <div
-        className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform ${
-          enabled ? 'translate-x-5' : 'translate-x-0'
-        }`}
+        className={`w-4 h-4 rounded-full shadow-md transform transition-transform
+          ${enabled
+            ? 'translate-x-5 bg-white'
+            : 'translate-x-0 bg-white dark:bg-gray-200'}
+        `}
       />
     </button>
   );
