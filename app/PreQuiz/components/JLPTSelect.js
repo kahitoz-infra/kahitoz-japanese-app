@@ -6,6 +6,7 @@ import { authFetch } from '@/app/middleware';
  
 const quizTypes = ['Vocab', 'Kanji'];
 const info_api = process.env.NEXT_PUBLIC_API_URL + "/level_info";
+const create_api = process.env.NEXT_PUBLIC_API_LEARN + "/generate_quiz";
 const CACHE_EXPIRY = 24 * 60 * 60 * 1000; // 24 hours
  
 function buildRangesFromUIDs(start, end, chunkSize = 100) {
@@ -121,42 +122,76 @@ export default function JLPTLevelSelector() {
     selectedLevels.length > 0 &&
     Object.values(selectedRanges).some((r) => r.length > 0);
  
-  const handleStartQuiz = () => {
-    const uids = [];
- 
-    for (const level of selectedLevels) {
-      const levelData = levelInfo.find((entry) => entry[0] === level);
-      if (!levelData) continue;
- 
-      const [_, uidStart, uidEnd] = levelData;
-      const selectedLabels = selectedRanges[level] || [];
- 
-      for (const label of selectedLabels) {
-        if (label.startsWith('Custom')) {
-          const match = label.match(/Custom (\d+)-(\d+)/);
-          if (match) {
-            const start = parseInt(match[1]);
-            const end = parseInt(match[2]);
-            for (let i = start; i <= end; i++) uids.push(i);
-          }
-        } else {
-          const range = rangesByLevel[level]?.find((r) => r.label === label);
-          if (range) {
-            for (let i = range.uidStart; i <= range.uidEnd; i++) {
-              uids.push(i);
+    const handleStartQuiz = async () => {
+      // Construct the level_uid_map
+      const levelUidMap = {};
+    
+      for (const level of selectedLevels) {
+        const levelData = levelInfo.find((entry) => entry[0] === level);
+        if (!levelData) continue;
+    
+        const [_, uidStart, uidEnd] = levelData;
+        let minUid = Infinity;
+        let maxUid = -Infinity;
+    
+        const selectedLabels = selectedRanges[level] || [];
+    
+        for (const label of selectedLabels) {
+          if (label.startsWith('Custom')) {
+            const match = label.match(/Custom (\d+)-(\d+)/);
+            if (match) {
+              const start = parseInt(match[1]);
+              const end = parseInt(match[2]);
+              minUid = Math.min(minUid, start);
+              maxUid = Math.max(maxUid, end);
+            }
+          } else {
+            const range = rangesByLevel[level]?.find((r) => r.label === label);
+            if (range) {
+              minUid = Math.min(minUid, range.uidStart);
+              maxUid = Math.max(maxUid, range.uidEnd);
             }
           }
         }
+    
+        // If nothing matched, fall back to level defaults
+        if (minUid === Infinity || maxUid === -Infinity) {
+          minUid = uidStart;
+          maxUid = uidEnd;
+        }
+    
+        levelUidMap[level] = {
+          start: minUid,
+          end: maxUid,
+        };
       }
-    }
- 
-    const uniqueUIDs = Array.from(new Set(uids));
-    localStorage.setItem('selected_uids', JSON.stringify(uniqueUIDs));
- 
-    // Navigate
-    window.location.href = '/Quiz';
-  };
- 
+    
+      try {
+        const res = await authFetch(create_api, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            quiz_type: selectedType.toLowerCase(),
+            level_uid_map: levelUidMap,
+            notes: '',
+          }),
+        });
+    
+        if (!res.ok) {
+          throw new Error(`Failed to create quiz: ${res.status}`);
+        }
+    
+        const quizData = await res.json();
+        localStorage.setItem('quizData', JSON.stringify(quizData));
+        window.location.href = '/Quiz?api_load=false';
+    
+      } catch (error) {
+        console.error('Error creating quiz:', error);
+      }
+    };
+    
   return (
     <div className="flex flex-col items-center gap-6 py-8">
       <h2 className="text-xl md:text-2xl font-semibold text-center">
