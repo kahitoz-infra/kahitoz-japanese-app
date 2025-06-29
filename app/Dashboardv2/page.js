@@ -87,9 +87,20 @@ const Dashboard = () => {
      {/* Top: Profile Picture + Greeting */}
 <div className="flex items-center justify-between mb-6 mt-12 flex-wrap gap-4">
   {/* Profile Picture (left aligned) */}
-  <div className="rounded-full overflow-hidden w-20 h-20 border border-black dark:border-white shrink-0">
+  <div className="rounded-full dark:hidden overflow-hidden w-20 h-20 border-b-4 border-[#FF5274] dark:border-[#F66538] shrink-0">
     <img
-      src={photo}
+      src={"/Chibi_dp.png"}
+      alt="Profile"
+      className="object-cover w-full h-full"
+      width={80}
+      height={80}
+    />
+  </div>
+
+
+<div className="rounded-full hidden dark:flex overflow-hidden w-20 h-20 border-b-4 border-[#FF5274] dark:border-[#F66538] shrink-0">
+    <img
+      src={"/Chibi_dp_dark.png"}
       alt="Profile"
       className="object-cover w-full h-full"
       width={80}
