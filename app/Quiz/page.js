@@ -4,9 +4,8 @@ import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import QuizQuestion from './components/QuizQuestion';
 import ProgressBar from '../common_components/ProgressBar';
-import CustomButton from '@/app/common_components/CustomButton';
 import { authFetch } from '../middleware';
-import { formatOption, formatQuestion } from './utils/formatOption';
+import { formatOption} from './utils/formatOption';
 
 export default function QuizPage() {
   const router = useRouter();
@@ -16,6 +15,12 @@ export default function QuizPage() {
   const type = searchParams.get('type');
   const quizNumber = searchParams.get('quiz_number');
 
+  let quiz_key = type + "_quiz" + "." +"custom_" + type + "_quiz_" + quizNumber;
+  let set_name = "set" + quizNumber
+
+  console.log("This is the quiz key - ",quiz_key)
+  console.log("This is the set name - ",set_name)
+
   const [questions, setQuestions] = useState([]);
   const [responses, setResponses] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -23,6 +28,8 @@ export default function QuizPage() {
   const [showFeedback, setShowFeedback] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [quizKey, setQuizKey] = useState(quiz_key)
+  const [set, setSet] = useState(set_name)
 
   const currentQuestion = questions[currentIndex];
   const totalQuestions = questions.length;
@@ -33,6 +40,8 @@ export default function QuizPage() {
 
       if (apiLoadParam === 'false') {
         const quizDataRaw = localStorage.getItem('quizData');
+        setQuizKey(localStorage.getItem('quizKey'))
+        setSet(localStorage.getItem('set_key'))
 
         if (quizDataRaw) {
           try {
@@ -97,7 +106,7 @@ export default function QuizPage() {
     setSelectedOption(option);
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (!selectedOption) return;
   
     if (!showFeedback) {
@@ -120,15 +129,41 @@ export default function QuizPage() {
       setSelectedOption(null);
       setShowFeedback(false);
     } else {
-      // Save to localStorage to pass to PostQuizPage
+      // Save to localStorage in case needed
       localStorage.setItem('quizResponses', JSON.stringify(responses));
+  
+      // Send POST request with quiz results
+      try {
+        const res = await authFetch(
+          `${process.env.NEXT_PUBLIC_API_LEARN}/save_quiz_results`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              quiz_key: quizKey,
+              set_name: set,
+              results: responses.map(r => JSON.stringify(r)) // if backend expects strings
+            }),
+          }
+        );
+  
+        if (!res.ok) {
+          console.error('Failed to save quiz results:', await res.text());
+        } else {
+          console.log('Quiz results saved successfully.');
+        }
+      } catch (err) {
+        console.error('Error saving quiz results:', err);
+      }
+  
+      // Redirect to post-quiz page
       router.push("/PostQuiz");
     }
   };
   
-
-
-
+  
   if (loading) return <p className="p-4 text-center">Loading...</p>;
   if (!currentQuestion) return <p className="p-4 text-center">No questions found.</p>;
 
