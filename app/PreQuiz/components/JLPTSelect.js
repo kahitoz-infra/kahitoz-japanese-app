@@ -1,8 +1,8 @@
 'use client';
  
 import { useState, useEffect } from 'react';
-import CustomButton from '@/app/common_components/CustomButton';
 import { authFetch } from '@/app/middleware';
+import { useRouter } from 'next/navigation';
  
 const quizTypes = ['Vocab', 'Kanji'];
 const info_api = process.env.NEXT_PUBLIC_API_URL + "/level_info";
@@ -10,6 +10,7 @@ const create_api = process.env.NEXT_PUBLIC_API_LEARN + "/generate_quiz";
 const CACHE_EXPIRY = 24 * 60 * 60 * 1000; // 24 hours
  
 function buildRangesFromUIDs(start, end, chunkSize = 100) {
+
   const ranges = [];
   let index = 1;
   let currentStartUID = start;
@@ -37,6 +38,8 @@ export default function JLPTLevelSelector() {
   const [rangesByLevel, setRangesByLevel] = useState({});
   const [selectedRanges, setSelectedRanges] = useState({});
   const [chunkSize, setChunkSize] = useState(100);
+
+  const router = useRouter();
  
  
   useEffect(() => {
@@ -185,7 +188,7 @@ export default function JLPTLevelSelector() {
     
         const quizData = await res.json();
         localStorage.setItem('quizData', JSON.stringify(quizData));
-        window.location.href = '/Quiz?api_load=false';
+        router.push('/Quiz?api_load=false');
     
       } catch (error) {
         console.error('Error creating quiz:', error);
