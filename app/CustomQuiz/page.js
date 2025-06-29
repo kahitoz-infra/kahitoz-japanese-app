@@ -16,9 +16,11 @@ export default function CustomQuizPage() {
       {/* Main Content */}
       <main className="flex-1 flex flex-col items-center justify-start pt-4 pb-6 px-4">
         <QuizBlock />
-        <CircularButton href="/PreQuiz" />
+        
       </main>
-
+      <div className="absolute z-10 bottom-24 right-4">
+    <CircularButton href="/PreQuiz" />
+    </div>
       {/* Bottom Navbar */}
       <Navbar />
     </div>
