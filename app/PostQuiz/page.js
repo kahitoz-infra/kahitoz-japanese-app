@@ -46,15 +46,15 @@ useEffect(() => {
       {/* Main content */}
       <div className="flex flex-col items-center justify-center gap-6 py-10 px-4 relative z-10">
         
-        {/* Image above heading */}
-        <div className="w-24 h-24 relative border border-gray-400 mt-4">
-          <Image
-            src="/celebration.png" // Ensure this image exists in your /public folder
-            alt="Well done"
-            fill
-            className="object-contain rounded-lg"
-          />
-        </div>
+        <div className="w-24 h-24 rounded-full relative border border-gray-400 mt-4 overflow-hidden">
+  <Image
+    src="/chibi_well_done.png" // Ensure this image exists in your /public folder
+    alt="Well done"
+    fill
+    className="object-cover"
+  />
+</div>
+
 
         {/* Heading */}
         <div className="text-center text-black dark:text-white">
