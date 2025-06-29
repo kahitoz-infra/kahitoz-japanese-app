@@ -18,8 +18,7 @@ export default function QuizPage() {
   let quiz_key = type + "_quiz" + "." +"custom_" + type + "_quiz_" + quizNumber;
   let set_name = "set" + quizNumber
 
-  console.log("This is the quiz key - ",quiz_key)
-  console.log("This is the set name - ",set_name)
+
 
   const [questions, setQuestions] = useState([]);
   const [responses, setResponses] = useState([]);
@@ -40,18 +39,21 @@ export default function QuizPage() {
 
       if (apiLoadParam === 'false') {
         const quizDataRaw = localStorage.getItem('quizData');
-        setQuizKey(localStorage.getItem('quizKey'))
-        setSet(localStorage.getItem('set_key'))
+        
 
         if (quizDataRaw) {
           try {
             const parsed = JSON.parse(quizDataRaw);
             let loadedQuestions = [];
+            setQuizKey(parsed.quiz_key)
+            setSet(parsed.next_set.set_key)
 
             if (Array.isArray(parsed)) {
               loadedQuestions = parsed;
             } else if (parsed?.questions) {
               loadedQuestions = parsed.questions;
+              
+              setSet(parsed.set_key)
             } else if (parsed?.next_set?.questions) {
               loadedQuestions = parsed.next_set.questions;
             }
