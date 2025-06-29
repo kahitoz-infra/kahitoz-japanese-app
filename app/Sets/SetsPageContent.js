@@ -3,6 +3,7 @@
 import { useSearchParams } from 'next/navigation';
 import SetBlock from './components/SetBlock';
 import { authFetch } from '../middleware';
+import Navbar from '../common_components/Navbar';
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 
@@ -102,6 +103,10 @@ export default function SetsPageContent() {
           ))}
         </div>
       )}
+      <footer>
+        <Navbar/>
+      </footer>
     </div>
+
   );
 }
