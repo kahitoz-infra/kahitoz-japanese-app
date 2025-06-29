@@ -46,14 +46,23 @@ useEffect(() => {
       {/* Main content */}
       <div className="flex flex-col items-center justify-center gap-6 py-10 px-4 relative z-10">
         
-        <div className="w-24 h-24 rounded-full relative border border-gray-400 mt-4 overflow-hidden">
-  <Image
-    src="/chibi_well_done.png" // Ensure this image exists in your /public folder
-    alt="Well done"
-    fill
-    className="object-cover"
-  />
-</div>
+        <div className="w-24 h-24 dark:hidden rounded-full relative border-b-2 border-[#FF5274] dark:border-[#F66538] mt-4 overflow-hidden">
+        <Image
+          src="/chibi_well_done.png" // Ensure this image exists in your /public folder
+          alt="Well done"
+          fill
+          className="object-cover"
+        />
+      </div>
+
+      <div className="w-24 h-24 dark:flex hidden rounded-full relative border-b-2 border-[#FF5274] dark:border-[#F66538] mt-4 overflow-hidden">
+        <Image
+          src="/chibi_well_done_dark.png" // Ensure this image exists in your /public folder
+          alt="Well done"
+          fill
+          className="object-cover"
+        />
+      </div>
 
 
         {/* Heading */}
@@ -65,11 +74,6 @@ useEffect(() => {
         {/* Progress Card */}
         <ProgressCard correct={correct} incorrect={incorrect} />
 
-        {/* Buttons */}
-        <div className="flex flex-col items-center gap-4 mt-4">
-          <CustomButton text="Review Answers" href="/Review" />
-          <SecondaryButton text="Try Again" href="/Quiz" />
-        </div>
 
       </div>
 
