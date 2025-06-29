@@ -4,16 +4,29 @@ import ProgressCard from './components/ProgressCard';
 import CustomButton from '@/app/common_components/CustomButton';
 import SecondaryButton from '@/app/common_components/SecondaryButton';
 import Navbar from '@/app/common_components/Navbar';
-import MotivationalQuotes from '@/app/common_components/MotivationalQuotes';
 import CherryBlossomSnowfall from '@/app/common_components/CherryBlossomSnowfall';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
 
 export default function PostQuizPage() {
-  const correct = 7;
-  const incorrect = 3;
 
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [responses, setResponses] = useState([]);
+  const [correct, setCorrect] = useState(0);
+  const [incorrect, setIncorrect] = useState(0);
+
+useEffect(() => {
+  const raw = localStorage.getItem('quizResponses');
+  if (raw) {
+    const parsed = JSON.parse(raw);
+    setResponses(parsed);
+    const correctCount = parsed.filter(r => r.correct).length;
+    const incorrectCount = parsed.filter(r => !r.correct).length;
+    setCorrect(correctCount);
+    setIncorrect(incorrectCount);
+  }
+}, []);
+
 
   useEffect(() => {
     // Detect dark mode using matchMedia
@@ -58,10 +71,6 @@ export default function PostQuizPage() {
           <SecondaryButton text="Try Again" href="/Quiz" />
         </div>
 
-        {/* Motivational Quotes */}
-        <div className="mt-1">
-          <MotivationalQuotes />
-        </div>
       </div>
 
       {/* Bottom Navbar */}

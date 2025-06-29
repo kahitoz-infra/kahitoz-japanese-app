@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import QuizQuestion from './components/QuizQuestion';
 import ProgressBar from '../common_components/ProgressBar';
 import { authFetch } from '../middleware';
-import { formatOption } from './utils/formatOption';
+import { formatOption} from './utils/formatOption';
 
 export default function QuizPage() {
   const router = useRouter();
@@ -15,19 +15,68 @@ export default function QuizPage() {
   const type = searchParams.get('type');
   const quizNumber = searchParams.get('quiz_number');
 
+  let quiz_key = type + "_quiz" + "." +"custom_" + type + "_quiz_" + quizNumber;
+  let set_name = "set" + quizNumber
+
+  console.log("This is the quiz key - ",quiz_key)
+  console.log("This is the set name - ",set_name)
+
   const [questions, setQuestions] = useState([]);
+  const [responses, setResponses] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState(null);
   const [showFeedback, setShowFeedback] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [quizKey, setQuizKey] = useState(quiz_key)
+  const [set, setSet] = useState(set_name)
 
   const currentQuestion = questions[currentIndex];
   const totalQuestions = questions.length;
 
   useEffect(() => {
-    const fetchQuestions = async () => {
-      if (!setNo || !type || !quizNumber) return;
+    const loadQuestions = async () => {
+      const apiLoadParam = searchParams.get('api_load');
+
+      if (apiLoadParam === 'false') {
+        const quizDataRaw = localStorage.getItem('quizData');
+        setQuizKey(localStorage.getItem('quizKey'))
+        setSet(localStorage.getItem('set_key'))
+
+        if (quizDataRaw) {
+          try {
+            const parsed = JSON.parse(quizDataRaw);
+            let loadedQuestions = [];
+
+            if (Array.isArray(parsed)) {
+              loadedQuestions = parsed;
+            } else if (parsed?.questions) {
+              loadedQuestions = parsed.questions;
+            } else if (parsed?.next_set?.questions) {
+              loadedQuestions = parsed.next_set.questions;
+            }
+
+            if (loadedQuestions.length > 0) {
+              setQuestions(loadedQuestions);
+            } else {
+              console.error('No questions found in quizData');
+            }
+
+          } catch (err) {
+            console.error('Failed to parse quizData from localStorage:', err);
+          }
+        } else {
+          console.error('No quizData found in localStorage');
+        }
+        setLoading(false);
+        return;
+      }
+
+      // Otherwise, load from API as usual
+      if (!setNo || !type || !quizNumber) {
+        setLoading(false);
+        return;
+      }
 
       try {
         const res = await authFetch(
@@ -47,34 +96,74 @@ export default function QuizPage() {
       }
     };
 
-    fetchQuestions();
-  }, []);
+    loadQuestions();
+  }, [searchParams, setNo, type, quizNumber]);
+
+
 
   const handleOptionClick = (option) => {
     if (showFeedback) return;
     setSelectedOption(option);
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (!selectedOption) return;
-
+  
     if (!showFeedback) {
       const correct = selectedOption === currentQuestion.correct_option;
       setIsCorrect(correct);
       setShowFeedback(true);
+  
+      // Store user response
+      const newResponse = {
+        q_id: currentQuestion.id,
+        correct: correct
+      };
+      setResponses((prev) => [...prev, newResponse]);
+  
       return;
     }
-
+  
     if (currentIndex < totalQuestions - 1) {
       setCurrentIndex(currentIndex + 1);
       setSelectedOption(null);
       setShowFeedback(false);
     } else {
-      alert("Quiz complete!");
-      router.push("/CustomQuiz");
+      // Save to localStorage in case needed
+      localStorage.setItem('quizResponses', JSON.stringify(responses));
+  
+      // Send POST request with quiz results
+      try {
+        const res = await authFetch(
+          `${process.env.NEXT_PUBLIC_API_LEARN}/save_quiz_results`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              quiz_key: quizKey,
+              set_name: set,
+              results: responses.map(r => JSON.stringify(r)) // if backend expects strings
+            }),
+          }
+        );
+  
+        if (!res.ok) {
+          console.error('Failed to save quiz results:', await res.text());
+        } else {
+          console.log('Quiz results saved successfully.');
+        }
+      } catch (err) {
+        console.error('Error saving quiz results:', err);
+      }
+  
+      // Redirect to post-quiz page
+      router.push("/PostQuiz");
     }
   };
-
+  
+  
   if (loading) return <p className="p-4 text-center">Loading...</p>;
   if (!currentQuestion) return <p className="p-4 text-center">No questions found.</p>;
 
