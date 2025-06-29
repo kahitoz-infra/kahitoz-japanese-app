@@ -171,7 +171,6 @@ export default function QuizPage() {
     <div className="flex flex-col min-h-screen text-black dark:text-white">
       {/* Header */}
       <div className="w-full h-[20vh] bg-[#fbfbfb] dark:bg-[#2F2F2F] border-b-4 border-[#FF5274] dark:border-[#F66538] rounded-b-xl px-4 py-2 flex flex-col justify-center">
-        <p className="cursor-pointer font-bold" onClick={() => router.push('/CustomQuiz')}>Quit</p>
         <ProgressBar
           label="Progress"
           start={0}
@@ -181,7 +180,7 @@ export default function QuizPage() {
         <h1 className="text-2xl font-bold text-center mt-4">Question {currentIndex + 1}</h1>
       </div>
 
-      {/* Question */}
+{/* Question Area */}
       <div className="flex-1 px-6 mt-4">
         <QuizQuestion
           question={currentQuestion.question}
@@ -200,28 +199,38 @@ export default function QuizPage() {
             ) : (
               <p className="text-red-500">
                 Incorrect. Correct Answer:{" "}
-                <span className="underline">{formatOption(currentQuestion.correct_option, currentQuestion.type)}</span>
+                <span className="underline">
+                  {formatOption(currentQuestion.correct_option, currentQuestion.type)}
+                </span>
               </p>
             )}
           </div>
         )}
-
       </div>
 
-      {/* Next Button */}
-      <div className="px-4 mt-8 flex justify-end mb-6">
+      {/* Button Row: Quit (left) + Next (right) */}
+      <div className="flex justify-between items-center px-6 mt-6 mb-8">
+        {/* Quit Button */}
+        <button
+          onClick={() => router.push('/CustomQuiz')}
+          className="px-6 py-3 rounded-lg font-semibold border border-gray-400 text-gray-700 dark:text-white dark:border-gray-600"
+        >
+          Quit
+        </button>
+
+        {/* Next / Check / Finish Button */}
         <button
           onClick={handleNext}
           disabled={!selectedOption}
           className={`px-6 py-3 rounded-lg font-semibold transition-all
-    ${selectedOption
-              ? 'bg-[#FF5274] dark:bg-[#F66538] text-white hover:opacity-90'
-              : 'bg-gray-300 dark:bg-gray-700 text-gray-500 cursor-not-allowed'}
-  `}
+            ${
+              selectedOption
+                ? 'bg-[#FF5274] dark:bg-[#F66538] text-white hover:opacity-90'
+                : 'bg-gray-300 dark:bg-gray-700 text-gray-500 cursor-not-allowed'
+            }`}
         >
           {currentIndex === totalQuestions - 1 ? "Finish" : showFeedback ? "Next" : "Check"}
         </button>
-
       </div>
     </div>
   );
