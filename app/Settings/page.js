@@ -19,6 +19,11 @@ export default function SettingsPage() {
     { label: 'Privacy Policy', href: '/privacy-policy', icon: <ShieldCheck size={20} /> },
   ];
 
+  const Line = () => (
+  <hr className="my-3 border-t border-gray-400 dark:border-gray-500" />
+);
+
+
   return (
 
 
@@ -45,7 +50,7 @@ export default function SettingsPage() {
               </Link>
             </li>
           ))}
-
+          <Line />
           {/* Toggles */}
           <li className="flex justify-between items-center mt-2  dark:text-white">
             <div className="flex items-center text-md font-medium">
@@ -71,7 +76,7 @@ export default function SettingsPage() {
             <Toggle enabled={soundEffects} setEnabled={setSoundEffects} />
           </li>
 
-
+          <Line />
           {/* Logout */}
           <li className="flex items-center text-md font-bold text-[#ff4970] mt-4 dark:text-[#FF5E2C]">
             <Link href="/logout" className="flex items-center hover:opacity-80 transition">
