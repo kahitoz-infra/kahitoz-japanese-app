@@ -7,6 +7,9 @@ export default function MotivationalQuotes() {
     "Every step counts!",
     "Believe in yourself.",
     "Today, we will be better.",
+    "Keep your heads high!",
+    "Aggregate small gains.",
+    "1% Better Every Day!"
   ];
 
   const [quoteIndex, setQuoteIndex] = useState(0);
