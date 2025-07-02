@@ -76,6 +76,7 @@ const Dashboard = () => {
 
       {/* Main Content */}
       <main
+      className="relative z-10 px-4 sm:px-6 md:px-10 lg:px-12 max-w-[1400px] mx-auto"
         style={{
           position: "relative",
           zIndex: 1,
@@ -84,68 +85,52 @@ const Dashboard = () => {
           margin: "0 auto",
         }}
       >
-     {/* Top: Profile Picture + Greeting */}
-<div className="flex items-center justify-between mb-6 mt-12 flex-wrap gap-4">
-  {/* Profile Picture (left aligned) */}
-  <div className="rounded-full dark:hidden overflow-hidden w-20 h-20 border-b-4 border-[#FF5274] dark:border-[#F66538] shrink-0">
-    <img
-      src={"/Chibi_dp.png"}
-      alt="Profile"
-      className="object-cover w-full h-full"
-      width={80}
-      height={80}
-    />
+<div className="flex flex-col items-center text-center mb-6 mt-12 gap-4">
+  <div className="rounded-full dark:hidden overflow-hidden w-20 h-20 border-b-4 border-[#FF5274] dark:border-[#F66538]">
+    <img src="/Chibi_dp.png" alt="Profile" className="object-cover w-full h-full" />
   </div>
-
-
-<div className="rounded-full hidden dark:flex overflow-hidden w-20 h-20 border-b-4 border-[#FF5274] dark:border-[#F66538] shrink-0">
-    <img
-      src={"/Chibi_dp_dark.png"}
-      alt="Profile"
-      className="object-cover w-full h-full"
-      width={80}
-      height={80}
-    />
+  <div className="rounded-full hidden dark:flex overflow-hidden w-20 h-20 border-b-4 border-[#FF5274] dark:border-[#F66538]">
+    <img src="/Chibi_dp_dark.png" alt="Profile" className="object-cover w-full h-full" />
   </div>
-
-  {/* Greeting (right aligned) */}
-
-  <div className="flex-1 min-w-[200px] text-right pr-2">
-    <h2 className="text-xl font-bold text-left">Welcome back,</h2>
-    <h2 className="text-xl font-bold text-left">{userName}!</h2>
-    <p className="text-md font-semibold text-left">良い一日を</p>
+  <div>
+    <h2 className="text-2xl font-bold">Welcome back,</h2>
+    <h2 className="text-2xl font-bold">{userName}!</h2>
+    <p className="text-md font-semibold">良い一日を</p>
   </div>
 </div>
 
+
         {/* Motivational Quotes */}
+        <div className="flex justify-center mb-6">
         <div
-          className="rounded-lg shadow-md mb-6 mx-auto text-center px-6 py-4"
-          style={{
-            backgroundColor: "var(--quote-bg)",
-            maxWidth: "700px",
-          }}
+          className="rounded-lg shadow-md text-center px-4 py-4 w-full max-w-[700px]"
+          style={{ backgroundColor: "var(--quote-bg)" }}
         >
           <MotivationalQuotes />
         </div>
+      </div>
 
 
-        {/* Recap Block + Progress Bar */}
-        <div className="flex justify-between items-start flex-wrap gap-4 mb-6">
-          <div className="flex-1 min-w-[250px]">
-            <RecapBlock kanji="日" meaning="Sun / Day" reading="にち / ひ" />
-            <div
-            className="flex-1 min-w-[250px] bg-white dark:bg-[#2f2f2f] rounded-lg shadow-md p-4"
-          >
-            <h3 className="text-lg font-semibold mb-2 border:border-black">Your Progress</h3>
-            <ProgressBar />
-          </div>
-          </div>
-        </div>
+        <div className="flex justify-center mb-6">
+  <div className="w-full max-w-[700px] flex flex-col gap-6 items-center">
+    {/* Recap Block */}
+    <div className="w-full">
+      <RecapBlock kanji="日" meaning="Sun / Day" reading="にち / ひ" />
+    </div>
 
-        {/* Calendar */}
-        <div className="mb-20">
-          <Calendar />
-        </div>
+    {/* Progress Bar */}
+    <div className="w-full bg-white dark:bg-[#2f2f2f] rounded-lg shadow-md p-4">
+      <h3 className="text-lg font-semibold mb-2">Your Progress</h3>
+      <ProgressBar />
+    </div>
+  </div>
+</div>
+
+
+<div className="mb-24 w-full px-4 sm:px-6 md:px-10">
+  <Calendar />
+</div>
+
 
         {/* Navbar */}
         <Navbar />
