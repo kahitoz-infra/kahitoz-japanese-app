@@ -4,7 +4,8 @@
   border: 2px solid var(--border-color);
   border-radius: 12px;
   padding: 16px;
-  max-width: 400px;
+  width: 100%;
+  max-width: 100%;
   background-color: var(--bg);
   margin-bottom: 150px;
   color: var(--text);
@@ -33,11 +34,13 @@
 .day {
   aspect-ratio: 1 / 1;
   border-radius: 8px;
-  text-align: center;
-  line-height: 2rem;
+  display: flex;               /* NEW */
+  align-items: center;         /* NEW */
+  justify-content: center;     /* NEW */
   font-weight: bold;
   cursor: pointer;
   background-color: var(--day-bg);
+  font-size: 1.2rem;           /* Bump font size (adjust as needed) */
 }
 
 .complete {
@@ -56,7 +59,7 @@
 }
 
 .empty {
-  background-color: #d9d9d9;
+  background-color: #f1f1f1;
   color: #000;
 }
 
