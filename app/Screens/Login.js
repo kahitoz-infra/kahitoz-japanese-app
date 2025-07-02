@@ -39,27 +39,12 @@ export default function Login() {
       <div>
 
       {!loading ? ( <div className="h-screen flex flex-col justify-end bg-[#FAF9F6] dark:bg-[#333333] font-sans">
-          {/* Logo */}
-          <motion.div
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 1 }}
-              className="flex justify-center mb-6"
-          >
-              <Image
-                  src="/zen_kanji.png"
-                  alt="App Logo"
-                  width={180}
-                  height={90}
-                  className="object-contain"
-                  priority
-              />
-          </motion.div>
+
 
           {/* Main Container */}
-          <div className="flex flex-col w-full h-[70vh] p-4 gap-y-4 bg-white dark:bg-[#353839] border-t-[3px] border-[#FF5274] dark:border-[#FF9676] rounded-t-[30px] shadow-md fixed bottom-0 left-0">
+          <div className="flex flex-col w-full h-[70vh] md:h-[60vh] p-4 md:p-8 gap-y-6 bg-white dark:bg-[#353839] border-t-[3px] border-[#FF5274] dark:border-[#FF9676] rounded-t-[30px] shadow-md fixed md:relative bottom-0 left-0 right-0">
               {/* Tabs */}
-              <div className="flex justify-center items-center mb-10">
+              <div className="flex justify-center items-center mb-6 md:mb-10 space-x-8">
                   <button
                       onClick={() => setActiveTab("register")}
                       className={`text-md font-semibold transition-colors relative ${activeTab === "register"
@@ -101,6 +86,7 @@ export default function Login() {
                       >
                           {activeTab === "register" && (
                               <>
+                              <div className="w-full flex flex-col gap-y-4 px-4 md:px-8">
                                   <div className="w-full px-4 mb-2">
                                       <div className="flex items-center border rounded-md px-3 py-2 w-full h-14 bg-[#f2f2f2] ">
                                           {/* Username Input field */}
@@ -157,6 +143,7 @@ export default function Login() {
                                           />
                                       </div>
                                   </div>
+                                  </div>
                               </>
                           )}
                           {activeTab === "login" && (
@@ -206,18 +193,18 @@ export default function Login() {
 
                           <Link
                               href="/Dashboardv2"
-                              className="px-7 h-12 bg-[#FF5274] dark:bg-[#F66538] text-white rounded-lg font-semibold mt-2 hover:opacity-90 transition-all flex items-center justify-center"
+                              className="w-11/12 md:w-4/5 h-12 bg-[#FF5274] dark:bg-[#F66538] text-white rounded-lg font-semibold mt-8 hover:opacity-90 transition-all flex items-center justify-center text-sm md:text-base"
                           >
                               {activeTab === "register" ? "Create Account" : "Sign In"}
                           </Link>
-                          <div className={'mt-4'}>
+                          <div className={'mt-8'}>
                               <GoogleLogin/>
                           </div>
                       </motion.div>
                   )}
               </div>
           </div>
-      </div>):( <div className={'flex w-screen h-screen items-center justify-center mt-2'}>
+      </div>):( <div className="flex w-screen h-screen items-center justify-center bg-[#faf9f6] dark:bg-[#333333]">
           <Image
               src="/icons/loading.svg"
               alt="loading"
