@@ -42,16 +42,15 @@ export default function QuizPageContent() {
           try {
             const parsed = JSON.parse(quizDataRaw);
             let loadedQuestions = [];
-            setQuizKey(parsed.quiz_key);
-            setSet(parsed.next_set?.set_key || set_name);
+            setQuizKey(parsed.quiz_key || quiz_key);
+            setSet(parsed.next_set?.set_key || parsed.set_key || set_name);
 
             if (Array.isArray(parsed)) {
               loadedQuestions = parsed;
+            } else if (parsed?.questions?.questions) {
+              loadedQuestions = parsed.questions.questions;
             } else if (parsed?.questions) {
               loadedQuestions = parsed.questions;
-              setSet(parsed.set_key);
-            } else if (parsed?.next_set?.questions) {
-              loadedQuestions = parsed.next_set.questions;
             }
 
             if (loadedQuestions.length > 0) {
@@ -81,8 +80,9 @@ export default function QuizPageContent() {
         );
         const data = await res.json();
 
-        if (res.ok && data.questions) {
-          setQuestions(data.questions);
+        if (res.ok && data.questions?.questions) {
+          setQuestions(data.questions.questions);
+          setSet(data.questions.set_key || set_name);
         } else {
           console.error(data.detail || 'Failed to load questions');
         }
@@ -95,6 +95,7 @@ export default function QuizPageContent() {
 
     loadQuestions();
   }, [searchParams, setNo, type, quizNumber]);
+
 
   const handleOptionClick = (option) => {
     if (showFeedback) return;
@@ -210,10 +211,9 @@ export default function QuizPageContent() {
           onClick={handleNext}
           disabled={!selectedOption}
           className={`px-6 py-3 rounded-lg font-semibold transition-all
-            ${
-              selectedOption
-                ? 'bg-[#FF5274] dark:bg-[#F66538] text-white hover:opacity-90'
-                : 'bg-gray-300 dark:bg-gray-700 text-gray-500 cursor-not-allowed'
+            ${selectedOption
+              ? 'bg-[#FF5274] dark:bg-[#F66538] text-white hover:opacity-90'
+              : 'bg-gray-300 dark:bg-gray-700 text-gray-500 cursor-not-allowed'
             }`}
         >
           {currentIndex === totalQuestions - 1 ? 'Finish' : showFeedback ? 'Next' : 'Check'}
