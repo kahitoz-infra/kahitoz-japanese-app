@@ -38,17 +38,21 @@ export default function QuizPageContent() {
       if (apiLoadParam === 'false') {
         const quizDataRaw = localStorage.getItem('quizData');
 
+
         if (quizDataRaw) {
           try {
+            console.log(typeof(quizDataRaw))
             const parsed = JSON.parse(quizDataRaw);
+            console.log(typeof(parsed))
+            console.log(parsed.next_set)
             let loadedQuestions = [];
             setQuizKey(parsed.quiz_key || quiz_key);
             setSet(parsed.next_set?.set_key || parsed.set_key || set_name);
 
             if (Array.isArray(parsed)) {
               loadedQuestions = parsed;
-            } else if (parsed?.questions?.questions) {
-              loadedQuestions = parsed.questions.questions;
+            } else if (parsed?.next_set?.questions) {
+              loadedQuestions = parsed.next_set.questions;
             } else if (parsed?.questions) {
               loadedQuestions = parsed.questions;
             }
@@ -111,7 +115,7 @@ export default function QuizPageContent() {
       setShowFeedback(true);
 
       const newResponse = {
-        q_id: currentQuestion.id,
+        q_id: currentQuestion._id,
         correct: correct,
       };
       setResponses((prev) => [...prev, newResponse]);
