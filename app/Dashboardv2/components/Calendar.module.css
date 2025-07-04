@@ -1,5 +1,3 @@
-/* Calendar.module.css */
-
 .calendar {
   border: 2px solid var(--border-color);
   border-radius: 12px;
@@ -17,6 +15,7 @@
   align-items: center;
   font-weight: bold;
   margin-bottom: 12px;
+  font-size: 1.1rem;
 }
 
 .weekdays,
@@ -29,38 +28,55 @@
 .weekdays div {
   text-align: center;
   font-weight: 600;
+  font-size: 1rem;
 }
 
 .day {
   aspect-ratio: 1 / 1;
   border-radius: 8px;
-  display: flex;               /* NEW */
-  align-items: center;         /* NEW */
-  justify-content: center;     /* NEW */
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-weight: bold;
   cursor: pointer;
   background-color: var(--day-bg);
-  font-size: 1.2rem;           /* Bump font size (adjust as needed) */
+  font-size: 1.2rem;
 }
 
-.complete {
-  background-color: #6bfa70;
-  color: #000;
+/* Tablet and above */
+@media (min-width: 768px) {
+  .calendar {
+    padding: 24px;
+  }
+
+  .header {
+    font-size: 1.5rem;
+  }
+
+  .weekdays div {
+    font-size: 1.2rem;
+  }
+
+  .day {
+    font-size: 1.6rem;
+  }
 }
 
-.incomplete {
-  background-color: #ffdb4d;
-  color: #000;
-}
+/* iPad Pro and larger (e.g., min-width 1024px) */
+@media (min-width: 1024px) {
+  .calendar {
+    padding: 32px;
+  }
 
-.absent {
-  background-color: #ff4d4d;
-  color: #000;
-}
+  .day {
+    font-size: 1.8rem;
+  }
 
-.empty {
-  background-color: #f1f1f1;
-  color: #000;
-}
+  .weekdays div {
+    font-size: 1.4rem;
+  }
 
-/* Do not include :root, body, or @tailwind in this file */
+  .header {
+    font-size: 1.75rem;
+  }
+}
