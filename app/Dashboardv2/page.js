@@ -85,19 +85,30 @@ const Dashboard = () => {
           margin: "0 auto",
         }}
       >
-<div className="flex flex-col items-center text-center mb-6 mt-12 gap-4">
-  <div className="rounded-full dark:hidden overflow-hidden w-20 h-20 border-b-4 border-[#FF5274] dark:border-[#F66538]">
-    <img src="/Chibi_dp.png" alt="Profile" className="object-cover w-full h-full" />
-  </div>
-  <div className="rounded-full hidden dark:flex overflow-hidden w-20 h-20 border-b-4 border-[#FF5274] dark:border-[#F66538]">
-    <img src="/Chibi_dp_dark.png" alt="Profile" className="object-cover w-full h-full" />
-  </div>
-  <div>
-    <h2 className="text-2xl font-bold">Welcome back,</h2>
-    <h2 className="text-2xl font-bold">{userName}! <span className="text-sm text-green-400">{subsType}</span> </h2>
-    <p className="text-md font-semibold">良い一日を</p>
+<div className="flex flex-col md:flex-col items-center text-center mb-6 mt-12 gap-4 md:gap-4">
+  {/* Container that switches to row layout on small screens but stacks on md and above */}
+  <div className="flex flex-row items-center text-left w-full max-w-sm md:flex-col md:text-center md:items-center md:w-auto md:max-w-none gap-4">
+
+    {/* Light Mode DP */}
+    <div className="rounded-full dark:hidden overflow-hidden w-16 h-16 border-b-4 border-[#FF5274] dark:border-[#F66538] shrink-0">
+      <img src="/Chibi_dp.png" alt="Profile" className="object-cover w-full h-full" />
+    </div>
+
+    {/* Dark Mode DP */}
+    <div className="rounded-full hidden dark:flex overflow-hidden w-16 h-16 border-b-4 border-[#FF5274] dark:border-[#F66538] shrink-0">
+      <img src="/Chibi_dp_dark.png" alt="Profile" className="object-cover w-full h-full" />
+    </div>
+
+    {/* Greeting Text */}
+    <div className="flex flex-col">
+      <h2 className="text-xl font-bold md:text-2xl">Welcome back,</h2>
+      <h2 className="text-xl font-bold md:text-2xl">{userName}! <span className="text-sm text-green-400">{subsType}</span> </h2>
+      <p className="text-sm font-semibold md:text-md">良い一日を</p>
+    </div>
+
   </div>
 </div>
+
 
 
         {/* Motivational Quotes */}
