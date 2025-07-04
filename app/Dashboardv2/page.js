@@ -30,7 +30,7 @@ const Dashboard = () => {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const [userName, setUserName] = useState("");
-  const [photo, setPhoto] = useState("");
+  const [subsType, setSubsType] = useState("")
 
   useEffect(() => {
     const initializeUser = async () => {
@@ -52,7 +52,7 @@ const Dashboard = () => {
       }
 
       setUserName(data.name);
-      setPhoto(data.photo);
+      setSubsType(data.user_sub)
       setIsLoading(false);
     };
 
@@ -94,7 +94,7 @@ const Dashboard = () => {
   </div>
   <div>
     <h2 className="text-2xl font-bold">Welcome back,</h2>
-    <h2 className="text-2xl font-bold">{userName}!</h2>
+    <h2 className="text-2xl font-bold">{userName}! <span className="text-sm text-green-400">{subsType}</span> </h2>
     <p className="text-md font-semibold">良い一日を</p>
   </div>
 </div>
