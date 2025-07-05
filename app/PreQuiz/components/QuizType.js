@@ -73,11 +73,11 @@ export default function QuizTypeJS({ userType, quizType, onSubmit }) {
                 type="button"
                 onClick={() => handleToggleOption(option)}
                 disabled={isLocked || isSingleSelected}
-                className={`px-4 py-2 rounded border flex items-center gap-1 ${
+                className={`px-4 py-2 rounded flex items-center gap-1 ${
                   isLocked || isSingleSelected
                     ? isSelected
                       ? "bg-[#FFB8C6] dark:bg-[#FF9D7E] text-black font-bold cursor-default"
-                      : "bg-gray-200 text-gray-500 cursor-not-allowed"
+                      : "bg-gray-200 text-black font-bold cursor-not-allowed"
                     : isSelected
                     ? "bg-green-500 text-white"
                     : "bg-blue-500 text-white hover:bg-blue-600"
