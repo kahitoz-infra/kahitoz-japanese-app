@@ -2,13 +2,29 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
-  User,Crown,CreditCard,KeyRound,BookOpen,Flower,Moon,Music,ShieldCheck,LogOut,ArrowLeft} from 'lucide-react';
+  User, Crown, CreditCard, KeyRound, BookOpen,
+  Flower, Moon, Music, ShieldCheck, LogOut, ArrowLeft
+} from 'lucide-react';
 
 export default function SettingsPage() {
   const [cherryBlossom, setCherryBlossom] = useState(false);
   const [themeDark, setThemeDark] = useState(false);
   const [soundEffects, setSoundEffects] = useState(true);
+  const router = useRouter();
+
+  const handleLogout = () => {
+  // ✅ Clear cookies by setting Max-Age=0
+  document.cookie = 'auth_token=; Max-Age=0; path=/;';
+  document.cookie = 'refresh_token=; Max-Age=0; path=/;';
+
+  // ✅ Redirect to login screen after a short delay
+  setTimeout(() => {
+    router.replace('/');
+  }, 100);
+};
+
 
   const staticLinks = [
     { label: 'Profile', href: '/profile', icon: <User size={20} /> },
@@ -20,10 +36,6 @@ export default function SettingsPage() {
   ];
 
   return (
-
-
-    
-
     <div className="min-h-screen px-6 py-6 font-bold bg-white dark:bg-[#333333] text-black flex flex-col justify-between font-sans">
       {/* Back Button */}
       <div>
@@ -32,7 +44,7 @@ export default function SettingsPage() {
         </Link>
 
         <h1 className="text-xl font-bold mb-6 text-center dark:text-white w-fit mx-auto border-b-2 border-pink-400 dark:border-[#FF5E2C]">
-        SETTINGS
+          SETTINGS
         </h1>
 
         {/* Static Settings */}
@@ -47,7 +59,7 @@ export default function SettingsPage() {
           ))}
 
           {/* Toggles */}
-          <li className="flex justify-between items-center mt-2  dark:text-white">
+          <li className="flex justify-between items-center mt-2 dark:text-white">
             <div className="flex items-center text-md font-medium">
               <Flower size={20} className="mr-4" />
               Cherry Blossom Effect
@@ -71,13 +83,15 @@ export default function SettingsPage() {
             <Toggle enabled={soundEffects} setEnabled={setSoundEffects} />
           </li>
 
-
-          {/* Logout */}
+          {/* ✅ Logout Button */}
           <li className="flex items-center text-md font-bold text-[#ff4970] mt-4 dark:text-[#FF5E2C]">
-            <Link href="/logout" className="flex items-center hover:opacity-80 transition">
+            <button
+              onClick={handleLogout}
+              className="flex items-center hover:opacity-80 transition"
+            >
               <LogOut size={20} className="mr-4" />
               Log Out
-            </Link>
+            </button>
           </li>
         </ul>
       </div>
@@ -95,7 +109,7 @@ export default function SettingsPage() {
   );
 }
 
-// Reusable Toggle Component
+// ✅ Reusable Toggle Component
 function Toggle({ enabled, setEnabled }) {
   return (
     <button
