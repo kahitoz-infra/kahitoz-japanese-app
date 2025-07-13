@@ -41,9 +41,9 @@ export default function QuizPageContent() {
 
         if (quizDataRaw) {
           try {
-            console.log(typeof(quizDataRaw))
+            console.log(typeof (quizDataRaw))
             const parsed = JSON.parse(quizDataRaw);
-            console.log(typeof(parsed))
+            console.log(typeof (parsed))
             console.log(parsed.next_set)
             let loadedQuestions = [];
             setQuizKey(parsed.quiz_key || quiz_key);
@@ -107,22 +107,6 @@ export default function QuizPageContent() {
   };
 
   const handleNext = async () => {
-    if (!selectedOption) return;
-
-    if (!showFeedback) {
-      const correct = selectedOption === currentQuestion.correct_option;
-      setIsCorrect(correct);
-      setShowFeedback(true);
-
-      const newResponse = {
-        q_id: currentQuestion._id,
-        correct: correct,
-      };
-      setResponses((prev) => [...prev, newResponse]);
-
-      return;
-    }
-
     if (currentIndex < totalQuestions - 1) {
       setCurrentIndex(currentIndex + 1);
       setSelectedOption(null);
@@ -157,8 +141,24 @@ export default function QuizPageContent() {
     }
   };
 
+
   if (loading) return <p className="p-4 text-center">Loading...</p>;
   if (!currentQuestion) return <p className="p-4 text-center">No questions found.</p>;
+
+  const handleCheckAnswer = () => {
+    if (!selectedOption) return;
+
+    const correct = selectedOption === currentQuestion.correct_option;
+    setIsCorrect(correct);
+    setShowFeedback(true);
+
+    const newResponse = {
+      q_id: currentQuestion._id,
+      correct: correct,
+    };
+    setResponses((prev) => [...prev, newResponse]);
+  };
+
 
   return (
     <div className="flex flex-col min-h-screen text-black dark:text-white">
@@ -186,42 +186,50 @@ export default function QuizPageContent() {
           type={currentQuestion.type}
         />
 
-        {showFeedback && (
-          <div className="mt-4 font-semibold">
-            {isCorrect ? (
-              <p className="text-green-600">Correct!</p>
-            ) : (
-              <p className="text-red-500">
-                Incorrect. Correct Answer:{' '}
-                <span className="underline">
-                  {formatOption(currentQuestion.correct_option, currentQuestion.type)}
-                </span>
-              </p>
-            )}
-          </div>
-        )}
-      </div>
 
-      {/* Controls */}
-      <div className="flex justify-between items-center px-6 mt-6 mb-8">
-        <button
-          onClick={() => router.push('/CustomQuiz')}
-          className="px-6 py-3 rounded-lg font-semibold border border-gray-400 text-gray-700 dark:text-white dark:border-gray-600"
-        >
-          Quit
-        </button>
+        {/* Controls + Feedback fixed at bottom */}
+        <div className="fixed bottom-0 left-0 w-full">
+          {showFeedback && (
+            <div
+              className={`w-full py-4 text-center text-lg font-semibold
+        ${isCorrect ? 'bg-green-600 text-white' : 'bg-red-600 text-white'}`}
+            >
+              {isCorrect ? (
+                <p>✅ Correct!</p>
+              ) : (
+                <p>
+                  ❌ Incorrect. Correct Answer:{' '}
+                  <span className="underline">
+                    {formatOption(currentQuestion.correct_option, currentQuestion.type)}
+                  </span>
+                </p>
+              )}
+            </div>
+          )}
 
-        <button
-          onClick={handleNext}
-          disabled={!selectedOption}
-          className={`px-6 py-3 rounded-lg font-semibold transition-all
-            ${selectedOption
-              ? 'bg-[#FF5274] dark:bg-[#F66538] text-white hover:opacity-90'
-              : 'bg-gray-300 dark:bg-gray-700 text-gray-500 cursor-not-allowed'
-            }`}
-        >
-          {currentIndex === totalQuestions - 1 ? 'Finish' : showFeedback ? 'Next' : 'Check'}
-        </button>
+          <button
+            onClick={showFeedback ? handleNext : handleCheckAnswer}
+            disabled={!selectedOption && !showFeedback}
+            className={`w-full px-6 py-4 text-lg font-bold transition-all
+      ${showFeedback
+                ? isCorrect
+                  ? 'bg-green-700 text-white'
+                  : 'bg-red-700 text-white'
+                : selectedOption
+                  ? 'bg-[#FF5274] dark:bg-[#F66538] text-white hover:opacity-90'
+                  : 'bg-gray-300 dark:bg-gray-700 text-gray-500 cursor-not-allowed'
+              }`}
+          >
+            {currentIndex === totalQuestions - 1 && showFeedback
+              ? 'Finish'
+              : showFeedback
+                ? 'Next'
+                : 'Check'}
+          </button>
+        </div>
+
+
+
       </div>
     </div>
   );
