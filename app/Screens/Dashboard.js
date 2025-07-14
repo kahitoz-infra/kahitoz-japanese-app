@@ -85,19 +85,27 @@ const Dashboard = () => {
           margin: "0 auto",
         }}
       >
-<div className="flex flex-col items-center text-center mb-6 mt-12 gap-4">
-  <div className="rounded-full dark:hidden overflow-hidden w-20 h-20 border-b-4 border-[#FF5274] dark:border-[#F66538]">
-    <img src="/Chibi_dp.png" alt="Profile" className="object-cover w-full h-full" />
-  </div>
-  <div className="rounded-full hidden dark:flex overflow-hidden w-20 h-20 border-b-4 border-[#FF5274] dark:border-[#F66538]">
-    <img src="/Chibi_dp_dark.png" alt="Profile" className="object-cover w-full h-full" />
-  </div>
-  <div>
-    <h2 className="text-2xl font-bold">Welcome back,</h2>
-    <h2 className="text-2xl font-bold">{userName}! <span className="text-sm text-green-400">{subsType}</span> </h2>
-    <p className="text-md font-semibold">良い一日を</p>
-  </div>
-</div>
+    <div className="flex flex-row items-center text-left mb-6 mt-12 gap-6">
+      {/* Image Section */}
+      <div className="relative w-20 h-20">
+        <div className="rounded-full dark:hidden overflow-hidden w-20 h-20 border-b-4 border-[#FF5274]">
+          <img src="/Chibi_dp.png" alt="Profile" className="object-cover w-full h-full" />
+        </div>
+        <div className="rounded-full hidden dark:flex overflow-hidden w-20 h-20 border-b-4 border-[#F66538] absolute top-0 left-0">
+          <img src="/Chibi_dp_dark.png" alt="Profile" className="object-cover w-full h-full" />
+        </div>
+      </div>
+
+      {/* Text Section */}
+      <div className="flex flex-col gap-1">
+        <h2 className="text-xl font-semibold">Welcome back,</h2>
+        <h2 className="text-xl font-semibold">
+          {userName}! <span className="text-sm text-green-400">{subsType}</span>
+        </h2>
+        <p className="text-md font-semibold">良い一日を</p>
+      </div>
+    </div>
+
 
 
         {/* Motivational Quotes */}
