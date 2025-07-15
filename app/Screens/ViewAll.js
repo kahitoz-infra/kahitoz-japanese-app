@@ -15,13 +15,14 @@ import SettingsVocabModal from "./components/SettingsVocabModal";
 import SettingsKanjiModal from "./components/SettingsKanjiModal";
 import SettingsGrammarModal from "./components/SettingsGrammarModal";
 import SettingsVerbModal from "./components/SettingsVerbModal";
+import TargetModal from "./components/TargetModal";
 
 import {
   fetch_vocab_data,
   update_bookmark_fetch,
   fetch_kanji_data,
   fetch_grammar_data,
-  fetch_verb_data
+  fetch_verb_data,
 } from "./logic";
 
 export default function ViewAll() {
@@ -31,6 +32,7 @@ export default function ViewAll() {
   const [openKanjiModal, setOpenKanjiModal] = useState(false);
   const [openGrammarModal, setOpenGrammarModal] = useState(false);
   const [openVerbModal, setOpenVerbModal] = useState(false);
+  const [openTargetModal, setOpenTargetModal] = useState(false);
 
   const [categoryState, setCategoryState] = useState({
     Vocabulary: { list: [], cache: [], index: 0 },
@@ -47,37 +49,19 @@ export default function ViewAll() {
   const handleJumpToIndex = useCallback(
     (newIndex) => {
       if (newIndex < 1 || newIndex > currentList.length) return;
-
       const indexToSet = newIndex - 1;
 
-      // Save new index to localStorage
-      if (selectedCategory === "Vocabulary") {
-        const bookmarkChecked =
-          localStorage.getItem("vocabBookMarkChecked") === "true";
-        const indexKey = bookmarkChecked ? "bookmarkIndex" : "normalIndex";
-        localStorage.setItem(indexKey, indexToSet.toString());
-      } else if (selectedCategory === "Kanji") {
-        const bookmarkChecked =
-          localStorage.getItem("kanjiBookMarkChecked") === "true";
-        const indexKey = bookmarkChecked
-          ? "bookmarkKanjiIndex"
-          : "normalKanjiIndex";
-        localStorage.setItem(indexKey, indexToSet.toString());
-      } else if (selectedCategory === 'Grammar') {
-        const bookmarkChecked =
-          localStorage.getItem("grammarBookMarkChecked") === "true";
-        const indexKey = bookmarkChecked
-          ? "bookmarkGrammarIndex"
-          : "normalGrammarIndex";
-        localStorage.setItem(indexKey, indexToSet.toString());
-      } else if (selectedCategory === 'Verb') {
-        const bookmarkChecked =
-          localStorage.getItem("verbBookMarkChecked") === "true";
-        const indexKey = bookmarkChecked
-          ? "bookmarkVerbIndex"
-          : "normalVerbIndex";
-        localStorage.setItem(indexKey, indexToSet.toString());
-      }
+      const keyMap = {
+        Vocabulary: ["vocabBookMarkChecked", "bookmarkIndex", "normalIndex"],
+        Kanji: ["kanjiBookMarkChecked", "bookmarkKanjiIndex", "normalKanjiIndex"],
+        Grammar: ["grammarBookMarkChecked", "bookmarkGrammarIndex", "normalGrammarIndex"],
+        Verbs: ["verbBookMarkChecked", "bookmarkVerbIndex", "normalVerbIndex"],
+      };
+
+      const [checkedKey, bookmarkKey, normalKey] = keyMap[selectedCategory];
+      const bookmarkChecked = localStorage.getItem(checkedKey) === "true";
+      const indexKey = bookmarkChecked ? bookmarkKey : normalKey;
+      localStorage.setItem(indexKey, indexToSet.toString());
 
       setCategoryState((prev) => ({
         ...prev,
@@ -90,113 +74,40 @@ export default function ViewAll() {
     [selectedCategory, currentList.length]
   );
 
-
   useEffect(() => {
     const load = async () => {
       setLoading(true);
-
       try {
-        if (selectedCategory === "Vocabulary") {
-          const cacheData = await fetch_vocab_data();
-          localStorage.setItem("cacheVocab", JSON.stringify(cacheData));
+        const categoryMap = {
+          Vocabulary: [fetch_vocab_data, "cacheVocab", "filteredVocabData", "vocabBookMarkChecked", "bookmarkIndex", "normalIndex"],
+          Kanji: [fetch_kanji_data, "cacheKanji", "filteredKanjiData", "kanjiBookMarkChecked", "bookmarkKanjiIndex", "normalKanjiIndex"],
+          Grammar: [fetch_grammar_data, "cacheGrammar", "filteredGrammarData", "grammarBookMarkChecked", "bookmarkGrammarIndex", "normalGrammarIndex"],
+          Verbs: [fetch_verb_data, "cacheVerb", "filteredVerbData", "verbBookMarkChecked", "bookmarkVerbIndex", "normalVerbIndex"],
+        };
 
-          const filtered = localStorage.getItem("filteredVocabData");
-          const bookmarkChecked =
-            localStorage.getItem("vocabBookMarkChecked") === "true";
+        const [fetchFn, cacheKey, filteredKey, checkedKey, bookmarkKey, normalKey] = categoryMap[selectedCategory];
+        const cacheData = await fetchFn();
+        localStorage.setItem(cacheKey, JSON.stringify(cacheData));
+        const filtered = localStorage.getItem(filteredKey);
+        const bookmarkChecked = localStorage.getItem(checkedKey) === "true";
+        const data = filtered ? JSON.parse(filtered) : cacheData;
 
-          let vocabData = filtered ? JSON.parse(filtered) : cacheData;
+        const indexKey = bookmarkChecked ? bookmarkKey : normalKey;
+        let savedIndex = parseInt(localStorage.getItem(indexKey) || "0", 10);
+        if (savedIndex >= data.length) savedIndex = data.length - 1;
 
-          const indexKey = bookmarkChecked ? "bookmarkIndex" : "normalIndex";
-          let savedIndex = parseInt(localStorage.getItem(indexKey) || "0", 10);
-          if (savedIndex >= vocabData.length) savedIndex = vocabData.length - 1;
-
-          setCategoryState((prev) => ({
-            ...prev,
-            Vocabulary: {
-              list: vocabData,
-              cache: cacheData,
-              index: savedIndex,
-            },
-          }));
-          setLoading(false);
-        } else if (selectedCategory === "Kanji") {
-          const cacheData = await fetch_kanji_data();
-          localStorage.setItem("cacheKanji", JSON.stringify(cacheData));
-
-          const filtered = localStorage.getItem("filteredKanjiData");
-          const bookmarkChecked =
-            localStorage.getItem("kanjiBookMarkChecked") === "true";
-
-          let kanjiData = filtered ? JSON.parse(filtered) : cacheData;
-
-          const indexKey = bookmarkChecked
-            ? "bookmarkKanjiIndex"
-            : "normalKanjiIndex";
-          let savedIndex = parseInt(localStorage.getItem(indexKey) || "0", 10);
-          if (savedIndex >= kanjiData.length) savedIndex = kanjiData.length - 1;
-
-          setCategoryState((prev) => ({
-            ...prev,
-            Kanji: {
-              list: kanjiData,
-              cache: cacheData,
-              index: savedIndex,
-            },
-          }));
-          setLoading(false);
-        } else if (selectedCategory === "Grammar") {
-          const cacheData = await fetch_grammar_data();
-          localStorage.setItem("cacheGrammar", JSON.stringify(cacheData));
-
-          const filtered = localStorage.getItem("filteredGrammarData");
-          const bookmarkChecked =
-            localStorage.getItem("grammarBookMarkChecked") === "true";
-
-          let grammarData = filtered ? JSON.parse(filtered) : cacheData;
-
-          const indexKey = bookmarkChecked
-            ? "bookmarkGrammarIndex"
-            : "normalGrammarIndex";
-          let savedIndex = parseInt(localStorage.getItem(indexKey) || "0", 10);
-          if (savedIndex >= grammarData.length) savedIndex = grammarData.length - 1;
-          setCategoryState((prev) => ({
-            ...prev,
-            Grammar: {
-              list: grammarData,
-              cache: cacheData,
-              index: savedIndex,
-            },
-          }));
-          setLoading(false);
-        } else if (selectedCategory === "Verbs") {
-          const cacheData = await fetch_verb_data();
-          localStorage.setItem("cacheVerb", JSON.stringify(cacheData));
-
-          const filtered = localStorage.getItem("filteredVerbData");
-          const bookmarkChecked =
-            localStorage.getItem("verbBookMarkChecked") === "true";
-
-          let verbData = filtered ? JSON.parse(filtered) : cacheData;
-
-          const indexKey = bookmarkChecked
-            ? "bookmarkVerbIndex"
-            : "normalVerbIndex";
-          let savedIndex = parseInt(localStorage.getItem(indexKey) || "0", 10);
-          if (savedIndex >= verbData.length) savedIndex = verbData.length - 1;
-          setCategoryState((prev) => ({
-            ...prev,
-            Verb: {
-              list: verbData,
-              cache: cacheData,
-              index: savedIndex,
-            },
-          }));
-          setLoading(false);
-        } else {
-          setLoading(true);
-        }
+        setCategoryState((prev) => ({
+          ...prev,
+          [selectedCategory]: {
+            list: data,
+            cache: cacheData,
+            index: savedIndex,
+          },
+        }));
       } catch (e) {
         console.error(`Error fetching ${selectedCategory} data:`, e);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -212,33 +123,17 @@ export default function ViewAll() {
             ? Math.min(prev[selectedCategory].index + 1, list.length - 1)
             : Math.max(prev[selectedCategory].index - 1, 0);
 
-        if (selectedCategory === "Vocabulary") {
-          const bookmarkChecked =
-            localStorage.getItem("vocabBookMarkChecked") === "true";
-          const indexKey = bookmarkChecked ? "bookmarkIndex" : "normalIndex";
-          localStorage.setItem(indexKey, newIndex.toString());
-        } else if (selectedCategory === "Kanji") {
-          const bookmarkChecked =
-            localStorage.getItem("kanjiBookMarkChecked") === "true";
-          const indexKey = bookmarkChecked
-            ? "bookmarkKanjiIndex"
-            : "normalKanjiIndex";
-          localStorage.setItem(indexKey, newIndex.toString());
-        }else if (selectedCategory === "Grammar") {
-          const bookmarkChecked =
-            localStorage.getItem("grammarBookMarkChecked") === "true";
-          const indexKey = bookmarkChecked
-            ? "bookmarkGrammarIndex"
-            : "normalGrammarIndex";
-          localStorage.setItem(indexKey, newIndex.toString());
-        }else if (selectedCategory === "Verbs") {
-          const bookmarkChecked =
-            localStorage.getItem("verbBookMarkChecked") === "true";
-          const indexKey = bookmarkChecked
-            ? "bookmarkVerbIndex"
-            : "normalVerbIndex";
-          localStorage.setItem(indexKey, newIndex.toString());
-        }
+        const keyMap = {
+          Vocabulary: ["vocabBookMarkChecked", "bookmarkIndex", "normalIndex"],
+          Kanji: ["kanjiBookMarkChecked", "bookmarkKanjiIndex", "normalKanjiIndex"],
+          Grammar: ["grammarBookMarkChecked", "bookmarkGrammarIndex", "normalGrammarIndex"],
+          Verbs: ["verbBookMarkChecked", "bookmarkVerbIndex", "normalVerbIndex"],
+        };
+
+        const [checkedKey, bookmarkKey, normalKey] = keyMap[selectedCategory];
+        const bookmarkChecked = localStorage.getItem(checkedKey) === "true";
+        const indexKey = bookmarkChecked ? bookmarkKey : normalKey;
+        localStorage.setItem(indexKey, newIndex.toString());
 
         return {
           ...prev,
@@ -256,7 +151,6 @@ export default function ViewAll() {
     const current = categoryState[selectedCategory];
     const list = [...current.list];
     const currentItem = { ...list[current.index] };
-
     currentItem.marked = !currentItem.marked;
     list[current.index] = currentItem;
 
@@ -268,43 +162,22 @@ export default function ViewAll() {
       },
     }));
 
-    if (selectedCategory === "Vocabulary") {
+    if (selectedCategory === "Vocabulary" || selectedCategory === "Kanji") {
+      const cacheKey = selectedCategory === "Vocabulary" ? "cacheVocab" : "cacheKanji";
       try {
-        const cache = localStorage.getItem("cacheVocab");
+        const cache = localStorage.getItem(cacheKey);
         if (cache) {
-          const parsedCache = JSON.parse(cache);
-          const updatedCache = parsedCache.map((item) =>
-            item.uid === currentItem.uid
-              ? { ...item, marked: currentItem.marked }
-              : item
+          const parsed = JSON.parse(cache);
+          const updated = parsed.map((item) =>
+            item.uid === currentItem.uid ? { ...item, marked: currentItem.marked } : item
           );
-          localStorage.setItem("cacheVocab", JSON.stringify(updatedCache));
+          localStorage.setItem(cacheKey, JSON.stringify(updated));
         }
       } catch (err) {
-        console.error("Error updating cache:", err);
+        console.error("Cache update error:", err);
       }
-
-      update_bookmark_fetch(currentItem.marked, currentItem.uid, "vocab");
-    } else if (selectedCategory === "Kanji") {
-      try {
-        const cache = localStorage.getItem("cacheKanji");
-        if (cache) {
-          const parsedCache = JSON.parse(cache);
-          const updatedCache = parsedCache.map((item) =>
-            item.uid === currentItem.uid
-              ? { ...item, marked: currentItem.marked }
-              : item
-          );
-          localStorage.setItem("cacheKanji", JSON.stringify(updatedCache));
-        }
-      } catch (err) {
-        console.error("Error updating cache:", err);
-      }
-
-      update_bookmark_fetch(currentItem.marked, currentItem.uid, "kanji");
+      update_bookmark_fetch(currentItem.marked, currentItem.uid, selectedCategory.toLowerCase());
     }
-
-    // TODO: Add bookmark API update for Kanji, Grammar, Verb
   }, [categoryState, selectedCategory]);
 
   return (
@@ -318,246 +191,30 @@ export default function ViewAll() {
         </div>
       </header>
 
-      {openVocabModal && selectedCategory === "Vocabulary" && (
-        <SettingsVocabModal
-          setOpenModal={setOpenVocabModal}
-          setFilteredData={(updated) => {
-            setCategoryState((prev) => ({
-              ...prev,
-              Vocabulary: {
-                ...prev.Vocabulary,
-                list: updated,
-              },
-            }));
-
-            const bookmarkChecked =
-              localStorage.getItem("vocabBookMarkChecked") === "true";
-            const indexKey = bookmarkChecked ? "bookmarkIndex" : "normalIndex";
-            let savedIndex = parseInt(
-              localStorage.getItem(indexKey) || "0",
-              10
-            );
-            if (savedIndex >= updated.length) savedIndex = updated.length - 1;
-
-            setCategoryState((prev) => ({
-              ...prev,
-              Vocabulary: {
-                ...prev.Vocabulary,
-                index: savedIndex,
-              },
-            }));
-          }}
-          setBookmark={(value) => {
-            localStorage.setItem(
-              "vocabBookMarkChecked",
-              value ? "true" : "false"
-            );
-            const updatedList = value
-              ? categoryState.Vocabulary.cache.filter((item) => item.marked)
-              : categoryState.Vocabulary.cache;
-
-            setCategoryState((prev) => ({
-              ...prev,
-              Vocabulary: {
-                ...prev.Vocabulary,
-                list: updatedList,
-                index: 0,
-              },
-            }));
-          }}
-        />
-      )}
-
-      {openKanjiModal && selectedCategory === "Kanji" && (
-        <SettingsKanjiModal
-          setOpenModal={setOpenKanjiModal}
-          setFilteredData={(updated) => {
-            setCategoryState((prev) => ({
-              ...prev,
-              Kanji: {
-                ...prev.Kanji,
-                list: updated,
-              },
-            }));
-
-            const bookmarkChecked =
-              localStorage.getItem("kanjiBookMarkChecked") === "true";
-            const indexKey = bookmarkChecked
-              ? "bookmarkKanjiIndex"
-              : "normalKanjiIndex";
-            let savedIndex = parseInt(
-              localStorage.getItem(indexKey) || "0",
-              10
-            );
-            if (savedIndex >= updated.length) savedIndex = updated.length - 1;
-
-            setCategoryState((prev) => ({
-              ...prev,
-              Kanji: {
-                ...prev.Kanji,
-                index: savedIndex,
-              },
-            }));
-          }}
-          setBookmark={(value) => {
-            localStorage.setItem(
-              "vocabBookMarkChecked",
-              value ? "true" : "false"
-            );
-            const updatedList = value
-              ? categoryState.Kanji.cache.filter((item) => item.marked)
-              : categoryState.Kanji.cache;
-
-            setCategoryState((prev) => ({
-              ...prev,
-              Kanji: {
-                ...prev.Kanji,
-                list: updatedList,
-                index: 0,
-              },
-            }));
-          }}
-        />
-      )}
-
-      {openGrammarModal && selectedCategory === "Grammar" && (
-        <SettingsGrammarModal
-          setOpenModal={setOpenGrammarModal}
-          setFilteredData={(updated) => {
-            setCategoryState((prev) => ({
-              ...prev,
-              Vocabulary: {
-                ...prev.Vocabulary,
-                list: updated,
-              },
-            }));
-
-            const bookmarkChecked =
-              localStorage.getItem("grammarBookMarkChecked") === "true";
-            const indexKey = bookmarkChecked
-              ? "bookmarkVerbIndex"
-              : "normalVerbIndex";
-            let savedIndex = parseInt(
-              localStorage.getItem(indexKey) || "0",
-              10
-            );
-            if (savedIndex >= updated.length) savedIndex = updated.length - 1;
-
-            setCategoryState((prev) => ({
-              ...prev,
-              Grammar: {
-                ...prev.Grammar,
-                index: savedIndex,
-              },
-            }));
-          }}
-          setBookmark={(value) => {
-            localStorage.setItem(
-              "grammarBookMarkChecked",
-              value ? "true" : "false"
-            );
-            const updatedList = value
-              ? categoryState.Grammar.cache.filter((item) => item.marked)
-              : categoryState.Grammar.cache;
-
-            setCategoryState((prev) => ({
-              ...prev,
-              Grammar: {
-                ...prev.Grammar,
-                list: updatedList,
-                index: 0,
-              },
-            }));
-          }}
-        />
-      )}
-
-      {openVerbModal && selectedCategory === "Verbs" && (
-        <SettingsVerbModal
-          setOpenModal={setOpenVerbModal}
-          setFilteredData={(updated) => {
-            setCategoryState((prev) => ({
-              ...prev,
-              Verbs: {
-                ...prev.Verbs,
-                list: updated,
-              },
-            }));
-
-            const bookmarkChecked =
-              localStorage.getItem("verbBookMarkChecked") === "true";
-            const indexKey = bookmarkChecked
-              ? "bookmarkVerbIndex"
-              : "normalVerbIndex";
-            let savedIndex = parseInt(
-              localStorage.getItem(indexKey) || "0",
-              10
-            );
-            if (savedIndex >= updated.length) savedIndex = updated.length - 1;
-
-            setCategoryState((prev) => ({
-              ...prev,
-              Verbs: {
-                ...prev.Verbs,
-                index: savedIndex,
-              },
-            }));
-          }}
-          setBookmark={(value) => {
-            localStorage.setItem(
-              "verbBookMarkChecked",
-              value ? "true" : "false"
-            );
-            const updatedList = value
-              ? categoryState.Verbs.cache.filter((item) => item.marked)
-              : categoryState.Verbs.cache;
-
-            setCategoryState((prev) => ({
-              ...prev,
-              Verbs: {
-                ...prev.Verbs,
-                list: updatedList,
-                index: 0,
-              },
-            }));
-          }}
-        />
-      )}
+      {/* 🎯 Target Modal */}
+      {openTargetModal && <TargetModal setOpenModal={setOpenTargetModal} />}
 
       <div className="flex flex-col w-full h-screen items-center justify-center">
         <div className="w-96">
           <div className="flex justify-between items-center mb-2">
-            {/* Left: Settings */}
             <Settings
               onClick={() => {
-                if (selectedCategory === "Vocabulary") {
-                  setOpenVocabModal(true);
-                } else if (selectedCategory === "Kanji") {
-                  setOpenKanjiModal(true);
-                }
-                else if (selectedCategory === "Grammar") {
-                  setOpenGrammarModal(true);
-                }
-                else if (selectedCategory === "Verbs") {
-                  setOpenVerbModal(true);
-                }
-                // TODO: Add modals for Kanji, Grammar, Verb
+                if (selectedCategory === "Vocabulary") setOpenVocabModal(true);
+                else if (selectedCategory === "Kanji") setOpenKanjiModal(true);
+                else if (selectedCategory === "Grammar") setOpenGrammarModal(true);
+                else if (selectedCategory === "Verbs") setOpenVerbModal(true);
               }}
             />
-
-            {/* Right: Learn Now Button */}
-            <Link href="/CustomQuiz">
+            <div className="flex gap-2">
               <button
-                onClick={() => {
-                  console.log("Navigate to quiz section");
-                }}
-                className="px-3 py-1 mb-2 rounded-full text-black font-medium transition
-                        bg-[#FFB8C6] dark:bg-[#FF9D7E] hover:opacity-90"
+                onClick={() => setOpenTargetModal(true)}
+                className="px-3 py-1 mb-2 rounded-full text-black font-medium transition bg-[#FFB8C6] dark:bg-[#FF9D7E] hover:opacity-90"
               >
-                Learn Now
+                Set Target
               </button>
-            </Link>
+            </div>
           </div>
+
           <TopBar onSelect={setSelectedCategory} />
         </div>
 
@@ -569,15 +226,12 @@ export default function ViewAll() {
               {selectedCategory === "Vocabulary" && currentItem && (
                 <VocabCard data={currentItem} onSwipe={handleSwipe} />
               )}
-
               {selectedCategory === "Kanji" && currentItem && (
                 <KanjiCard data={currentItem} onSwipe={handleSwipe} />
               )}
-
               {selectedCategory === "Verbs" && currentItem && (
                 <VerbCard data={currentItem} onSwipe={handleSwipe} />
               )}
-
               {selectedCategory === "Grammar" && currentItem && (
                 <GrammarCard data={currentItem} onSwipe={handleSwipe} />
               )}
@@ -595,9 +249,6 @@ export default function ViewAll() {
           />
         </div>
       </div>
-
-      <footer>
-      </footer>
     </div>
   );
 }
