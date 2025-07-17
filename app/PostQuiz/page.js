@@ -1,35 +1,33 @@
 'use client';
 
-import ProgressCard from './components/ProgressCard';
-import CustomButton from '@/app/common_components/CustomButton';
-import SecondaryButton from '@/app/common_components/SecondaryButton';
-import Navbar from '@/app/common_components/Navbar';
-import CherryBlossomSnowfall from '@/app/common_components/CherryBlossomSnowfall';
-import Image from 'next/image';
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import Image from 'next/image';
+
+import ProgressCard from './components/ProgressCard';
+import CherryBlossomSnowfall from '@/app/common_components/CherryBlossomSnowfall';
 
 export default function PostQuizPage() {
+  const router = useRouter();
 
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [responses, setResponses] = useState([]);
   const [correct, setCorrect] = useState(0);
   const [incorrect, setIncorrect] = useState(0);
 
-useEffect(() => {
-  const raw = localStorage.getItem('quizResponses');
-  if (raw) {
-    const parsed = JSON.parse(raw);
-    setResponses(parsed);
-    const correctCount = parsed.filter(r => r.correct).length;
-    const incorrectCount = parsed.filter(r => !r.correct).length;
-    setCorrect(correctCount);
-    setIncorrect(incorrectCount);
-  }
-}, []);
-
+  useEffect(() => {
+    const raw = localStorage.getItem('quizResponses');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      setResponses(parsed);
+      const correctCount = parsed.filter((r) => r.correct).length;
+      const incorrectCount = parsed.filter((r) => !r.correct).length;
+      setCorrect(correctCount);
+      setIncorrect(incorrectCount);
+    }
+  }, []);
 
   useEffect(() => {
-    // Detect dark mode using matchMedia
     const match = window.matchMedia('(prefers-color-scheme: dark)');
     setIsDarkMode(match.matches);
     const listener = (e) => setIsDarkMode(e.matches);
@@ -39,31 +37,28 @@ useEffect(() => {
 
   return (
     <div className="min-h-screen flex flex-col justify-between bg-[#FAF9F6] dark:bg-[#333333] text-white relative z-10">
-      
-      {/* Cherry blossom background (behind everything) */}
+      {/* Background Animation */}
       <CherryBlossomSnowfall isDarkMode={isDarkMode} />
 
-      {/* Main content */}
+      {/* Main Content */}
       <div className="flex flex-col items-center justify-center gap-6 py-10 px-4 relative z-10">
-        
-        <div className="w-24 h-24 dark:hidden rounded-full relative border-b-2 border-[#FF5274] dark:border-[#F66538] mt-4 overflow-hidden">
-        <Image
-          src="/chibi_well_done.png" // Ensure this image exists in your /public folder
-          alt="Well done"
-          fill
-          className="object-cover"
-        />
-      </div>
-
-      <div className="w-24 h-24 dark:flex hidden rounded-full relative border-b-2 border-[#FF5274] dark:border-[#F66538] mt-4 overflow-hidden">
-        <Image
-          src="/chibi_well_done_dark.png" // Ensure this image exists in your /public folder
-          alt="Well done"
-          fill
-          className="object-cover"
-        />
-      </div>
-
+        {/* Character Image */}
+        <div className="w-24 h-24 dark:hidden rounded-full relative border-b-2 border-[#FF5274] mt-4 overflow-hidden">
+          <Image
+            src="/chibi_well_done.png"
+            alt="Well done"
+            fill
+            className="object-cover"
+          />
+        </div>
+        <div className="w-24 h-24 hidden dark:flex rounded-full relative border-b-2 border-[#F66538] mt-4 overflow-hidden">
+          <Image
+            src="/chibi_well_done_dark.png"
+            alt="Well done"
+            fill
+            className="object-cover"
+          />
+        </div>
 
         {/* Heading */}
         <div className="text-center text-black dark:text-white">
@@ -71,14 +66,19 @@ useEffect(() => {
           <p className="text-md mt-1">Well done</p>
         </div>
 
-        {/* Progress Card */}
+        {/* Score Summary */}
         <ProgressCard correct={correct} incorrect={incorrect} />
 
-
+        {/* Back to Homepage Button */}
+        <div className="p-4">
+          <button
+            onClick={() => router.push('/')}
+            className="text-sm px-4 py-4 font-semibold bg-[#FF3A60] dark:bg-white text:white dark:text-black rounded-2xl"
+          >
+            &lt; Back to Homepage
+          </button>
+        </div>
       </div>
-
-      {/* Bottom Navbar */}
-      <Navbar />
     </div>
   );
 }
