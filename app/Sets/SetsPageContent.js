@@ -1,9 +1,9 @@
 'use client';
 
 import { useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import SetBlock from './components/SetBlock';
 import { authFetch } from '../middleware';
-import Navbar from '../common_components/Navbar';
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 
@@ -60,6 +60,16 @@ export default function SetsPageContent() {
         </h1>
       </div>
 
+      {/* Back Link */}
+      <div className="p-4">
+        <Link
+          href="/"
+          className="text-[#FF3A60] dark:text-white font-semibold hover:underline text-lg"
+        >
+          &lt; Back
+        </Link>
+      </div>
+
       {/* Loading Spinner */}
       {loading && (
         <div className="flex justify-center items-center mt-8">
@@ -103,10 +113,6 @@ export default function SetsPageContent() {
           ))}
         </div>
       )}
-      <footer>
-        <Navbar/>
-      </footer>
     </div>
-
   );
 }
