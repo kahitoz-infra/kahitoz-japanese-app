@@ -18,8 +18,8 @@ export default function CustomQuizPage() {
         <QuizBlock />
         
       </main>
-      <div className="absolute z-10 bottom-24 right-4">
-    <CircularButton href="/PreQuiz" />
+<div className="fixed z-10 bottom-20 right-3">
+  <CircularButton href="/PreQuiz" />
     </div>
     </div>
   );
