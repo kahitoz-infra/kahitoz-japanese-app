@@ -1,7 +1,7 @@
 'use client';
 
 import Calendar from "./components/Calendar";
-import RecapBlock from "./components/RecapBlock";
+import RecapBlock from "../Screens/components/RecapBlock";
 import Navbar from "../common_components/Navbar";
 import CherryBlossomSnowfall from "../common_components/CherryBlossomSnowfall";
 import MotivationalQuotes from "../common_components/MotivationalQuotes";
@@ -85,19 +85,41 @@ const Dashboard = () => {
           margin: "0 auto",
         }}
       >
-<div className="flex flex-col items-center text-center mb-6 mt-12 gap-4">
-  <div className="rounded-full dark:hidden overflow-hidden w-20 h-20 border-b-4 border-[#FF5274] dark:border-[#F66538]">
-    <img src="/Chibi_dp.png" alt="Profile" className="object-cover w-full h-full" />
-  </div>
-  <div className="rounded-full hidden dark:flex overflow-hidden w-20 h-20 border-b-4 border-[#FF5274] dark:border-[#F66538]">
-    <img src="/Chibi_dp_dark.png" alt="Profile" className="object-cover w-full h-full" />
-  </div>
-  <div>
-    <h2 className="text-2xl font-bold">Welcome back,</h2>
-    <h2 className="text-2xl font-bold">{userName}! <span className="text-sm text-green-400">{subsType}</span> </h2>
-    <p className="text-md font-semibold">良い一日を</p>
-  </div>
-</div>
+    <div className="flex flex-row items-center text-left mb-6 mt-12 gap-6">
+      {/* Image Section */}
+      <div className="relative w-20 h-20">
+
+      {/* Badge — Only show if subsType is "plus" */}
+      {subsType === "plus" && (
+        <div className="absolute -top-2 -right-2 text-[10px] font-semibold px-2 py-0.5 rounded-full z-10 bg-black text-white dark:bg-white dark:text-black shadow-md">
+          PLUS
+        </div>
+      )}
+      {/* Light mode image */}
+      <div className={`rounded-full dark:hidden overflow-hidden w-20 h-20 border-b-4 ${
+        subsType === "plus" ? "border-[#FF5274]" : "border-pink-400"
+      }`}>
+        <img src="/Chibi_dp.png" alt="Profile" className="object-cover w-full h-full" />
+      </div>
+
+      {/* Dark mode image */}
+      <div className={`rounded-full hidden dark:flex overflow-hidden w-20 h-20 border-b-4 absolute top-0 left-0 ${
+        subsType === "plus" ? "border-[#F66538]" : "border-orange-500"
+      }`}>
+        <img src="/Chibi_dp_dark.png" alt="Profile" className="object-cover w-full h-full" />
+      </div>
+      </div>
+
+      {/* Text Section */}
+      <div className="flex flex-col gap-1">
+        <h2 className="text-xl font-semibold">Welcome back,</h2>
+        <h2 className="text-xl font-semibold">
+          {userName}!
+        </h2>
+        <p className="text-md font-semibold">良い一日を</p>
+      </div>
+    </div>
+
 
 
         {/* Motivational Quotes */}
@@ -130,10 +152,6 @@ const Dashboard = () => {
 <div className="mb-24 w-full px-4 sm:px-6 md:px-10">
   <Calendar />
 </div>
-
-
-        {/* Navbar */}
-        <Navbar />
       </main>
 
       {/* 🌗 Light/Dark styles for quote box */}

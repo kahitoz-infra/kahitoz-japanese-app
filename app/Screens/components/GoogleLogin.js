@@ -51,7 +51,7 @@ export default function UnifiedGoogleLoginToken() {
             document.cookie = `auth_token=${data.auth_token}; path=/; max-age=${sevenDays}; SameSite=Lax`;
             document.cookie = `refresh_token=${data.refresh_token}; path=/; path=/; max-age=${sevenDays}; SameSite=Lax`;
 
-            router.push('/Dashboardv2');
+            router.push('/');
         } catch (err) {
             console.error(err);
             setLoading(false);

@@ -1,5 +1,5 @@
 'use client'
-import QuizBlock from "../CustomQuiz/components/QuizBlock";
+import QuizBlock from "./components/QuizBlock";
 import Navbar from "../common_components/Navbar";
 import CircularButton from "../common_components/CircularButton";
 
@@ -18,11 +18,9 @@ export default function CustomQuizPage() {
         <QuizBlock />
         
       </main>
-      <div className="absolute z-10 bottom-24 right-4">
-    <CircularButton href="/PreQuiz" />
+<div className="fixed z-10 bottom-20 right-3">
+  <CircularButton href="/PreQuiz" />
     </div>
-      {/* Bottom Navbar */}
-      <Navbar />
     </div>
   );
 }
