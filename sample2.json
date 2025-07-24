@@ -1,0 +1,316 @@
+{
+  "example_kanji": [
+    {
+      "_id": "日",
+      "examples": [
+        {
+          "reading": "ニチ",
+          "type": "onyomi",
+          "sentence": "今日はいい天気です。",
+          "sentence_hiragana": "こんにちはいいてんきです。",
+          "sentence_romaji": "konnichihaiitenkidesu。",
+          "translation": "Today is good weather.",
+          "explanation": "The 'nichi' onyomi reading is commonly used for words related to time and days."
+        },
+        {
+          "reading": "ひ",
+          "type": "kunyomi",
+          "sentence": "日差しが気持ちいい。",
+          "sentence_hiragana": "ひざしがきもちいい。",
+          "sentence_romaji": "hizashigakimochiii。",
+          "translation": "The sunlight is pleasant.",
+          "explanation": "The 'hi' kunyomi reading is used here to represent the direct experience of sunshine."
+        },
+        {
+          "reading": "か",
+          "type": "kunyomi",
+          "sentence": "日が沈む。",
+          "sentence_hiragana": "にちがしずむ。",
+          "sentence_romaji": "nichigashizumu。",
+          "translation": "The sun sets.",
+          "explanation": "The 'ka' kunyomi reading is employed to depict the action of the sun going down."
+        }
+      ],
+      "kanji": "日",
+      "kunyomi": [
+        "ひ",
+        "か"
+      ],
+      "onyomi": [
+        "ニチ"
+      ]
+    },
+    {
+      "_id": "月",
+      "examples": [
+        {
+          "reading": "ゲツ",
+          "type": "onyomi",
+          "sentence": "月は夜空にあります。",
+          "sentence_hiragana": "がつはよぞらにあります。",
+          "sentence_romaji": "gatsuhayozoraniarimasu。",
+          "translation": "The moon is in the night sky.",
+          "explanation": "The 'ゲツ' (getsu) reading is used here for words related to the moon and its phases, reflecting its traditional association with the calendar."
+        },
+        {
+          "reading": "ガツ",
+          "type": "onyomi",
+          "sentence": "月光が部屋を照らします。",
+          "sentence_hiragana": "げっこうがへやをてらします。",
+          "sentence_romaji": "gekkougaheyawoterashimasu。",
+          "translation": "Moonlight illuminates the room.",
+          "explanation": "The 'ガツ' (katsu) reading is utilized in this sentence for 'moonlight', a more direct, descriptive term."
+        },
+        {
+          "reading": "つき",
+          "type": "kunyomi",
+          "sentence": "つきは夜に綺麗です。",
+          "sentence_hiragana": "つきはよるにきれいです。",
+          "sentence_romaji": "tsukihayorunikireidesu。",
+          "translation": "The moon is beautiful at night.",
+          "explanation": "The 'つき' (tsuki) reading is the most common and natural way to refer to the moon as a simple object."
+        }
+      ],
+      "kanji": "月",
+      "kunyomi": [
+        "つき"
+      ],
+      "onyomi": [
+        "ゲツ",
+        "ガツ"
+      ]
+    }
+  ],
+  "example_vocab": [
+    {
+      "_id": "危ない",
+      "examples": [
+        {
+          "sentence": "この道は危ないから気を付けてください。",
+          "furigana": "このみちはあぶないからきをつけてください。",
+          "translation": "This road is dangerous, so please be careful."
+        },
+        {
+          "sentence": "子供は危ない場所に一人で行かないで。",
+          "furigana": "こどもはあぶないばしょにひとりでいかないで。",
+          "translation": "Children should not go alone to dangerous places."
+        },
+        {
+          "sentence": "転ぶかもしれない、危ないです。",
+          "furigana": "ころぶかもしれない、あぶないです。",
+          "translation": "There is a risk of falling, it's dangerous."
+        }
+      ],
+      "furigana": "abunai",
+      "word": "危ない"
+    },
+    {
+      "_id": "浴びる",
+      "examples": [
+        {
+          "sentence": "私は毎日お風呂に浴びる。",
+          "furigana": "わたしはまいにちおふろにあびる。",
+          "translation": "I take a bath every day."
+        },
+        {
+          "sentence": "雨に浴びる傘は濡れる。",
+          "furigana": "あめにあびるかさはぬれる。",
+          "translation": "An umbrella gets wet when it gets rained on."
+        },
+        {
+          "sentence": "子供たちは太陽に浴びる。",
+          "furigana": "こどもたちはたいようにあびる。",
+          "translation": "The children enjoy basking in the sun."
+        }
+      ],
+      "furigana": "abiru",
+      "word": "浴びる"
+    }
+  ],
+  "question_kanji": [
+    {
+      "_id": "kanji_to_onyo_kunyo_日_N5",
+      "type": "kanji_to_onyo_kunyo",
+      "question": {
+        "sentence_1": "Select the correct Kanji for the following Onyomi - ",
+        "Onyomi": "[\"ニチ\"]",
+        "sentence_2": "and Kunyomi - ",
+        "Kunyomi": "[\"ひ\", \"か\"]"
+      },
+      "options": [
+        "加",
+        "陸",
+        "好",
+        "日"
+      ],
+      "correct_option": "日",
+      "correct_weight": 0.2,
+      "wrong_weight": -0.1,
+      "kanji": 2,
+      "tags": "N5"
+    },
+    {
+      "_id": "kanji_to_onyo_kunyo_月_N5",
+      "type": "kanji_to_onyo_kunyo",
+      "question": {
+        "sentence_1": "Select the correct Kanji for the following Onyomi - ",
+        "Onyomi": "[\"ゲツ\", \"ガツ\"]",
+        "sentence_2": "and Kunyomi - ",
+        "Kunyomi": "[\"つき\"]"
+      },
+      "options": [
+        "弟",
+        "過",
+        "劇",
+        "月"
+      ],
+      "correct_option": "月",
+      "correct_weight": 0.2,
+      "wrong_weight": -0.1,
+      "kanji": 1,
+      "tags": "N5"
+    },
+    {
+      "_id": "meaning_to_kanji_日_N5",
+      "type": "meaning_to_kanji",
+      "question": "Select the kanji with the following meaning - Sun, Day",
+      "options": [
+        "係",
+        "給",
+        "央",
+        "日"
+      ],
+      "correct_option": "日",
+      "correct_weight": 0.2,
+      "wrong_weight": -0.1,
+      "kanji": 2,
+      "tags": "N5"
+    },
+    {
+      "_id": "meaning_to_kanji_月_N5",
+      "type": "meaning_to_kanji",
+      "question": "Select the kanji with the following meaning - Moon, Month",
+      "options": [
+        "月",
+        "録",
+        "員",
+        "原"
+      ],
+      "correct_option": "月",
+      "correct_weight": 0.2,
+      "wrong_weight": -0.1,
+      "kanji": 1,
+      "tags": "N5"
+    },
+    {
+      "_id": "onyo_kunyo_to_kanji_日_N5",
+      "type": "onyo_kunyo_to_kanji",
+      "question": "Select the correct Onyomi and Kunyomi pair for the following kanji - 日",
+      "options": [
+        "[\"チ\"] | [\"はじ、は(ずかしい)\"]",
+        "[\"テイ\"] | [\"ほど\"]",
+        "[\"ザツ、ゾウ\"] | [\"まじ(る)\"]",
+        "[\"ニチ\"] | [\"ひ\", \"か\"]"
+      ],
+      "correct_option": "[\"ニチ\"] | [\"ひ\", \"か\"]",
+      "correct_weight": 0.5,
+      "wrong_weight": -0.3,
+      "kanji": 2,
+      "tags": "N5"
+    },
+    {
+      "_id": "onyo_kunyo_to_kanji_月_N5",
+      "type": "onyo_kunyo_to_kanji",
+      "question": "Select the correct Onyomi and Kunyomi pair for the following kanji - 月",
+      "options": [
+        "[\"ゲツ\", \"ガツ\"] | [\"つき\"]",
+        "[\"ジ\"] | [\"や(める)\"]",
+        "[\"タイ\"] | [\"からだ\"]",
+        "[\"チュウ\"] | [\"なか\"]"
+      ],
+      "correct_option": "[\"ゲツ\", \"ガツ\"] | [\"つき\"]",
+      "correct_weight": 0.5,
+      "wrong_weight": -0.3,
+      "kanji": 1,
+      "tags": "N5"
+    }
+  ],
+  "question_vocab": [
+    {
+      "_id": "meaning_to_word_危ない_N5",
+      "type": "meaning_to_word",
+      "question": "Select the word with the following meaning: dangerous, risky",
+      "options": [
+        "厚い",
+        "危ない",
+        "追加",
+        "保証"
+      ],
+      "correct_option": "危ない",
+      "correct_weight": 0.5,
+      "wrong_weight": -0.3,
+      "kanji_only": "危",
+      "kanji_type": "危:N3",
+      "furigana": "abunai",
+      "vocab": 2,
+      "tags": "N5"
+    },
+    {
+      "_id": "meaning_to_word_浴びる_N5",
+      "type": "meaning_to_word",
+      "question": "Select the word with the following meaning: to take a shower",
+      "options": [
+        "浴びる",
+        "立派",
+        "睡眠",
+        "多少"
+      ],
+      "correct_option": "浴びる",
+      "correct_weight": 0.5,
+      "wrong_weight": -0.3,
+      "kanji_only": "浴",
+      "kanji_type": "浴:N2",
+      "furigana": "abiru",
+      "vocab": 1,
+      "tags": "N5"
+    },
+    {
+      "_id": "word_to_meaning_危ない_N5",
+      "type": "word_to_meaning",
+      "question": "Select the meaning for the word: 危ない",
+      "options": [
+        "aviation, flight",
+        "unbalanced diet​",
+        "departure of a vehicle",
+        "dangerous, risky"
+      ],
+      "correct_option": "dangerous, risky",
+      "correct_weight": 0.5,
+      "wrong_weight": -0.3,
+      "kanji_only": "危",
+      "kanji_type": "危:N3",
+      "furigana": "abunai",
+      "vocab": 2,
+      "tags": "N5"
+    },
+    {
+      "_id": "word_to_meaning_浴びる_N5",
+      "type": "word_to_meaning",
+      "question": "Select the meaning for the word: 浴びる",
+      "options": [
+        "to take a shower",
+        "pencil",
+        "verbal message",
+        "precipitous; rugged; inaccessible; impregnable; steep​; grim; severe; stern​"
+      ],
+      "correct_option": "to take a shower",
+      "correct_weight": 0.5,
+      "wrong_weight": -0.3,
+      "kanji_only": "浴",
+      "kanji_type": "浴:N2",
+      "furigana": "abiru",
+      "vocab": 1,
+      "tags": "N5"
+    }
+  ]
+}
