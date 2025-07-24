@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import Link from 'next/link';
 
 export default function TargetModal({ setOpenModal }) {
   const [kanjiTarget, setKanjiTarget] = useState(
@@ -55,12 +56,15 @@ export default function TargetModal({ setOpenModal }) {
           >
             Cancel
           </button>
+
+           <Link href="/TargetLearning">
           <button
             onClick={handleSave}
             className="px-3 py-1 rounded-full text-sm font-semibold bg-[#FF6E8A] dark:bg-[#FF9270] text-black"
           >
             Take a Test
           </button>
+        </Link>
         </div>
       </div>
     </div>
