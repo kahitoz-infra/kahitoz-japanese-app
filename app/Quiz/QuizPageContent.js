@@ -11,6 +11,13 @@ export default function QuizPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
+  const setNo = searchParams.get('setNo');
+  const type = searchParams.get('type');
+  const quizNumber = searchParams.get('quiz_number');
+
+  const quiz_key = `${type}_quiz.custom_${type}_quiz_${quizNumber}`;
+  const set_name = `set${quizNumber}`;
+
   const [questions, setQuestions] = useState([]);
   const [responses, setResponses] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -18,44 +25,80 @@ export default function QuizPageContent() {
   const [showFeedback, setShowFeedback] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [quizKey, setQuizKey] = useState('');
-  const [set, setSet] = useState('');
-  const set_id = searchParams.get('set_id');
-
+  const [quizKey, setQuizKey] = useState(quiz_key);
+  const [set, setSet] = useState(set_name);
 
   const currentQuestion = questions[currentIndex];
   const totalQuestions = questions.length;
 
   useEffect(() => {
-  const loadQuestions = async () => {
-    if (!set_id) {
-      console.error("Missing set_id");
-      setLoading(false);
-      return;
-    }
+    const loadQuestions = async () => {
+      const apiLoadParam = searchParams.get('api_load');
 
-    try {
-      const res = await authFetch(
-        `${process.env.NEXT_PUBLIC_API_LEARN}/start_quiz?set_id=${set_id}`
-      );
-      const data = await res.json();
+      if (apiLoadParam === 'false') {
+        const quizDataRaw = localStorage.getItem('quizData');
 
-      if (res.ok && data?.questions?.length > 0) {
-        setQuestions(data.questions);
-        setQuizKey(data.quiz_key || 'default_quiz_key');
-        setSet(data.set_key || 'default_set');
-      } else {
-        console.error(data.detail || 'Failed to load questions');
+
+        if (quizDataRaw) {
+          try {
+            console.log(typeof (quizDataRaw))
+            const parsed = JSON.parse(quizDataRaw);
+            console.log(typeof (parsed))
+            console.log(parsed.next_set)
+            let loadedQuestions = [];
+            setQuizKey(parsed.quiz_key || quiz_key);
+            setSet(parsed.next_set?.set_key || parsed.set_key || set_name);
+
+            if (Array.isArray(parsed)) {
+              loadedQuestions = parsed;
+            } else if (parsed?.next_set?.questions) {
+              loadedQuestions = parsed.next_set.questions;
+            } else if (parsed?.questions) {
+              loadedQuestions = parsed.questions;
+            }
+
+            if (loadedQuestions.length > 0) {
+              setQuestions(loadedQuestions);
+            } else {
+              console.error('No questions found in quizData');
+            }
+          } catch (err) {
+            console.error('Failed to parse quizData from localStorage:', err);
+          }
+        } else {
+          console.error('No quizData found in localStorage');
+        }
+        setLoading(false);
+        return;
       }
-    } catch (err) {
-      console.error('Error loading questions:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
 
-  loadQuestions();
-}, [set_id]);
+      if (!setNo || !type || !quizNumber) {
+        console.error('Missing params:', { setNo, type, quizNumber });
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const res = await authFetch(
+          `${process.env.NEXT_PUBLIC_API_LEARN}/set_question?quiz_type=${type}&quiz_number=${quizNumber}&set_number=${setNo}`
+        );
+        const data = await res.json();
+
+        if (res.ok && data.questions?.questions) {
+          setQuestions(data.questions.questions);
+          setSet(data.questions.set_key || set_name);
+        } else {
+          console.error(data.detail || 'Failed to load questions');
+        }
+      } catch (err) {
+        console.error('Error loading questions:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadQuestions();
+  }, [searchParams, setNo, type, quizNumber]);
 
 
   const handleOptionClick = (option) => {
