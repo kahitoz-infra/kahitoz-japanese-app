@@ -2,7 +2,7 @@
 import React from 'react';
 import { Play } from 'lucide-react';
 
-function PlayButton({ progress = 0 }) {
+function PlayButton({ progress = 0, onClick }) {
   const radius = 32;
   const stroke = 4;
   const normalizedRadius = radius - stroke / 2;
@@ -10,14 +10,14 @@ function PlayButton({ progress = 0 }) {
   const strokeDashoffset = circumference - (progress / 100) * circumference;
 
   return (
-    <div className="relative w-20 h-20">
+    <div className="relative w-20 h-20" onClick={onClick}>
       {/* Circular Progress Ring */}
       <svg
         height="100%"
         width="100%"
-        className="rotate-[-90deg] absolute top-0 left-0"
+        className="rotate-[-90deg] absolute top-0 left-0 pointer-events-none"
       >
-        {/* Track (empty circle) */}
+        {/* Empty track */}
         <circle
           stroke="transparent"
           fill="transparent"
@@ -41,10 +41,11 @@ function PlayButton({ progress = 0 }) {
       </svg>
 
       {/* Play Button */}
-      <button className="w-14 h-14 rounded-full flex items-center justify-center absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 
+      
+      <div className="w-14 h-14 rounded-full flex items-center justify-center absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 
         bg-white dark:bg-[#222222]">
         <Play className="text-white w-6 h-6" />
-      </button>
+      </div>
     </div>
   );
 }
