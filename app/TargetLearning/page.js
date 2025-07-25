@@ -44,9 +44,27 @@ function TargetLearning() {
     ? Math.round((completedCount / setsData.length) * 100)
     : 0;
 
-  const handleQuizStart = (setId) => {
-    router.push(`/Quiz?set_id=${setId}`);
-  };
+ const handleQuizStart = async () => {
+  try {
+    const res = await authFetch(`${API_URL}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      // optionally send any body payload if needed
+    });
+
+    const data = await res.json();
+
+    if (res.ok && data.quiz_id) {
+      router.push(`/Quiz?quiz_id=${data.quiz_id}`);
+    } else {
+      console.error("Failed to get quiz_id:", data);
+    }
+  } catch (err) {
+    console.error("Error starting quiz:", err);
+  }
+};
 
   // Only show max 9 sets at a time in 3x3
   const visibleSets = setsData.slice(0, 9);
@@ -65,10 +83,7 @@ function TargetLearning() {
             {set.completed ? (
               <PlayButton progress={100} />
             ) : isCurrent ? (
-              <PlayButton
-                progress={0}
-                onClick={() => handleQuizStart(set.set_id)}
-              />
+              <PlayButton progress={0} onClick={handleQuizStart} />
             ) : (
               <div className="opacity-20 pointer-events-none">
                 <PlayButton progress={0} />
