@@ -10,6 +10,7 @@ export default function AdaptiveQuizPageContent() {
   const router = useRouter();
 
   const [questions, setQuestions] = useState([]);
+  const [originalQuestions, setOriginalQuestions] = useState([]);
   const [responses, setResponses] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState(null);
@@ -17,16 +18,16 @@ export default function AdaptiveQuizPageContent() {
   const [isCorrect, setIsCorrect] = useState(false);
   const [loading, setLoading] = useState(true);
 
+  const [retryMode, setRetryMode] = useState(false);
+  const [incorrectQuestions, setIncorrectQuestions] = useState([]);
+
   const currentQuestion = questions[currentIndex];
   const totalQuestions = questions.length;
 
-  // Format question for display
   const formatQuestionText = (q) => {
     if (typeof q === 'string') return q;
     if (Array.isArray(q)) return q.join(' ');
-    if (typeof q === 'object' && q !== null) {
-      return Object.values(q).join(' ');
-    }
+    if (typeof q === 'object' && q !== null) return Object.values(q).join(' ');
     return String(q);
   };
 
@@ -47,11 +48,8 @@ export default function AdaptiveQuizPageContent() {
           .flat()
           .filter((item) => item.type === 'question');
 
-        if (allQuestions.length === 0) {
-          console.error('No adaptive questions found');
-        }
-
         setQuestions(allQuestions);
+        setOriginalQuestions(allQuestions);
       } catch (err) {
         console.error('Error parsing adaptive_quiz:', err);
       } finally {
@@ -81,50 +79,73 @@ export default function AdaptiveQuizPageContent() {
     setResponses((prev) => [...prev, newResponse]);
   };
 
-    const handleNext = () => {
+  const handleNext = () => {
     if (currentIndex < totalQuestions - 1) {
-        setCurrentIndex((prev) => prev + 1);
-        setSelectedOption(null);
-        setShowFeedback(false);
+      setCurrentIndex((prev) => prev + 1);
+      setSelectedOption(null);
+      setShowFeedback(false);
     } else {
-        // Final question — manually push last response before saving
-        const finalResponse = {
+      const finalResponse = {
         q_id: currentQuestion._id,
         correct: selectedOption === currentQuestion.correct_option,
-        };
+      };
+      const updatedResponses = [...responses, finalResponse];
 
-        const updatedResponses = [...responses, finalResponse];
+      // If first pass, check for incorrects and enter retry mode
+      if (!retryMode) {
+        const incorrectQIDs = updatedResponses
+          .filter((res) => !res.correct)
+          .map((res) => res.q_id);
 
-        const quizResult = {
-          timestamp: Date.now(), // Save the completion time
-          responses: updatedResponses,
-        };
-
-        localStorage.setItem('adaptive_quiz_responses', JSON.stringify(quizResult));
-        router.push('/PostQuiz');
+        if (incorrectQIDs.length > 0) {
+          const incorrectQs = originalQuestions.filter((q) =>
+            incorrectQIDs.includes(q._id)
+          );
+          setResponses(updatedResponses); // Save original responses
+          setQuestions(incorrectQs);      // Set new retry list
+          setCurrentIndex(0);
+          setSelectedOption(null);
+          setShowFeedback(false);
+          setRetryMode(true);
+          setIncorrectQuestions(incorrectQs);
+        } else {
+          // All correct, store and redirect
+          saveAndRedirect(updatedResponses);
+        }
+      } else {
+        // Retry done, use original responses (don't override), just redirect
+        saveAndRedirect(responses);
+      }
     }
+  };
+
+  const saveAndRedirect = (finalResponses) => {
+    const quizResult = {
+      timestamp: Date.now(),
+      responses: finalResponses,
     };
 
+    localStorage.setItem('adaptive_quiz_responses', JSON.stringify(quizResult));
+    router.push('/PostQuiz');
+  };
 
   if (loading) return <p className="p-4 text-center">Loading...</p>;
   if (!currentQuestion) return <p className="p-4 text-center">No questions found.</p>;
 
   return (
     <div className="flex flex-col min-h-screen text-black dark:text-white">
-      {/* Header */}
       <div className="w-full h-[20vh] bg-[#fbfbfb] dark:bg-[#2F2F2F] border-b-4 border-[#FF5274] dark:border-[#F66538] rounded-b-xl px-4 py-2 flex flex-col justify-center">
         <ProgressBar
-          label="Progress"
+          label={retryMode ? 'Retry Progress' : 'Progress'}
           start={0}
           end={totalQuestions}
           current={currentIndex + 1}
         />
         <h1 className="text-2xl font-bold text-center mt-4">
-          Question {currentIndex + 1}
+          {retryMode ? 'Reattempt' : 'Question'} {currentIndex + 1}
         </h1>
       </div>
 
-      {/* Question */}
       <div className="flex-1 px-6 mt-4 pb-40">
         <QuizQuestion
           question={formatQuestionText(currentQuestion.question)}
@@ -135,7 +156,6 @@ export default function AdaptiveQuizPageContent() {
           type={currentQuestion.type}
         />
 
-        {/* Controls + Feedback fixed at bottom */}
         <div className="fixed bottom-0 left-0 w-full">
           {showFeedback && (
             <div
@@ -170,7 +190,9 @@ export default function AdaptiveQuizPageContent() {
             }`}
           >
             {currentIndex === totalQuestions - 1 && showFeedback
-              ? 'Finish'
+              ? retryMode
+                ? 'Finish Retry'
+                : 'Retry Incorrect'
               : showFeedback
               ? 'Next'
               : 'Check'}
