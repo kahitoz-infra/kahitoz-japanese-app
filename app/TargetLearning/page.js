@@ -1,7 +1,7 @@
 // app/Quiz/page.js
 
 import { Suspense } from 'react';
-import AdaptiveQuizPageContent from './AdaptiveQuiz';
+import AdaptiveQuizPageContent from '../common_components/AdaptiveQuiz';
 
 export default function AdaptiveQuiz() {
   return (
