@@ -17,15 +17,28 @@ export default function PostQuizPage() {
 
   useEffect(() => {
     const raw =
-    localStorage.getItem('adaptive_quiz_responses') ||
-    localStorage.getItem('quizResponses');
+      localStorage.getItem('adaptive_quiz_responses') ||
+      localStorage.getItem('quizResponses');
+
     if (raw) {
-      const parsed = JSON.parse(raw);
-      setResponses(parsed);
-      const correctCount = parsed.filter((r) => r.correct).length;
-      const incorrectCount = parsed.filter((r) => !r.correct).length;
-      setCorrect(correctCount);
-      setIncorrect(incorrectCount);
+      try {
+        const parsed = JSON.parse(raw);
+
+        // Handle both array and object format
+        const respArray = Array.isArray(parsed)
+          ? parsed
+          : parsed.responses || [];
+
+        setResponses(respArray);
+
+        const correctCount = respArray.filter((r) => r.correct).length;
+        const incorrectCount = respArray.filter((r) => !r.correct).length;
+
+        setCorrect(correctCount);
+        setIncorrect(incorrectCount);
+      } catch (error) {
+        console.error('Failed to parse stored responses:', error);
+      }
     }
   }, []);
 
