@@ -4,9 +4,11 @@ import { useEffect, useState } from 'react';
 export default function MotivationalQuotes() {
   const quotes = [
     "Keep going, you're doing great!",
+    "Greatness Awaits!",
     "Every step counts!",
     "Believe in yourself.",
     "Today, we will be better.",
+    "There's a hero in all of us.",
   ];
 
   const [quoteIndex, setQuoteIndex] = useState(0);
