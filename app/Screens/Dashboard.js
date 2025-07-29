@@ -1,7 +1,7 @@
 'use client';
 
-import Calendar from "./components/Calendar";
-import RecapBlock from "../Screens/components/RecapBlock";
+import Calendar from "../common_components/Calendar";
+import RecapBlock from "../common_components/RecapBlock";
 import Navbar from "../common_components/Navbar";
 import CherryBlossomSnowfall from "../common_components/CherryBlossomSnowfall";
 import MotivationalQuotes from "../common_components/MotivationalQuotes";
