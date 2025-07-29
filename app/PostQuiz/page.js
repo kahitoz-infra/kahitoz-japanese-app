@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 
-import ProgressCard from './components/ProgressCard';
+import ProgressCard from '../common_components/ProgressCard';
 import CherryBlossomSnowfall from '@/app/common_components/CherryBlossomSnowfall';
 
 export default function PostQuizPage() {
