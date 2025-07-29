@@ -1,20 +1,24 @@
 'use client';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useGenerateAdaptiveQuiz } from '@/app/TargetLearning/utils/generateAdaptiveQuiz';
+
 
 export default function TargetModal({ setOpenModal }) {
   const [kanjiTarget, setKanjiTarget] = useState('');
   const [vocabTarget, setVocabTarget] = useState('');
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isClient, setIsClient] = useState(false);
+  const generateQuiz = useGenerateAdaptiveQuiz();
 
   const expiryDuration = 24 * 60 * 60 * 1000; // 24 hours in ms
 
   useEffect(() => {
-    const storedKanji = JSON.parse(localStorage.getItem('kanji_target'));
-    const storedVocab = JSON.parse(localStorage.getItem('vocab_target'));
+    setIsClient(true); // mark when component is client-rendered
+    const storedKanji = JSON.parse(localStorage.getItem('kanji_target') || '{}');
+    const storedVocab = JSON.parse(localStorage.getItem('vocab_target') || '{}');
     const now = Date.now();
 
-    // If both values exist and are not expired, mark as submitted
     if (
       storedKanji?.value &&
       storedVocab?.value &&
@@ -25,22 +29,21 @@ export default function TargetModal({ setOpenModal }) {
     }
   }, []);
 
-  const handleSave = () => {
-    const now = Date.now();
+  const handleSaveAndGenerate = () => {
+    if (!isClient || isSubmitted) return;
 
-    // Store only once
-    if (!isSubmitted) {
-      localStorage.setItem(
-        'kanji_target',
-        JSON.stringify({ value: parseInt(kanjiTarget), timestamp: now })
-      );
-      localStorage.setItem(
-        'vocab_target',
-        JSON.stringify({ value: parseInt(vocabTarget), timestamp: now })
-      );
-      setIsSubmitted(true);
-      setOpenModal(false);
-    }
+    const now = Date.now();
+    localStorage.setItem(
+      'kanji_target',
+      JSON.stringify({ value: parseInt(kanjiTarget), timestamp: now })
+    );
+    localStorage.setItem(
+      'vocab_target',
+      JSON.stringify({ value: parseInt(vocabTarget), timestamp: now })
+    );
+    setIsSubmitted(true);
+    setOpenModal(false);
+    generateQuiz(); // Call API and navigate
   };
 
   const isButtonDisabled =
@@ -87,19 +90,17 @@ export default function TargetModal({ setOpenModal }) {
             Cancel
           </button>
 
-          <Link href={isButtonDisabled ? '#' : '/TargetLearning'}>
-            <button
-              onClick={handleSave}
-              className={`px-3 py-1 rounded-full text-sm font-semibold ${
-                isButtonDisabled
-                  ? 'bg-gray-400 dark:bg-gray-600 text-gray-200 cursor-not-allowed'
-                  : 'bg-[#FF6E8A] dark:bg-[#FF9270] text-black'
-              }`}
-              disabled={isButtonDisabled}
-            >
-              Take a Test
-            </button>
-          </Link>
+          <button
+          onClick={handleSaveAndGenerate}
+          disabled={isButtonDisabled}
+          className={`px-3 py-1 rounded-full text-sm font-semibold ${
+            isButtonDisabled
+              ? 'bg-gray-400 dark:bg-gray-600 text-gray-200 cursor-not-allowed'
+              : 'bg-[#FF6E8A] dark:bg-[#FF9270] text-black'
+          }`}
+        >
+          Take a Test
+        </button>
         </div>
       </div>
     </div>
