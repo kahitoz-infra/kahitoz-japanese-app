@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import { authFetch } from "@/app/middleware";
 import QuizTypeJS from "./QuizType";
-import QuizModal from "../PreQuiz/components/QuizModal";
+import QuizModal from '../common_components/QuizModal';
+
 
 const quizTypes = ["Vocab", "Kanji"];
 const info_api = process.env.NEXT_PUBLIC_API_URL + "/level_info";
