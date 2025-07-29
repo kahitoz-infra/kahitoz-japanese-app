@@ -1,7 +1,8 @@
 // app/Quiz/page.js
 
 import { Suspense } from 'react';
-import QuizPageContent from './QuizPageContent';
+import QuizPageContent from '../common_components/QuizPageContent';
+
 
 export default function QuizPage() {
   return (
