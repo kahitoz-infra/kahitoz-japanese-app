@@ -3,19 +3,19 @@
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import CherryBlossomSnowfall from "../common_components/CherryBlossomSnowfall";
-import VocabCard from "./components/VocabCards";
-import KanjiCard from "./components/KanjiCards";
-import VerbCard from "./components/VerbCards";
-import GrammarCard from "./components/GrammarCards";
-import TopBar from "./components/Topbar";
-import Settings from "./components/Settings";
-import ControlBar from "./components/ControlBar";
-import LoadCard from "./components/LoadingCard";
-import SettingsVocabModal from "./components/SettingsVocabModal";
-import SettingsKanjiModal from "./components/SettingsKanjiModal";
-import SettingsGrammarModal from "./components/SettingsGrammarModal";
-import SettingsVerbModal from "./components/SettingsVerbModal";
-import TargetModal from "./components/TargetModal";
+import VocabCard from "../common_components/VocabCards";
+import KanjiCard from "../common_components/KanjiCards";
+import VerbCard from "../common_components/VerbCards";
+import GrammarCard from "../common_components/GrammarCards";
+import TopBar from "../common_components/Topbar";
+import Settings from "../common_components/Settings";
+import ControlBar from "../common_components/ControlBar";
+import LoadCard from "../common_components/LoadingCard";
+import SettingsVocabModal from "../common_components/SettingsVocabModal";
+import SettingsKanjiModal from "../common_components/SettingsKanjiModal";
+import SettingsGrammarModal from "../common_components/SettingsGrammarModal";
+import SettingsVerbModal from "../common_components/SettingsVerbModal";
+import TargetModal from "../common_components/TargetModal";
 
 import {
   fetch_vocab_data,
