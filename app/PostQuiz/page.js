@@ -6,6 +6,7 @@ import Image from 'next/image';
 
 import ProgressCard from '../common_components/ProgressCard';
 import CherryBlossomSnowfall from '@/app/common_components/CherryBlossomSnowfall';
+import { authFetch } from '@/app/middleware';
 
 export default function PostQuizPage() {
   const router = useRouter();
@@ -23,8 +24,6 @@ export default function PostQuizPage() {
     if (raw) {
       try {
         const parsed = JSON.parse(raw);
-
-        // Handle both array and object format
         const respArray = Array.isArray(parsed)
           ? parsed
           : parsed.responses || [];
@@ -42,6 +41,71 @@ export default function PostQuizPage() {
     }
   }, []);
 
+  // ✅ Post adaptive quiz results on page load
+  useEffect(() => {
+    const sendAdaptiveQuizData = async () => {
+      const quizData = localStorage.getItem('adaptive_quiz');
+      const responseData = localStorage.getItem('adaptive_quiz_responses');
+
+      if (!quizData || !responseData) {
+        console.warn('Missing adaptive_quiz or responses.');
+        return;
+      }
+
+      try {
+        const parsedQuiz = JSON.parse(quizData);
+        const parsedResponses = JSON.parse(responseData);
+        const { quiz_id, sets_data } = parsedQuiz;
+        const { responses } = parsedResponses;
+
+        // Loop through each set (set1, set2, etc.)
+        for (const setName in sets_data) {
+          const items = sets_data[setName];
+
+          const questionIds = items
+            .filter((item) => item.type === 'question')
+            .map((item) => item._id);
+
+          const matchedResponses = responses
+            .filter((r) => questionIds.includes(r.q_id))
+            .map((r) => ({
+              question_id: r.q_id,
+              correct: r.correct,
+            }));
+
+          if (matchedResponses.length === 0) continue;
+
+          const payload = {
+            quiz_id,
+            set_name: setName,
+            response: matchedResponses,
+          };
+
+          const res = await authFetch(
+            `${process.env.NEXT_PUBLIC_API_ADAPT_LEARN}/adapt_evaluate`,
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify(payload),
+            }
+          );
+
+          if (!res.ok) {
+            console.error(`Failed to send data for ${setName}:`, await res.text());
+          } else {
+            console.log(`Submitted responses for ${setName}`);
+          }
+        }
+      } catch (err) {
+        console.error('Error submitting adaptive quiz data:', err);
+      }
+    };
+
+    sendAdaptiveQuizData();
+  }, []);
+
   useEffect(() => {
     const match = window.matchMedia('(prefers-color-scheme: dark)');
     setIsDarkMode(match.matches);
@@ -52,39 +116,22 @@ export default function PostQuizPage() {
 
   return (
     <div className="min-h-screen flex flex-col justify-between bg-[#FAF9F6] dark:bg-[#333333] text-white relative z-10">
-      {/* Background Animation */}
       <CherryBlossomSnowfall isDarkMode={isDarkMode} />
-
-      {/* Main Content */}
       <div className="flex flex-col items-center justify-center gap-6 py-10 px-4 relative z-10">
-        {/* Character Image */}
         <div className="w-24 h-24 dark:hidden rounded-full relative border-b-2 border-[#FF5274] mt-4 overflow-hidden">
-          <Image
-            src="/chibi_well_done.png"
-            alt="Well done"
-            fill
-            className="object-cover"
-          />
+          <Image src="/chibi_well_done.png" alt="Well done" fill className="object-cover" />
         </div>
         <div className="w-24 h-24 hidden dark:flex rounded-full relative border-b-2 border-[#F66538] mt-4 overflow-hidden">
-          <Image
-            src="/chibi_well_done_dark.png"
-            alt="Well done"
-            fill
-            className="object-cover"
-          />
+          <Image src="/chibi_well_done_dark.png" alt="Well done" fill className="object-cover" />
         </div>
 
-        {/* Heading */}
         <div className="text-center text-black dark:text-white">
           <h1 className="text-3xl font-bold mt-4">よくできました</h1>
           <p className="text-md mt-1">Well done</p>
         </div>
 
-        {/* Score Summary */}
         <ProgressCard correct={correct} incorrect={incorrect} />
 
-        {/* Back to Homepage Button */}
         <div className="p-4">
           <button
             onClick={() => router.push('/')}
