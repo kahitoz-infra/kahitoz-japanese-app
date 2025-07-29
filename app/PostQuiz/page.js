@@ -16,7 +16,9 @@ export default function PostQuizPage() {
   const [incorrect, setIncorrect] = useState(0);
 
   useEffect(() => {
-    const raw = localStorage.getItem('quizResponses');
+    const raw =
+    localStorage.getItem('adaptive_quiz_responses') ||
+    localStorage.getItem('quizResponses');
     if (raw) {
       const parsed = JSON.parse(raw);
       setResponses(parsed);
