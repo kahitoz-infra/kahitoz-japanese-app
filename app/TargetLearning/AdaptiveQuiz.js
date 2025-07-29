@@ -81,16 +81,24 @@ export default function AdaptiveQuizPageContent() {
     setResponses((prev) => [...prev, newResponse]);
   };
 
-  const handleNext = () => {
+    const handleNext = () => {
     if (currentIndex < totalQuestions - 1) {
-      setCurrentIndex((prev) => prev + 1);
-      setSelectedOption(null);
-      setShowFeedback(false);
+        setCurrentIndex((prev) => prev + 1);
+        setSelectedOption(null);
+        setShowFeedback(false);
     } else {
-      localStorage.setItem('adaptive_quiz_responses', JSON.stringify(responses));
-      router.push('/PostQuiz');
+        // Final question — manually push last response before saving
+        const finalResponse = {
+        q_id: currentQuestion._id,
+        correct: selectedOption === currentQuestion.correct_option,
+        };
+
+        const updatedResponses = [...responses, finalResponse];
+        localStorage.setItem('adaptive_quiz_responses', JSON.stringify(updatedResponses));
+        router.push('/PostQuiz');
     }
-  };
+    };
+
 
   if (loading) return <p className="p-4 text-center">Loading...</p>;
   if (!currentQuestion) return <p className="p-4 text-center">No questions found.</p>;
