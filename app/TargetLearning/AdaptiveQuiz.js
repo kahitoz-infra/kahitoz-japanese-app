@@ -94,7 +94,13 @@ export default function AdaptiveQuizPageContent() {
         };
 
         const updatedResponses = [...responses, finalResponse];
-        localStorage.setItem('adaptive_quiz_responses', JSON.stringify(updatedResponses));
+
+        const quizResult = {
+          timestamp: Date.now(), // Save the completion time
+          responses: updatedResponses,
+        };
+
+        localStorage.setItem('adaptive_quiz_responses', JSON.stringify(quizResult));
         router.push('/PostQuiz');
     }
     };
