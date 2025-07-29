@@ -1,23 +1,53 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 
 export default function TargetModal({ setOpenModal }) {
-  const [kanjiTarget, setKanjiTarget] = useState(
-    localStorage.getItem('dailyKanjiTarget') || ''
-  );
-  const [vocabTarget, setVocabTarget] = useState(
-    localStorage.getItem('dailyVocabTarget') || ''
-  );
+  const [kanjiTarget, setKanjiTarget] = useState('');
+  const [vocabTarget, setVocabTarget] = useState('');
+  const [isSubmitted, setIsSubmitted] = useState(false);
+
+  const expiryDuration = 24 * 60 * 60 * 1000; // 24 hours in ms
+
+  useEffect(() => {
+    const storedKanji = JSON.parse(localStorage.getItem('kanji_target'));
+    const storedVocab = JSON.parse(localStorage.getItem('vocab_target'));
+    const now = Date.now();
+
+    // If both values exist and are not expired, mark as submitted
+    if (
+      storedKanji?.value &&
+      storedVocab?.value &&
+      now - storedKanji.timestamp < expiryDuration &&
+      now - storedVocab.timestamp < expiryDuration
+    ) {
+      setIsSubmitted(true);
+    }
+  }, []);
 
   const handleSave = () => {
-    localStorage.setItem('dailyKanjiTarget', kanjiTarget);
-    localStorage.setItem('dailyVocabTarget', vocabTarget);
-    setOpenModal(false);
+    const now = Date.now();
+
+    // Store only once
+    if (!isSubmitted) {
+      localStorage.setItem(
+        'kanji_target',
+        JSON.stringify({ value: parseInt(kanjiTarget), timestamp: now })
+      );
+      localStorage.setItem(
+        'vocab_target',
+        JSON.stringify({ value: parseInt(vocabTarget), timestamp: now })
+      );
+      setIsSubmitted(true);
+      setOpenModal(false);
+    }
   };
 
+  const isButtonDisabled =
+    isSubmitted || !kanjiTarget || !vocabTarget || parseInt(kanjiTarget) <= 0 || parseInt(vocabTarget) <= 0;
+
   return (
-    <div className="fixed inset-0 z-50 bg-black dark:border border-white bg-opacity-40 flex items-center justify-center">
+    <div className="fixed inset-0 z-50 bg-black bg-opacity-40 flex items-center justify-center">
       <div className="bg-white dark:bg-[#1f1f1f] p-6 rounded-xl w-80">
         <h2 className="text-xl font-bold mb-6 text-center text-black dark:text-white">
           Set Your Daily Targets
@@ -57,14 +87,19 @@ export default function TargetModal({ setOpenModal }) {
             Cancel
           </button>
 
-           <Link href="/TargetLearning">
-          <button
-            onClick={handleSave}
-            className="px-3 py-1 rounded-full text-sm font-semibold bg-[#FF6E8A] dark:bg-[#FF9270] text-black"
-          >
-            Take a Test
-          </button>
-        </Link>
+          <Link href={isButtonDisabled ? '#' : '/TargetLearning'}>
+            <button
+              onClick={handleSave}
+              className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                isButtonDisabled
+                  ? 'bg-gray-400 dark:bg-gray-600 text-gray-200 cursor-not-allowed'
+                  : 'bg-[#FF6E8A] dark:bg-[#FF9270] text-black'
+              }`}
+              disabled={isButtonDisabled}
+            >
+              Take a Test
+            </button>
+          </Link>
         </div>
       </div>
     </div>
