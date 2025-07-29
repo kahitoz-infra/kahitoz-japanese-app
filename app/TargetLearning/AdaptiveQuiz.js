@@ -20,6 +20,16 @@ export default function AdaptiveQuizPageContent() {
   const currentQuestion = questions[currentIndex];
   const totalQuestions = questions.length;
 
+  // Format question for display
+  const formatQuestionText = (q) => {
+    if (typeof q === 'string') return q;
+    if (Array.isArray(q)) return q.join(' ');
+    if (typeof q === 'object' && q !== null) {
+      return Object.values(q).join(' ');
+    }
+    return String(q);
+  };
+
   useEffect(() => {
     const loadAdaptiveQuestions = () => {
       const rawData = localStorage.getItem('adaptive_quiz');
@@ -101,9 +111,9 @@ export default function AdaptiveQuizPageContent() {
       </div>
 
       {/* Question */}
-      <div className="flex-1 px-6 mt-4">
+      <div className="flex-1 px-6 mt-4 pb-40">
         <QuizQuestion
-          question={currentQuestion.question}
+          question={formatQuestionText(currentQuestion.question)}
           options={currentQuestion.options}
           name={`adaptive-q-${currentIndex}`}
           selectedOption={selectedOption}
