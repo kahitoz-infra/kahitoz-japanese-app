@@ -1,7 +1,7 @@
 // app/Sets/page.js
 
 import { Suspense } from 'react';
-import SetsPageContent from './components/SetsPageContent';
+import SetsPageContent from '../common_components/SetsPageContent';
 
 export default function SetsPage() {
   return (
