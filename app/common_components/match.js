@@ -2,7 +2,7 @@
 
 import ProgressBar from '@/app/common_components/ProgressBar';
 import CustomButton from '@/app/common_components/CustomButton';
-import MatchColumn from '@/app/Quiz/components/MatchColumn';
+import MatchColumn from '@/app/common_components/MatchColumn';
 import Navbar from '@/app/common_components/Navbar';
 
 export default function MatchPage() {

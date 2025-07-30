@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import QuizQuestion from './components/QuizQuestion';
+import QuizQuestion from '../common_components/QuizQuestion';
 import ProgressBar from '../common_components/ProgressBar';
 import { authFetch } from '../middleware';
-import { formatOption } from './utils/formatOption';
+import { formatOption } from '../utils/formatOption';
 
 export default function QuizPageContent() {
   const router = useRouter();

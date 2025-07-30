@@ -1,6 +1,6 @@
 "use client";
 
-import JLPTLevelSelector from "./components/JLPTSelect";
+import JLPTLevelSelector from "../common_components/JLPTSelect";
 import Navbar from "../common_components/Navbar";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";

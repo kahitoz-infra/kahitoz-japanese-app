@@ -1,5 +1,5 @@
 'use client'
-import QuizBlock from "./components/QuizBlock";
+import QuizBlock from "../common_components/QuizBlock";
 import Navbar from "../common_components/Navbar";
 import CircularButton from "../common_components/CircularButton";
 

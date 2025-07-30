@@ -1,13 +1,12 @@
 // app/Quiz/page.js
 
 import { Suspense } from 'react';
-import QuizPageContent from '../common_components/QuizPageContent';
+import AdaptiveQuizPageContent from '../common_components/AdaptiveQuiz';
 
-
-export default function QuizPage() {
+export default function AdaptiveQuiz() {
   return (
     <Suspense fallback={<p className="p-4 text-center">Loading quiz...</p>}>
-      <QuizPageContent />
+      <AdaptiveQuizPageContent/>
     </Suspense>
   );
 }

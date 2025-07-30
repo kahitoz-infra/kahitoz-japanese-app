@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
-import GoogleLogin from "@/app/Screens/components/GoogleLogin";
+import GoogleLogin from "@/app/common_components/GoogleLogin";
 import Cookies from "js-cookie";
 
 export default function Login({ onLogin = () => {} }) {

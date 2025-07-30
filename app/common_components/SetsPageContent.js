@@ -2,7 +2,7 @@
 
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import SetBlock from './components/SetBlock';
+import SetBlock from './SetBlock';
 import { authFetch } from '../middleware';
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
