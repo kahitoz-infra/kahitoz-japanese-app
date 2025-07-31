@@ -1,17 +1,24 @@
 export const formatOption = (optionStr, type) => {
   if (type === 'onyo_kunyo_to_kanji') {
     try {
-      const [onyomiRaw, kunyomiRaw] = optionStr.split('|').map(part => JSON.parse(part.trim()));
-      const onyomi = onyomiRaw.length ? onyomiRaw.join(', ') : '—';
-      const kunyomi = kunyomiRaw.length ? kunyomiRaw.join(', ') : '—';
+      const [onyomiPart, kunyomiPart] = optionStr.split('|');
+
+      const parseAndJoin = (rawStr) => {
+        const cleaned = rawStr.replace(/[\[\]"]/g, '').trim();
+        return cleaned ? cleaned.split(',').map(s => s.trim()).join(', ') : '—';
+      };
+
+      const onyomi = parseAndJoin(onyomiPart);
+      const kunyomi = parseAndJoin(kunyomiPart);
+
       return `Onyomi: ${onyomi} | Kunyomi: ${kunyomi}`;
     } catch {
       return optionStr;
     }
-  } else if(type === ''){
-
   }
-  return optionStr;
+
+  return optionStr.replace(/[\[\]"\|]/g, '').trim();
+
 };
 
 export function formatQuestion(question, type) {
