@@ -73,8 +73,17 @@ export default function ExampleQuiz({ onComplete }) {
   }
 
   return (
+    
     <div className="min-h-screen flex flex-col items-center justify-start px-4 pt-10 pb-40 text-black dark:text-white">
-      <div className="w-full max-w-xl rounded-xl shadow-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#2F2F2F] p-6 mb-4">
+      <div>
+        <h1 className='font-bold text-2xl text-center flex-col mb-4'>
+        Adaptive Quiz Section.
+        </h1>
+        <h2 className='font-medium text-large text-center flex-col mb-4'>
+            Kindly have a look at the sample questions.
+        </h2>
+      </div>
+      <div className="w-full max-w-xl rounded-xl shadow-md border border-[#FF5274] dark:border-[#F66538] bg-white dark:bg-[#2F2F2F] p-6 mt-8">
         <h2 className="text-xl font-bold mb-2 text-center">
           Example {currentExampleIndex + 1} of {examples.length}
         </h2>
@@ -87,7 +96,7 @@ export default function ExampleQuiz({ onComplete }) {
           <p><span className="font-bold">Sentence:</span> {example.sentence}</p>
           <p><span className="font-bold">Translation:</span> {example.translation}</p>
           {example.explanation && (
-            <p className="mt-2 text-sm italic text-gray-600 dark:text-gray-400">
+            <p className="mt-2 text-sm italic text-gray-600 dark:text-gray-200">
               💡 {example.explanation}
             </p>
           )}
@@ -100,7 +109,7 @@ export default function ExampleQuiz({ onComplete }) {
               className={`p-3 rounded border font-medium ${
                 opt.value === selected
                   ? 'bg-green-200 border-green-500 dark:bg-green-700 dark:border-green-400 text-black dark:text-white'
-                  : 'bg-gray-100 border-gray-300 dark:bg-gray-800 dark:border-gray-600 text-gray-700 dark:text-gray-300'
+                  : 'bg-gray-100 border-gray-300 dark:bg-[#333333] dark:border-gray-500 text-gray-700 dark:text-gray-300'
               }`}
             >
               {opt.label}
