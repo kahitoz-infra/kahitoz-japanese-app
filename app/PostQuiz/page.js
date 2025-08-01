@@ -3,14 +3,12 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-
 import ProgressCard from '../common_components/ProgressCard';
 import CherryBlossomSnowfall from '@/app/common_components/CherryBlossomSnowfall';
 import { authFetch } from '@/app/middleware';
 
 export default function PostQuizPage() {
   const router = useRouter();
-
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [responses, setResponses] = useState([]);
   const [correct, setCorrect] = useState(0);
@@ -24,79 +22,76 @@ export default function PostQuizPage() {
     if (raw) {
       try {
         const parsed = JSON.parse(raw);
-        const respArray = Array.isArray(parsed)
-          ? parsed
-          : parsed.responses || [];
-
+        const respArray = Array.isArray(parsed) ? parsed : parsed.responses || [];
         setResponses(respArray);
-
-        const correctCount = respArray.filter((r) => r.correct).length;
-        const incorrectCount = respArray.filter((r) => !r.correct).length;
-
-        setCorrect(correctCount);
-        setIncorrect(incorrectCount);
+        setCorrect(respArray.filter(r => r.correct).length);
+        setIncorrect(respArray.filter(r => !r.correct).length);
       } catch (error) {
         console.error('Failed to parse stored responses:', error);
       }
     }
   }, []);
 
-  // ✅ Post adaptive quiz results on page load
   useEffect(() => {
     const sendAdaptiveQuizData = async () => {
       const quizData = localStorage.getItem('adaptive_quiz');
       const responseData = localStorage.getItem('adaptive_quiz_responses');
 
-      if (!quizData || !responseData) {
-        console.warn('Missing adaptive_quiz or responses.');
-        return;
-      }
+      if (!quizData || !responseData) return;
 
       try {
         const parsedQuiz = JSON.parse(quizData);
         const parsedResponses = JSON.parse(responseData);
         const { quiz_id, sets_data } = parsedQuiz;
         const { responses } = parsedResponses;
+        let anySuccess = false;
 
-        // Loop through each set (set1, set2, etc.)
         for (const setName in sets_data) {
           const items = sets_data[setName];
-
-          const questionIds = items
-            .filter((item) => item.type === 'question')
-            .map((item) => item._id);
-
+          const questionIds = items.filter(i => i.type === 'question').map(i => i._id);
           const matchedResponses = responses
-            .filter((r) => questionIds.includes(r.q_id))
-            .map((r) => ({
-              question_id: r.q_id,
-              correct: r.correct,
-            }));
+            .filter(r => questionIds.includes(r.q_id))
+            .map(r => ({ question_id: r.q_id, correct: r.correct }));
 
           if (matchedResponses.length === 0) continue;
 
-          const payload = {
-            quiz_id,
-            set_name: setName,
-            response: matchedResponses,
-          };
+          const payload = { quiz_id, set_name: setName, response: matchedResponses };
 
           const res = await authFetch(
             `${process.env.NEXT_PUBLIC_API_ADAPT_LEARN}/adapt_evaluate`,
             {
               method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
+              headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(payload),
             }
           );
 
-          if (!res.ok) {
-            console.error(`Failed to send data for ${setName}:`, await res.text());
-          } else {
-            console.log(`Submitted responses for ${setName}`);
+          if (res.ok) {
+            console.log(`✅ Submitted responses for ${setName}`);
+            anySuccess = true;
           }
+        }
+
+        if (anySuccess) {
+          const today = new Date().toISOString().split('T')[0];
+
+          const streakRes = await authFetch(
+            `${process.env.NEXT_PUBLIC_API_URL}/update_streak?date=${today}`,
+            { method: 'PUT' }
+          );
+
+          const streakData = await streakRes.json();
+          const localStreaks = JSON.parse(localStorage.getItem('user_streaks') || '{}');
+
+          if (streakData.updated) {
+            console.log('✅ Streak updated successfully');
+            localStreaks[today] = 'complete';
+          } else {
+            console.warn('ℹ️ Streak already updated or skipped');
+            localStreaks[today] = 'incomplete';
+          }
+
+          localStorage.setItem('user_streaks', JSON.stringify(localStreaks));
         }
       } catch (err) {
         console.error('Error submitting adaptive quiz data:', err);
@@ -124,14 +119,11 @@ export default function PostQuizPage() {
         <div className="w-24 h-24 hidden dark:flex rounded-full relative border-b-2 border-[#F66538] mt-4 overflow-hidden">
           <Image src="/chibi_well_done_dark.png" alt="Well done" fill className="object-cover" />
         </div>
-
         <div className="text-center text-black dark:text-white">
           <h1 className="text-3xl font-bold mt-4">よくできました</h1>
           <p className="text-md mt-1">Well done</p>
         </div>
-
         <ProgressCard correct={correct} incorrect={incorrect} />
-
         <div className="p-4">
           <button
             onClick={() => router.push('/')}
