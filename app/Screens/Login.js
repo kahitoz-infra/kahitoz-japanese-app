@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
-import GoogleLogin from "@/app/common_components/GoogleLogin";
+import UnifiedGoogleLoginToken from "../common_components/GoogleLogin";
 import Cookies from "js-cookie";
 
 export default function Login({ onLogin = () => {} }) {
@@ -116,7 +116,7 @@ export default function Login({ onLogin = () => {} }) {
 
                   {/* Google Login */}
                   <div className="mt-8">
-                    <GoogleLogin />
+                    <UnifiedGoogleLoginToken />
                   </div>
                 </motion.div>
               )}

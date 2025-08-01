@@ -17,6 +17,8 @@ export default function AdaptiveQuizPageContent() {
   const [showFeedback, setShowFeedback] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [retryResponses, setRetryResponses] = useState([]);
+
 
   const [retryMode, setRetryMode] = useState(false);
   const [incorrectQuestions, setIncorrectQuestions] = useState([]);
@@ -76,48 +78,73 @@ export default function AdaptiveQuizPageContent() {
       q_id: currentQuestion._id,
       correct,
     };
+
     setResponses((prev) => [...prev, newResponse]);
+
+    if (retryMode) {
+      // Update retry responses list
+      setRetryResponses((prev) => {
+        const updated = prev.filter((r) => r.q_id !== currentQuestion._id);
+        if (!correct) {
+          updated.push(newResponse); // Keep only incorrect ones
+        }
+        return updated;
+      });
+    }
   };
 
   const handleNext = () => {
-    if (currentIndex < totalQuestions - 1) {
-      setCurrentIndex((prev) => prev + 1);
-      setSelectedOption(null);
-      setShowFeedback(false);
-    } else {
-      const finalResponse = {
-        q_id: currentQuestion._id,
-        correct: selectedOption === currentQuestion.correct_option,
-      };
-      const updatedResponses = [...responses, finalResponse];
+  const isLastQuestion = currentIndex === totalQuestions - 1;
+  const currentCorrect = selectedOption === currentQuestion.correct_option;
 
-      // If first pass, check for incorrects and enter retry mode
-      if (!retryMode) {
-        const incorrectQIDs = updatedResponses
-          .filter((res) => !res.correct)
-          .map((res) => res.q_id);
+  if (isLastQuestion) {
+    const finalResponse = {
+      q_id: currentQuestion._id,
+      correct: currentCorrect,
+    };
+    const updatedResponses = [...responses, finalResponse];
 
-        if (incorrectQIDs.length > 0) {
-          const incorrectQs = originalQuestions.filter((q) =>
-            incorrectQIDs.includes(q._id)
-          );
-          setResponses(updatedResponses); // Save original responses
-          setQuestions(incorrectQs);      // Set new retry list
-          setCurrentIndex(0);
-          setSelectedOption(null);
-          setShowFeedback(false);
-          setRetryMode(true);
-          setIncorrectQuestions(incorrectQs);
-        } else {
-          // All correct, store and redirect
-          saveAndRedirect(updatedResponses);
-        }
+    if (!retryMode) {
+      const incorrectQIDs = updatedResponses
+        .filter((res) => !res.correct)
+        .map((res) => res.q_id);
+
+      if (incorrectQIDs.length > 0) {
+        const incorrectQs = originalQuestions.filter((q) =>
+          incorrectQIDs.includes(q._id)
+        );
+        setResponses(updatedResponses);
+        setQuestions(incorrectQs);
+        setCurrentIndex(0);
+        setSelectedOption(null);
+        setShowFeedback(false);
+        setRetryMode(true);
+        setRetryResponses(incorrectQs.map((q) => ({ q_id: q._id, correct: false })));
       } else {
-        // Retry done, use original responses (don't override), just redirect
-        saveAndRedirect(responses);
+        saveAndRedirect(updatedResponses);
+      }
+    } else {
+      // RetryMode: check if retryResponses is empty
+      if (retryResponses.length === 0) {
+        saveAndRedirect(responses); // Done, all correct
+      } else {
+        // Retry again only incorrect ones
+        const retryQs = originalQuestions.filter((q) =>
+          retryResponses.some((r) => r.q_id === q._id && !r.correct)
+        );
+        setQuestions(retryQs);
+        setCurrentIndex(0);
+        setSelectedOption(null);
+        setShowFeedback(false);
       }
     }
-  };
+  } else {
+    setCurrentIndex((prev) => prev + 1);
+    setSelectedOption(null);
+    setShowFeedback(false);
+  }
+};
+
 
   const saveAndRedirect = (finalResponses) => {
     const quizResult = {
@@ -142,7 +169,7 @@ export default function AdaptiveQuizPageContent() {
           current={currentIndex + 1}
         />
         <h1 className="text-2xl font-bold text-center mt-4">
-          {retryMode ? 'Reattempt' : 'Question'} {currentIndex + 1}
+          {retryMode ? 'Previous Mistake Revisit' : `Question ${currentIndex + 1}`}
         </h1>
       </div>
 

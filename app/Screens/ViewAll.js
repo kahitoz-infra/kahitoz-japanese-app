@@ -1,14 +1,13 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import Link from "next/link";
 import CherryBlossomSnowfall from "../common_components/CherryBlossomSnowfall";
 import VocabCard from "../common_components/VocabCards";
 import KanjiCard from "../common_components/KanjiCards";
 import VerbCard from "../common_components/VerbCards";
 import GrammarCard from "../common_components/GrammarCards";
 import TopBar from "../common_components/Topbar";
-import Settings from "../common_components/Settings";
+import SettingsButton from "../common_components/Settings";
 import ControlBar from "../common_components/ControlBar";
 import LoadCard from "../common_components/LoadingCard";
 import SettingsVocabModal from "../common_components/SettingsVocabModal";
@@ -191,13 +190,63 @@ export default function ViewAll() {
         </div>
       </header>
 
-      {/* 🎯 Target Modal */}
+      {/* 🎯 Modals */}
       {openTargetModal && <TargetModal setOpenModal={setOpenTargetModal} />}
 
+      {openVocabModal && (
+        <SettingsVocabModal
+          setOpenModal={setOpenVocabModal}
+          setFilteredData={(data) =>
+            setCategoryState((prev) => ({
+              ...prev,
+              Vocabulary: { ...prev.Vocabulary, list: data, index: 0 },
+            }))
+          }
+          setBookmark={(val) => localStorage.setItem("vocabBookMarkChecked", val)}
+        />
+      )}
+      {openKanjiModal && (
+        <SettingsKanjiModal
+          setOpenModal={setOpenKanjiModal}
+          setFilteredData={(data) =>
+            setCategoryState((prev) => ({
+              ...prev,
+              Kanji: { ...prev.Kanji, list: data, index: 0 },
+            }))
+          }
+          setBookmark={(val) => localStorage.setItem("kanjiBookMarkChecked", val)}
+        />
+      )}
+      {openGrammarModal && (
+        <SettingsGrammarModal
+          setOpenModal={setOpenGrammarModal}
+          setFilteredData={(data) =>
+            setCategoryState((prev) => ({
+              ...prev,
+              Grammar: { ...prev.Grammar, list: data, index: 0 },
+            }))
+          }
+          setBookmark={(val) => localStorage.setItem("grammarBookMarkChecked", val)}
+        />
+      )}
+      {openVerbModal && (
+        <SettingsVerbModal
+          setOpenModal={setOpenVerbModal}
+          setFilteredData={(data) =>
+            setCategoryState((prev) => ({
+              ...prev,
+              Verbs: { ...prev.Verbs, list: data, index: 0 },
+            }))
+          }
+          setBookmark={(val) => localStorage.setItem("verbBookMarkChecked", val)}
+        />
+      )}
+
+      {/* Main Content */}
       <div className="flex flex-col w-full h-screen items-center justify-center">
         <div className="w-96">
           <div className="flex justify-between items-center mb-2">
-            <Settings
+            <SettingsButton
               onClick={() => {
                 if (selectedCategory === "Vocabulary") setOpenVocabModal(true);
                 else if (selectedCategory === "Kanji") setOpenKanjiModal(true);
