@@ -11,6 +11,7 @@ export function useGenerateAdaptiveQuiz() {
       const item = JSON.parse(localStorage.getItem(key));
       return item?.value ?? null;
     } catch {
+      console.error(`Invalid localStorage value for ${key}`);
       return null;
     }
   };
@@ -28,11 +29,38 @@ export function useGenerateAdaptiveQuiz() {
     const apiUrl = `${baseUrl}/adapt_quiz?kanji_target=${kanjiTarget}&vocab_target=${vocabTarget}`;
 
     try {
-      const res = await authFetch(apiUrl); // ✅ use authFetch
+      const res = await authFetch(apiUrl);
       if (!res.ok) throw new Error(`Error: ${res.status}`);
       const quizData = await res.json();
 
+      const quizId = Date.now();
+      const quizWithMeta = {
+        id: quizId,
+        date: new Date().toISOString(),
+        kanjiTarget,
+        vocabTarget,
+        quizData,
+      };
+
+      // Save to individual quiz slot for playing
       localStorage.setItem('adaptive_quiz', JSON.stringify(quizData));
+
+      // Save to quiz history list
+      let existing = [];
+      try {
+        existing = JSON.parse(localStorage.getItem('adaptive_quiz_list')) || [];
+      } catch {
+        console.warn('adaptive_quiz_list was invalid, resetting...');
+        existing = [];
+      }
+
+      const exists = existing.some(q => q.id === quizId);
+      if (!exists) {
+        existing.push(quizWithMeta);
+      }
+
+      localStorage.setItem('adaptive_quiz_list', JSON.stringify(existing));
+
       router.push('/TargetLearning');
     } catch (err) {
       console.error('Failed to fetch quiz:', err);
