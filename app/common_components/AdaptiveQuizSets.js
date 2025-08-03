@@ -23,7 +23,7 @@ export default function AdaptiveQuizSets() {
 
   return (
     <div className="p-6">
-      <h1 className="text-3xl font-bold mb-4">Your Quiz Sets</h1>
+      <h1 className="text-3xl font-bold text-center mt-8 mb-4">Adaptive Quiz Sets</h1>
 
       {quizzes.length === 0 ? (
         <p className="text-gray-500">No quizzes yet. Generate one to get started!</p>
@@ -32,15 +32,15 @@ export default function AdaptiveQuizSets() {
           {quizzes.map((quiz) => (
             <div
               key={quiz.id}
-              className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-4 transition hover:shadow-xl"
+              className="bg-white dark:bg-[#333333] rounded-xl shadow-lg p-4 border border-[#FF5274] dark:border-[#F66538] transition hover:shadow-xl"
             >
-              <p className="text-gray-500 text-sm">
+              <p className="text-black mb-3 dark:text-white text-sm">
                 {new Date(quiz.date).toLocaleString()}
               </p>
               <p className="font-semibold">
                 Kanji Target: {quiz.kanjiTarget}, Vocab Target: {quiz.vocabTarget}
               </p>
-              <p className="text-gray-400">
+              <p className="text-gray-600 dark:text-[#fafafa]">
                 {quiz.quizData?.sets_data
                   ? Object.keys(quiz.quizData.sets_data).length + ' sets'
                   : 'No data'}
