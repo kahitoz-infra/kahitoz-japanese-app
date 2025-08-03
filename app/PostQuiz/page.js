@@ -124,7 +124,18 @@ export default function PostQuizPage() {
           <p className="text-md mt-1">Well done</p>
         </div>
         <ProgressCard correct={correct} incorrect={incorrect} />
-        <div className="p-4">
+
+        
+         <div>
+          <button
+            onClick={() => router.push('/AdaptiveSets')}
+            className="text-sm px-4 py-4 font-bold bg-[#FF3A60] dark:bg-white text:white dark:text-black rounded-2xl"
+          >
+            View Adaptive Quiz Sets
+          </button>
+        </div>
+
+        <div>
           <button
             onClick={() => router.push('/')}
             className="text-sm px-4 py-4 font-semibold bg-[#FF3A60] dark:bg-white text:white dark:text-black rounded-2xl"
@@ -132,6 +143,7 @@ export default function PostQuizPage() {
             &lt; Back to Homepage
           </button>
         </div>
+
       </div>
     </div>
   );
