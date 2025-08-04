@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation';
 
 const quiz_api = process.env.NEXT_PUBLIC_API_LEARN + "/all_quiz";
 
-
 export default function CustomKanjiQuizBlock() {
   const [type, setType] = useState("kanji");
   const [loading, setLoading] = useState(true);
@@ -18,9 +17,23 @@ export default function CustomKanjiQuizBlock() {
       setLoading(true);
       try {
         const res = await authFetch(`${quiz_api}?quiz_type=${type}`);
-        const data = await res.json();
 
+        // Defensive: Handle API errors gracefully
+        if (!res.ok) {
+          console.warn(`Server returned ${res.status} for quiz_type=${type}`);
+          setQuizzes([]);
+          return;
+        }
+
+        const data = await res.json();
         const quizData = data[`${type}_quiz`] || {};
+
+        // Defensive: Ensure quizData is a valid object
+        if (typeof quizData !== "object" || quizData === null) {
+          setQuizzes([]);
+          return;
+        }
+
         const parsedQuizzes = Object.entries(quizData).map(([key, value]) => {
           const desc = value.description || {};
           const uidRanges = desc.uid_ranges || {};
@@ -58,26 +71,24 @@ export default function CustomKanjiQuizBlock() {
     <div>
       {/* Type Switch Buttons */}
       <div className="flex w-full justify-center gap-x-4 items-center mb-4">
-              <button
-      className={`${
-        type === 'kanji'
-          ? 'bg-[#FFB8C6] dark:bg-[#FF9D7E]'
-          : 'bg-white dark:bg-white'
-      } text-black dark:text-black font-bold px-4 py-2 rounded-lg`}
-      onClick={() => handleTypeChange('kanji')}
-    >
-      Kanji
-    </button>
-    <button
-      className={`${
-        type === 'vocab'
-          ? 'bg-[#FFB8C6] dark:bg-[#FF9D7E]'
-          : 'bg-white dark:bg-white'
-      } text-black dark:text-black font-bold px-4 py-2 rounded-lg`}
-      onClick={() => handleTypeChange('vocab')}
-    >
-      Vocab
-    </button>
+        <button
+          className={`${type === 'kanji'
+            ? 'bg-[#FFB8C6] dark:bg-[#FF9D7E]'
+            : 'bg-white dark:bg-white'
+            } text-black dark:text-black font-bold px-4 py-2 rounded-lg`}
+          onClick={() => handleTypeChange('kanji')}
+        >
+          Kanji
+        </button>
+        <button
+          className={`${type === 'vocab'
+            ? 'bg-[#FFB8C6] dark:bg-[#FF9D7E]'
+            : 'bg-white dark:bg-white'
+            } text-black dark:text-black font-bold px-4 py-2 rounded-lg`}
+          onClick={() => handleTypeChange('vocab')}
+        >
+          Vocab
+        </button>
       </div>
 
       {/* Loader */}
@@ -104,9 +115,10 @@ export default function CustomKanjiQuizBlock() {
         </div>
       ))}
 
+      {/* Empty State */}
       {!loading && quizzes.length === 0 && (
         <div className="text-center text-gray-600 dark:text-gray-300">
-          No quizzes found for this type.
+          You haven't created any quizzes yet.
         </div>
       )}
     </div>
