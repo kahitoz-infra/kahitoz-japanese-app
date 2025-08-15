@@ -6,6 +6,7 @@ import Image from 'next/image';
 import ProgressCard from '../common_components/ProgressCard';
 import CherryBlossomSnowfall from '@/app/common_components/CherryBlossomSnowfall';
 import { authFetch } from '@/app/middleware';
+import dayjs from 'dayjs'; // Import dayjs for reliable date formatting
 
 export default function PostQuizPage() {
   const router = useRouter();
@@ -72,29 +73,36 @@ export default function PostQuizPage() {
           }
         }
 
+        // ✅ --- STREAK UPDATE LOGIC --- ✅
         if (anySuccess) {
-          const today = new Date().toISOString().split('T')[0];
+          // 1. Get today's date in YYYY-MM-DD format
+          const today = dayjs().format('YYYY-MM-DD');
 
+          // 2. Call your PUT endpoint using the URL from your .env file
           const streakRes = await authFetch(
             `${process.env.NEXT_PUBLIC_API_URL}/update_streak?date=${today}`,
             { method: 'PUT' }
           );
-
-          const streakData = await streakRes.json();
-          const localStreaks = JSON.parse(localStorage.getItem('user_streaks') || '{}');
-
-          if (streakData.updated) {
-            console.log('✅ Streak updated successfully');
-            localStreaks[today] = 'complete';
-          } else {
-            console.warn('ℹ️ Streak already updated or skipped');
-            localStreaks[today] = 'incomplete';
+          
+          if (!streakRes.ok) {
+              console.error('Streak API request failed:', streakRes.statusText);
+              return; // Stop if the API call itself fails
           }
 
-          localStorage.setItem('user_streaks', JSON.stringify(localStreaks));
+          const streakData = await streakRes.json();
+
+          // 3. Update localStorage only if the API confirms an update happened
+          if (streakData.updated) {
+            console.log('✅ Streak updated successfully via API.');
+            const localStreaks = JSON.parse(localStorage.getItem('user_streaks') || '{}');
+            localStreaks[today] = 'complete';
+            localStorage.setItem('user_streaks', JSON.stringify(localStreaks));
+          } else {
+            console.warn('ℹ️ Streak was not updated by the API (it may have already been complete).');
+          }
         }
       } catch (err) {
-        console.error('Error submitting adaptive quiz data:', err);
+        console.error('Error submitting adaptive quiz data or updating streak:', err);
       }
     };
 
@@ -110,6 +118,7 @@ export default function PostQuizPage() {
   }, []);
 
   return (
+    // ... your JSX remains unchanged ...
     <div className="min-h-screen flex flex-col justify-between bg-[#FAF9F6] dark:bg-[#333333] text-white relative z-10">
       <CherryBlossomSnowfall isDarkMode={isDarkMode} />
       <div className="flex flex-col items-center justify-center gap-6 py-10 px-4 relative z-10">
