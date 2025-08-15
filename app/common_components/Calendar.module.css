@@ -45,8 +45,15 @@
 
 /* Status Styles */
 .complete {
-  background-color: #6bfa70;
-  color: #000;
+  background-color: #FF5274; /* Light mode background */
+  color: #000;               /* Text color for better contrast */
+}
+
+/* This automatically applies when the user's OS is in dark mode */
+@media (prefers-color-scheme: dark) {
+  .complete {
+    background-color: #F66538; /* Dark mode background */
+  }
 }
 
 .incomplete {
