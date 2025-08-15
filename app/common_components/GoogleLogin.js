@@ -8,7 +8,7 @@ import Image from "next/image";
 
 const auth_Api = process.env.NEXT_PUBLIC_AUTH_URL;
 
-export default function UnifiedGoogleLoginToken({ onLogin }) {
+export default function UnifiedGoogleLoginToken() {
     const router = useRouter();
     const [isNative, setIsNative] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -49,15 +49,13 @@ export default function UnifiedGoogleLoginToken({ onLogin }) {
             // Set cookies
             const sevenDays = 7 * 24 * 60 * 60;
             document.cookie = `auth_token=${data.auth_token}; path=/; max-age=${sevenDays}; SameSite=Lax`;
-            document.cookie = `refresh_token=${data.refresh_token}; path=/; max-age=${sevenDays}; SameSite=Lax`;
-
-            // ✅ Immediately notify parent so UI updates without restart
-            if (onLogin) onLogin();
+            document.cookie = `refresh_token=${data.refresh_token}; path=/; path=/; max-age=${sevenDays}; SameSite=Lax`;
 
             router.push('/');
         } catch (err) {
             console.error(err);
             setLoading(false);
+            // You can optionally handle errors visually here if you want
         }
     };
 
@@ -69,6 +67,7 @@ export default function UnifiedGoogleLoginToken({ onLogin }) {
             }
         } catch (err) {
             console.error('Native login failed:', err);
+            // Optionally handle error state here
         }
     };
 
@@ -79,24 +78,28 @@ export default function UnifiedGoogleLoginToken({ onLogin }) {
     };
 
     const webSignInError = () => {
-        console.error('Web Google login failed');
+        // Optionally handle error state here
     };
 
     const renderLoginButton = () =>
         isNative ? (
             <div className='flex justify-center items-center gap-x-2 dark:bg-white dark:text-black p-2 rounded-xl bg-gray-100 text-black'>
                 <Image src="/google-logo.webp" width={30} height={30} alt="google" />
-                <button onClick={nativeSignIn} disabled={loading}>
+                <button onClick={nativeSignIn} className='' disabled={loading}>
                     Sign in with Google
                 </button>
+
             </div>
+
         ) : (
             <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID}>
-                <GoogleLogin
-                    onSuccess={webSignInSuccess}
-                    onError={webSignInError}
-                    disabled={loading}
-                />
+                <div >
+                    <GoogleLogin
+                        onSuccess={webSignInSuccess}
+                        onError={webSignInError}
+                        disabled={loading}
+                    />
+                </div>
             </GoogleOAuthProvider>
         );
 
