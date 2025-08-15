@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react'; // 👈 Import useCallback
 import styles from './Calendar.module.css';
 import dayjs from 'dayjs';
 
@@ -21,18 +21,39 @@ export default function Calendar({ refreshKey = 0 }) {
   const [month, setMonth] = useState(today.month() + 1);
   const [userData, setUserData] = useState({});
 
+  // ✅ Wrap the data loading logic in a useCallback hook
+  const loadLocalStreaks = useCallback(() => {
+    try {
+      const streaks = JSON.parse(localStorage.getItem('user_streaks') || '{}');
+      setUserData(streaks);
+      console.log('Calendar data reloaded from localStorage.');
+    } catch (e) {
+      console.error('Failed to load streaks from localStorage', e);
+    }
+  }, []);
+
+  // This effect still handles updates from the same page (via refreshKey)
   useEffect(() => {
-    const loadLocalStreaks = () => {
-      try {
-        const streaks = JSON.parse(localStorage.getItem('user_streaks') || '{}');
-        setUserData(streaks);
-      } catch (e) {
-        console.error('Failed to load streaks from localStorage', e);
+    loadLocalStreaks();
+  }, [refreshKey, loadLocalStreaks]);
+
+  // ✅ ADD THIS NEW useEffect HOOK
+  // This effect listens for changes made from other pages
+  useEffect(() => {
+    const handleStorageChange = (event) => {
+      // Check if the change was for our specific 'user_streaks' key
+      if (event.key === 'user_streaks') {
+        loadLocalStreaks();
       }
     };
 
-    loadLocalStreaks();
-  }, [refreshKey]);
+    window.addEventListener('storage', handleStorageChange);
+
+    // Cleanup: remove the event listener when the component unmounts
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, [loadLocalStreaks]); // Re-run if loadLocalStreaks changes (it won't, due to useCallback)
 
   const handleMonthChange = (direction) => {
     let newMonth = month + direction;
