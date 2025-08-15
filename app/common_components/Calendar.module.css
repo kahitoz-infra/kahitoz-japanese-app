@@ -50,12 +50,7 @@
 }
 
 .incomplete {
-  background-color: #ffdb4d;
-  color: #000;
-}
-
-.absent {
-  background-color: #ff4d4d;
+  background-color: #6bfa70;
   color: #000;
 }
 
