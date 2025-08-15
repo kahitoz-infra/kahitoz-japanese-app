@@ -27,17 +27,15 @@ export default function Login({ onLogin = () => {} }) {
   }, [onLogin]);
 
   const handleManualLogin = () => {
-    Cookies.set("auth_token", "dummy_token", { expires: 1 }); // simulate login
-    onLogin(); // notify parent to switch to app
+    Cookies.set("auth_token", "dummy_token", { expires: 1 });
+    onLogin();
   };
 
   return (
     <div>
       {!loading ? (
         <div className="h-screen flex flex-col justify-end bg-[#FAF9F6] dark:bg-[#333333] font-sans">
-          {/* Main Container */}
           <div className="flex flex-col w-full h-[70vh] md:h-[60vh] p-4 md:p-8 gap-y-6 bg-white dark:bg-[#353839] border-t-[3px] border-[#FF5274] dark:border-[#FF9676] rounded-t-[30px] shadow-md fixed md:relative bottom-0 left-0 right-0">
-            {/* Tabs */}
             <div className="flex justify-center items-center mb-6 md:mb-10 space-x-8">
               <button
                 onClick={() => setActiveTab("register")}
@@ -68,7 +66,6 @@ export default function Login({ onLogin = () => {} }) {
               </button>
             </div>
 
-            {/* Form */}
             <div className="h-full flex flex-col items-center justify-between">
               {showContent && (
                 <motion.div
@@ -77,7 +74,6 @@ export default function Login({ onLogin = () => {} }) {
                   transition={{ duration: 0.5 }}
                   className="flex flex-col items-center w-full"
                 >
-                  {/* Fields */}
                   <div className="w-full flex flex-col gap-y-4 px-4 md:px-8">
                     {(activeTab === "register" || activeTab === "login") && (
                       <>
@@ -106,7 +102,6 @@ export default function Login({ onLogin = () => {} }) {
                     )}
                   </div>
 
-                  {/* Main Action Button */}
                   <button
                     onClick={handleManualLogin}
                     className="w-11/12 md:w-4/5 h-12 bg-[#FF5274] dark:bg-[#F66538] text-white rounded-lg font-semibold mt-8 hover:opacity-90 transition-all flex items-center justify-center text-sm md:text-base"
@@ -114,9 +109,8 @@ export default function Login({ onLogin = () => {} }) {
                     {activeTab === "register" ? "Create Account" : "Sign In"}
                   </button>
 
-                  {/* Google Login */}
                   <div className="mt-8">
-                    <UnifiedGoogleLoginToken />
+                    <UnifiedGoogleLoginToken onLogin={onLogin} />
                   </div>
                 </motion.div>
               )}
@@ -138,7 +132,6 @@ export default function Login({ onLogin = () => {} }) {
   );
 }
 
-// 🧩 Input Component
 function Input({ placeholder, icon, type = "text" }) {
   return (
     <div className="w-full px-4">
