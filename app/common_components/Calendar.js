@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import styles from './Calendar.module.css';
 import dayjs from 'dayjs';
+import Cookies from 'js-cookie';
+import Image from 'next/image';
 
 // Helper function to read a specific cookie by name
 const getCookie = (name) => {
@@ -10,6 +12,17 @@ const getCookie = (name) => {
   const parts = value.split(`; ${name}=`);
   if (parts.length === 2) return parts.pop().split(';').shift();
 };
+
+const handleLogout = () => {
+    Cookies.remove("auth_token");
+    Cookies.remove("refresh_token");
+
+    // Clear localStorage if needed
+    localStorage.removeItem("darkMode");
+    localStorage.removeItem("cherryBlossom");
+
+    router.refresh(); // Triggers Login.js logic to show login screen
+  };
 
 
 const getMonthDays = (year, month) => {
@@ -55,15 +68,16 @@ export default function Calendar({ refreshKey = 0 }) {
           },
         });
 
-        if (!response.ok) {
-          if (response.status === 401) {
-             setError('Your session has expired. Please log in again.');
-          } else {
-             throw new Error(`API request failed with status ${response.status}`);
-          }
-          setStreakData({});
-          return;
+      if (!response.ok) {
+        if (response.status === 401) {
+          handleLogout();   // auto logout
+        } else {
+          // Don’t expose raw status to the user
+          setError('Could not load streak data.');
         }
+        setStreakData({});
+        return;
+      }
 
         const data = await response.json();
 
@@ -106,12 +120,25 @@ export default function Calendar({ refreshKey = 0 }) {
   const daysInMonth = getMonthDays(year, month);
   const monthName = dayjs(`${year}-${month}-01`).format('MMMM');
 
-  if (loading) {
-    return <div className={styles.calendar}>Loading calendar... 🗓️</div>;
-  }
-  if (error) {
-    return <div className={styles.calendar}>{error} 😢</div>;
-  }
+if (loading) {
+  return (
+    <div className={styles.calendar}>
+      <div className="flex flex-col items-center justify-center py-8">
+        <Image
+          src="/icons/loading.svg"
+          alt="Loading..."
+          width={48}
+          height={48}
+          className="animate-spin"
+        />
+        <p className="mt-3 text-sm text-black dark:text-white">Loading calendar...</p>
+      </div>
+    </div>
+  );
+}
+if (error) {
+  return <div className={styles.calendar}></div>;
+}
 
   return (
     <div className={styles.calendar}>
