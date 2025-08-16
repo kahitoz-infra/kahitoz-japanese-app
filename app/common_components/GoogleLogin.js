@@ -1,6 +1,5 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { Capacitor } from '@capacitor/core';
 import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth';
 import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
@@ -8,8 +7,7 @@ import Image from "next/image";
 
 const auth_Api = process.env.NEXT_PUBLIC_AUTH_URL;
 
-export default function UnifiedGoogleLoginToken() {
-    const router = useRouter();
+export default function UnifiedGoogleLoginToken({ onLogin = () => {} }) {
     const [isNative, setIsNative] = useState(false);
     const [loading, setLoading] = useState(false);
 
@@ -49,13 +47,14 @@ export default function UnifiedGoogleLoginToken() {
             // Set cookies
             const sevenDays = 7 * 24 * 60 * 60;
             document.cookie = `auth_token=${data.auth_token}; path=/; max-age=${sevenDays}; SameSite=Lax`;
-            document.cookie = `refresh_token=${data.refresh_token}; path=/; path=/; max-age=${sevenDays}; SameSite=Lax`;
+            document.cookie = `refresh_token=${data.refresh_token}; path=/; max-age=${sevenDays}; SameSite=Lax`;
 
-            router.push('/');
+            // Notify parent to switch to the app (Dashboard)
+            onLogin?.();
         } catch (err) {
             console.error(err);
+        } finally {
             setLoading(false);
-            // You can optionally handle errors visually here if you want
         }
     };
 
@@ -63,7 +62,7 @@ export default function UnifiedGoogleLoginToken() {
         try {
             const user = await GoogleAuth.signIn();
             if (user?.authentication?.idToken) {
-                handleAuthResponse(user.authentication.idToken);
+                await handleAuthResponse(user.authentication.idToken);
             }
         } catch (err) {
             console.error('Native login failed:', err);
