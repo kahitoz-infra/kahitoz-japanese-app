@@ -1,7 +1,6 @@
 "use client";
 
 import JLPTLevelSelector from "../common_components/JLPTSelect";
-import Navbar from "../common_components/Navbar";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
@@ -65,8 +64,6 @@ export default function JLPTQuizSetupPage() {
         {/* The page is scrollable in case of more options on the screen*/}
         <div className="flex-1 overflow-auto min-h-0 px-4 pb-32 mt-10"></div>
 
-        {/* Bottom Navbar */}
-        <Navbar />
       </div>
     </div>
   );

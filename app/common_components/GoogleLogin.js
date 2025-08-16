@@ -49,7 +49,7 @@ export default function UnifiedGoogleLoginToken() {
             // Set cookies
             const sevenDays = 7 * 24 * 60 * 60;
             document.cookie = `auth_token=${data.auth_token}; path=/; max-age=${sevenDays}; SameSite=Lax`;
-            document.cookie = `refresh_token=${data.refresh_token}; path=/; max-age=${sevenDays}; SameSite=Lax`;
+            document.cookie = `refresh_token=${data.refresh_token}; path=/; path=/; max-age=${sevenDays}; SameSite=Lax`;
 
             router.push('/');
         } catch (err) {

@@ -3,14 +3,13 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-
 import ProgressCard from '../common_components/ProgressCard';
 import CherryBlossomSnowfall from '@/app/common_components/CherryBlossomSnowfall';
 import { authFetch } from '@/app/middleware';
+import dayjs from 'dayjs'; // Import dayjs for reliable date formatting
 
 export default function PostQuizPage() {
   const router = useRouter();
-
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [responses, setResponses] = useState([]);
   const [correct, setCorrect] = useState(0);
@@ -24,82 +23,86 @@ export default function PostQuizPage() {
     if (raw) {
       try {
         const parsed = JSON.parse(raw);
-        const respArray = Array.isArray(parsed)
-          ? parsed
-          : parsed.responses || [];
-
+        const respArray = Array.isArray(parsed) ? parsed : parsed.responses || [];
         setResponses(respArray);
-
-        const correctCount = respArray.filter((r) => r.correct).length;
-        const incorrectCount = respArray.filter((r) => !r.correct).length;
-
-        setCorrect(correctCount);
-        setIncorrect(incorrectCount);
+        setCorrect(respArray.filter(r => r.correct).length);
+        setIncorrect(respArray.filter(r => !r.correct).length);
       } catch (error) {
         console.error('Failed to parse stored responses:', error);
       }
     }
   }, []);
 
-  // ✅ Post adaptive quiz results on page load
   useEffect(() => {
     const sendAdaptiveQuizData = async () => {
       const quizData = localStorage.getItem('adaptive_quiz');
       const responseData = localStorage.getItem('adaptive_quiz_responses');
 
-      if (!quizData || !responseData) {
-        console.warn('Missing adaptive_quiz or responses.');
-        return;
-      }
+      if (!quizData || !responseData) return;
 
       try {
         const parsedQuiz = JSON.parse(quizData);
         const parsedResponses = JSON.parse(responseData);
         const { quiz_id, sets_data } = parsedQuiz;
         const { responses } = parsedResponses;
+        let anySuccess = false;
 
-        // Loop through each set (set1, set2, etc.)
         for (const setName in sets_data) {
           const items = sets_data[setName];
-
-          const questionIds = items
-            .filter((item) => item.type === 'question')
-            .map((item) => item._id);
-
+          const questionIds = items.filter(i => i.type === 'question').map(i => i._id);
           const matchedResponses = responses
-            .filter((r) => questionIds.includes(r.q_id))
-            .map((r) => ({
-              question_id: r.q_id,
-              correct: r.correct,
-            }));
+            .filter(r => questionIds.includes(r.q_id))
+            .map(r => ({ question_id: r.q_id, correct: r.correct }));
 
           if (matchedResponses.length === 0) continue;
 
-          const payload = {
-            quiz_id,
-            set_name: setName,
-            response: matchedResponses,
-          };
+          const payload = { quiz_id, set_name: setName, response: matchedResponses };
 
           const res = await authFetch(
             `${process.env.NEXT_PUBLIC_API_ADAPT_LEARN}/adapt_evaluate`,
             {
               method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
+              headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(payload),
             }
           );
 
-          if (!res.ok) {
-            console.error(`Failed to send data for ${setName}:`, await res.text());
+          if (res.ok) {
+            console.log(`✅ Submitted responses for ${setName}`);
+            anySuccess = true;
+          }
+        }
+
+        // ✅ --- STREAK UPDATE LOGIC --- ✅
+        if (anySuccess) {
+          // 1. Get today's date in YYYY-MM-DD format
+          const today = dayjs().format('YYYY-MM-DD');
+
+          // 2. Call your PUT endpoint using the URL from your .env file
+          const streakRes = await authFetch(
+            `${process.env.NEXT_PUBLIC_API_URL}/update_streak?date=${today}`,
+            { method: 'PUT' }
+          );
+          
+          if (!streakRes.ok) {
+              console.error('Streak API request failed:', streakRes.statusText);
+              return; // Stop if the API call itself fails
+          }
+
+          const streakData = await streakRes.json();
+
+          // 3. Update localStorage only if the API confirms an update happened
+          if (streakData.updated) {
+            console.log('✅ Streak updated successfully via API.');
+            const localStreaks = JSON.parse(localStorage.getItem('user_streaks') || '{}');
+            localStreaks[today] = 'complete';
+            localStorage.setItem('user_streaks', JSON.stringify(localStreaks));
           } else {
-            console.log(`Submitted responses for ${setName}`);
+            console.warn('ℹ️ Streak was not updated by the API (it may have already been complete).');
           }
         }
       } catch (err) {
-        console.error('Error submitting adaptive quiz data:', err);
+        console.error('Error submitting adaptive quiz data or updating streak:', err);
       }
     };
 
@@ -115,6 +118,7 @@ export default function PostQuizPage() {
   }, []);
 
   return (
+    // ... your JSX remains unchanged ...
     <div className="min-h-screen flex flex-col justify-between bg-[#FAF9F6] dark:bg-[#333333] text-white relative z-10">
       <CherryBlossomSnowfall isDarkMode={isDarkMode} />
       <div className="flex flex-col items-center justify-center gap-6 py-10 px-4 relative z-10">
@@ -124,15 +128,23 @@ export default function PostQuizPage() {
         <div className="w-24 h-24 hidden dark:flex rounded-full relative border-b-2 border-[#F66538] mt-4 overflow-hidden">
           <Image src="/chibi_well_done_dark.png" alt="Well done" fill className="object-cover" />
         </div>
-
         <div className="text-center text-black dark:text-white">
           <h1 className="text-3xl font-bold mt-4">よくできました</h1>
           <p className="text-md mt-1">Well done</p>
         </div>
-
         <ProgressCard correct={correct} incorrect={incorrect} />
 
-        <div className="p-4">
+        
+         <div>
+          <button
+            onClick={() => router.push('/AdaptiveSets')}
+            className="text-sm px-4 py-4 font-bold bg-[#FF3A60] dark:bg-white text:white dark:text-black rounded-2xl"
+          >
+            View Adaptive Quiz Sets
+          </button>
+        </div>
+
+        <div>
           <button
             onClick={() => router.push('/')}
             className="text-sm px-4 py-4 font-semibold bg-[#FF3A60] dark:bg-white text:white dark:text-black rounded-2xl"
@@ -140,6 +152,7 @@ export default function PostQuizPage() {
             &lt; Back to Homepage
           </button>
         </div>
+
       </div>
     </div>
   );

@@ -34,33 +34,52 @@
 .day {
   aspect-ratio: 1 / 1;
   border-radius: 8px;
-  display: flex;               /* NEW */
-  align-items: center;         /* NEW */
-  justify-content: center;     /* NEW */
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-weight: bold;
   cursor: pointer;
   background-color: var(--day-bg);
-  font-size: 1.2rem;           /* Bump font size (adjust as needed) */
+  font-size: 1.2rem;
 }
 
+/* Status Styles */
 .complete {
-  background-color: #6bfa70;
-  color: #000;
+  background-color: #FF5274; /* Light mode background */
+  color: #000;               /* Text color for better contrast */
+}
+
+/* This automatically applies when the user's OS is in dark mode */
+@media (prefers-color-scheme: dark) {
+  .complete {
+    background-color: #F66538; /* Dark mode background */
+  }
 }
 
 .incomplete {
-  background-color: #ffdb4d;
-  color: #000;
-}
-
-.absent {
-  background-color: #ff4d4d;
+  background-color: #6bfa70;
   color: #000;
 }
 
 .empty {
   background-color: #f1f1f1;
   color: #000;
+}
+
+/* Highlight for today's date */
+.today {
+  border: 2px solid #000;
+  box-shadow: 0 0 0 2px #ffffff inset;
+}
+
+/* Optional Refresh Button if used in header */
+.refreshButton {
+  margin-left: 8px;
+  font-size: 1rem;
+  background: transparent;
+  color: var(--text);
+  border: none;
+  cursor: pointer;
 }
 
 /* Do not include :root, body, or @tailwind in this file */

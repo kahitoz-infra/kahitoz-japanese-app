@@ -68,32 +68,6 @@ export default function SettingsPage() {
             </li>
           ))}
 
-          {/* Toggle: Cherry Blossom */}
-          <li className="flex justify-between items-center mt-2 dark:text-white">
-            <div className="flex items-center text-md font-medium">
-              <Flower size={20} className="mr-4" />
-              Cherry Blossom Effect
-            </div>
-            <Toggle enabled={cherryBlossom} setEnabled={setCherryBlossom} />
-          </li>
-
-          {/* Toggle: Theme */}
-          <li className="flex justify-between items-center dark:text-white">
-            <div className="flex items-center text-md font-medium">
-              <Moon size={20} className="mr-4" />
-              Theme
-            </div>
-            <Toggle enabled={themeDark} setEnabled={setThemeDark} />
-          </li>
-
-          {/* Toggle: Sound Effects */}
-          <li className="flex justify-between items-center dark:text-white">
-            <div className="flex items-center text-md font-medium">
-              <Music size={20} className="mr-4" />
-              Sound Effects
-            </div>
-            <Toggle enabled={soundEffects} setEnabled={setSoundEffects} />
-          </li>
 
           {/* Logout */}
           <li className="flex items-center text-md font-bold text-[#ff4970] mt-4 dark:text-[#FF5E2C]">
@@ -118,20 +92,3 @@ export default function SettingsPage() {
   );
 }
 
-// Toggle Switch
-function Toggle({ enabled, setEnabled }) {
-  return (
-    <button
-      className={`w-11 h-6 flex items-center rounded-full px-1 transition-colors duration-300 ${
-        enabled ? 'bg-pink-500 dark:bg-orange-500' : 'bg-gray-300 dark:bg-gray-600'
-      }`}
-      onClick={() => setEnabled(!enabled)}
-    >
-      <div
-        className={`w-4 h-4 rounded-full shadow-md transform transition-transform ${
-          enabled ? 'translate-x-5 bg-white' : 'translate-x-0 bg-white dark:bg-gray-200'
-        }`}
-      />
-    </button>
-  );
-}
