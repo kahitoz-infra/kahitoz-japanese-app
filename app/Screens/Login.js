@@ -116,7 +116,7 @@ export default function Login({ onLogin = () => {} }) {
 
                   {/* Google Login */}
                   <div className="mt-8">
-                    <GoogleLogin />
+                    <GoogleLogin onLogin={onLogin} />
                   </div>
                 </motion.div>
               )}
