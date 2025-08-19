@@ -1,7 +1,6 @@
 "use client";
 
 import AdaptiveQuizSets from "@/app/common_components/AdaptiveQuizSets";
-import CherryBlossomSnowfall from "@/app/common_components/CherryBlossomSnowfall";
 import CircularButton from "@/app/common_components/CircularButton";
 import { useState, useEffect } from "react";
 
@@ -22,8 +21,6 @@ function AdaptiveSets() {
 
   return (
     <div className="relative min-h-screen">
-      {/* Background effect */}
-      <CherryBlossomSnowfall isDarkMode={isDarkMode} />
 
       {/* Content */}
       <div className="relative z-10">
