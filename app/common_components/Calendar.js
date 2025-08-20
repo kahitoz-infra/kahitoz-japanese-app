@@ -14,15 +14,15 @@ const getCookie = (name) => {
 };
 
 const handleLogout = () => {
-    Cookies.remove("auth_token");
-    Cookies.remove("refresh_token");
+  Cookies.remove("auth_token");
+  Cookies.remove("refresh_token");
 
-    // Clear localStorage if needed
-    localStorage.removeItem("darkMode");
-    localStorage.removeItem("cherryBlossom");
+  localStorage.removeItem("darkMode");
+  localStorage.removeItem("cherryBlossom");
 
-    router.refresh(); // Triggers Login.js logic to show login screen
-  };
+  window.location.href = "/"; // sends them to login page
+};
+
 
 
 const getMonthDays = (year, month) => {
