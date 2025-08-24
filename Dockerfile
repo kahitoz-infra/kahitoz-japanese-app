@@ -11,7 +11,7 @@ COPY package.json package-lock.json ./
 RUN npm install
 
 # Copy the rest of the application files
-COPY .env.prod .env
+COPY .env.local .env
 
 COPY . .  
 
