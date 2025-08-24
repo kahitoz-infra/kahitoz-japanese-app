@@ -12,7 +12,7 @@ pipeline {
     environment {
         IMAGE_NAME      = "japanese-frontend"
         TAG             = "latest"
-        REGISTRY        = "127.0.0.1:5000"
+        REGISTRY        = "10.243.4.236:5000"
         DEPLOYMENT_NAME = "japanese-frontend"
         NAMESPACE       = "apps"
 
