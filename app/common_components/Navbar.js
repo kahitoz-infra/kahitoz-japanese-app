@@ -29,7 +29,7 @@ export default function Navbar({ setCurrentPage }) {
 
     return (
         <nav className="w-full fixed inset-x-0 bottom-0 bg-[#FFFFFF] dark:bg-[#353839] border-t-[3px] border-[#FF5274] dark:border-[#F66538] z-50 rounded-t-3xl">
-            <ul className="relative flex justify-between items-center px-4 py-6 rounded-t-[20px]">
+            <ul className="relative flex justify-between items-center px-4 py-8 rounded-t-[20px]">
                 {navItems.map((item, index) => {
                     const isCenter = index === 2;
 

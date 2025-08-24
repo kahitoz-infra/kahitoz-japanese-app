@@ -210,7 +210,7 @@ export default function QuizPageContent() {
           <button
             onClick={showFeedback ? handleNext : handleCheckAnswer}
             disabled={!selectedOption && !showFeedback}
-            className={`w-full px-6 py-4 text-lg font-bold transition-all
+            className={`w-full px-6 py-8 text-lg font-bold transition-all
       ${showFeedback
                 ? isCorrect
                   ? 'bg-green-700 text-white'
