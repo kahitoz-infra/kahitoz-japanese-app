@@ -4,8 +4,8 @@ pipeline {
     parameters {
         choice(
             name: 'DEPLOY_TARGET',
-            choices: ['docker', 'k8s'],
-            description: 'Choose where to deploy the application'
+            choices: ['docker', 'k8s', 'apk-only'],
+            description: 'Choose where to deploy the application or build APK only'
         )
         booleanParam(
             name: 'BUILD_ANDROID_APK',
@@ -117,6 +117,9 @@ pipeline {
         }
 
         stage('Build Docker Image') {
+            when {
+                expression { params.DEPLOY_TARGET != 'apk-only' }
+            }
             steps {
                 script {
                     echo 'Building Docker Image...'
@@ -126,6 +129,9 @@ pipeline {
         }
 
         stage('Tag Image for Registry') {
+            when {
+                expression { params.DEPLOY_TARGET != 'apk-only' }
+            }
             steps {
                 script {
                     echo 'Tagging image for remote registry...'
@@ -135,6 +141,9 @@ pipeline {
         }
 
         stage('Push Image to Registry') {
+            when {
+                expression { params.DEPLOY_TARGET != 'apk-only' }
+            }
             steps {
                 script {
                     echo 'Pushing Docker Image to Registry...'
@@ -144,6 +153,9 @@ pipeline {
         }
 
         stage('Deploy') {
+            when {
+                expression { params.DEPLOY_TARGET != 'apk-only' }
+            }
             steps {
                 script {
                     if (params.DEPLOY_TARGET == 'k8s') {
@@ -178,6 +190,9 @@ pipeline {
         }
 
         stage('Cleanup Local') {
+            when {
+                expression { params.DEPLOY_TARGET != 'apk-only' }
+            }
             steps {
                 script {
                     echo 'Cleaning up unused local Docker resources...'
