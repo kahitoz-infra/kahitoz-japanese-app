@@ -72,33 +72,24 @@ pipeline {
                 success {
                     archiveArtifacts artifacts: 'android/app/build/outputs/apk/debug/app-debug.apk', fingerprint: true
 
-                    echo 'Uploading APK to GitHub release...'
+                    echo 'Uploading APK to private S3/MinIO...'
 
-                    post {
-                        success {
-                            archiveArtifacts artifacts: 'android/app/build/outputs/apk/debug/app-debug.apk', fingerprint: true
+                    withCredentials([usernamePassword(credentialsId: 'minio-creds', usernameVariable: 'MINIO_USER', passwordVariable: 'MINIO_PASS')]) {
+                        sh '''
+                            APK_PATH=android/app/build/outputs/apk/debug/app-debug.apk
+                            APK_NAME=app-debug-$(date +%Y%m%d-%H%M%S).apk
+                            BUCKET_URL="https://privates3api.kahitoz.com/apks"
 
-                            echo 'Uploading APK to private S3/MinIO...'
+                            echo "Uploading $APK_NAME to $BUCKET_URL"
 
-                            withCredentials([usernamePassword(credentialsId: 'minio-creds', usernameVariable: 'MINIO_USER', passwordVariable: 'MINIO_PASS')]) {
-                                sh '''
-                                    APK_PATH=android/app/build/outputs/apk/debug/app-debug.apk
-                                    APK_NAME=app-debug-$(date +%Y%m%d-%H%M%S).apk
-                                    BUCKET_URL="https://privates3api.kahitoz.com/apks"
+                            curl -X PUT --upload-file "$APK_PATH" \
+                                -u "$MINIO_USER:$MINIO_PASS" \
+                                "$BUCKET_URL/$APK_NAME"
 
-                                    echo "Uploading $APK_NAME to $BUCKET_URL"
-
-                                    curl -X PUT --upload-file "$APK_PATH" \
-                                        -u "$MINIO_USER:$MINIO_PASS" \
-                                        "$BUCKET_URL/$APK_NAME"
-
-                                    echo "SHA1 fingerprint of APK:"
-                                    keytool -list -printcert -jarfile "$APK_PATH" | grep SHA1
-                                '''
-                            }
-                        }
+                            echo "SHA1 fingerprint of APK:"
+                            keytool -list -printcert -jarfile "$APK_PATH" | grep SHA1
+                        '''
                     }
-
                 }
             }
 
@@ -106,7 +97,7 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                script {
+                script {t {
                     echo 'Building Docker Image...'
                     sh "docker build -t ${IMAGE_NAME}:${TAG} ."
                 }
