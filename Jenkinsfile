@@ -78,7 +78,7 @@ pipeline {
                         sh '''
                             APK_PATH=android/app/build/outputs/apk/debug/app-debug.apk
                             APK_NAME=app-debug-$(date +%Y%m%d-%H%M%S).apk
-                            BUCKET_URL="https://privates3api.kahitoz.com/apks"
+                            BUCKET_URL="http://privates3api.kahitoz.com/apks"
 
                             echo "Uploading $APK_NAME to $BUCKET_URL"
 
