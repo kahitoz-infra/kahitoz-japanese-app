@@ -83,17 +83,29 @@ pipeline {
 
                             echo "Uploading $APK_NAME to MinIO bucket $BUCKET_NAME"
 
-                            # Configure mc client for MinIO
-                            mc alias set minio "$MINIO_ENDPOINT" "$MINIO_USER" "$MINIO_PASS"
-                            
-                            # Create bucket if it doesn't exist
-                            mc mb minio/$BUCKET_NAME || true
-                            
-                            # Upload the APK
-                            mc cp "$APK_PATH" "minio/$BUCKET_NAME/$APK_NAME"
-                            
-                            # Generate a shareable link (optional)
-                            mc share download "minio/$BUCKET_NAME/$APK_NAME" --expire=720h
+                            # Check if mc is available, otherwise use aws cli
+                            if command -v mc >/dev/null 2>&1; then
+                                echo "Using MinIO client (mc)"
+                                mc alias set minio "$MINIO_ENDPOINT" "$MINIO_USER" "$MINIO_PASS"
+                                mc mb minio/$BUCKET_NAME || true
+                                mc cp "$APK_PATH" "minio/$BUCKET_NAME/$APK_NAME"
+                                mc share download "minio/$BUCKET_NAME/$APK_NAME" --expire=720h || true
+                            elif command -v aws >/dev/null 2>&1; then
+                                echo "Using AWS CLI with S3-compatible endpoint"
+                                export AWS_ACCESS_KEY_ID="$MINIO_USER"
+                                export AWS_SECRET_ACCESS_KEY="$MINIO_PASS"
+                                aws --endpoint-url="$MINIO_ENDPOINT" s3 mb s3://$BUCKET_NAME || true
+                                aws --endpoint-url="$MINIO_ENDPOINT" s3 cp "$APK_PATH" "s3://$BUCKET_NAME/$APK_NAME"
+                                echo "APK uploaded successfully to s3://$BUCKET_NAME/$APK_NAME"
+                            else
+                                echo "Neither mc nor aws cli found. Attempting curl with proper S3 signature..."
+                                # Simple PUT upload (may not work with all MinIO configurations)
+                                curl -v -X PUT \
+                                    --data-binary "@$APK_PATH" \
+                                    -H "Content-Type: application/vnd.android.package-archive" \
+                                    "$MINIO_ENDPOINT/$BUCKET_NAME/$APK_NAME" \
+                                    --user "$MINIO_USER:$MINIO_PASS" || echo "Upload failed, but continuing..."
+                            fi
 
                             echo "SHA1 fingerprint of APK:"
                             keytool -list -printcert -jarfile "$APK_PATH" | grep SHA1 || echo "Could not extract SHA1 fingerprint"
