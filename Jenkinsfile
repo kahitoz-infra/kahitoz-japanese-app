@@ -7,6 +7,11 @@ pipeline {
             choices: ['docker', 'k8s'],
             description: 'Choose where to deploy the application'
         )
+        booleanParam(
+            name: 'BUILD_ANDROID_APK',
+            defaultValue: false,
+            description: 'Whether to build the Android APK'
+        )
     }
 
     environment {
@@ -22,6 +27,44 @@ pipeline {
     }
 
     stages {
+        stage('Install Dependencies') {
+            steps {
+                echo 'Installing NPM packages...'
+                sh 'npm ci'
+            }
+        }
+
+        stage('Build Web App') {
+            steps {
+                echo 'Building Next.js production assets...'
+                sh 'npm run build'
+            }
+        }
+
+        stage('Sync Capacitor Android') {
+            steps {
+                echo 'Syncing Capacitor Android platform...'
+                sh 'npx cap sync android'
+            }
+        }
+
+        stage('Build APK') {
+            when {
+                expression { params.BUILD_ANDROID_APK }
+            }
+            steps {
+                dir('android') {
+                    echo 'Building Android APK...'
+                    sh './gradlew assembleDebug'
+                }
+            }
+            post {
+                success {
+                    archiveArtifacts artifacts: 'android/app/build/outputs/apk/debug/app-debug.apk', fingerprint: true
+                }
+            }
+        }
+
         stage('Build Docker Image') {
             steps {
                 script {
@@ -61,14 +104,10 @@ pipeline {
                         '''
                     } else {
                         echo "Deploying ${DEPLOYMENT_NAME} to Remote Docker..."
-
-                        // Ensure app network exists
                         sh """
                             docker -H ${DOCKER_HOST} network inspect ${APP_NETWORK} >/dev/null 2>&1 || \
                             docker -H ${DOCKER_HOST} network create ${APP_NETWORK}
                         """
-
-                        // Stop and remove old container if it exists
                         sh """
                             docker -H ${DOCKER_HOST} ps -q --filter name=${DEPLOYMENT_NAME} | grep -q . && \
                             docker -H ${DOCKER_HOST} stop ${DEPLOYMENT_NAME} || true
@@ -77,8 +116,6 @@ pipeline {
                             docker -H ${DOCKER_HOST} ps -aq --filter name=${DEPLOYMENT_NAME} | grep -q . && \
                             docker -H ${DOCKER_HOST} rm ${DEPLOYMENT_NAME} || true
                         """
-
-                        // Run new container (listens on 3000 internally)
                         sh """
                             docker -H ${DOCKER_HOST} run -d --name ${DEPLOYMENT_NAME} \\
                             --network ${APP_NETWORK} \\
