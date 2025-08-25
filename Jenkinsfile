@@ -54,6 +54,11 @@ pipeline {
             }
             steps {
                 dir('android') {
+                    echo 'Setting up Android SDK...'
+                    sh '''
+                    echo "sdk.dir=/var/lib/jenkins/android-sdk" > local.properties
+                    '''
+
                     echo 'Building Android APK...'
                     sh './gradlew assembleDebug'
                 }
@@ -64,6 +69,7 @@ pipeline {
                 }
             }
         }
+
 
         stage('Build Docker Image') {
             steps {
