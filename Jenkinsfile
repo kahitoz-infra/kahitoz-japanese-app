@@ -78,16 +78,25 @@ pipeline {
                         sh '''
                             APK_PATH=android/app/build/outputs/apk/debug/app-debug.apk
                             APK_NAME=app-debug-$(date +%Y%m%d-%H%M%S).apk
-                            BUCKET_URL="http://127.0.0.1:9000/apks"
+                            MINIO_ENDPOINT="http://127.0.0.1:9000"
+                            BUCKET_NAME="apks"
 
-                            echo "Uploading $APK_NAME to $BUCKET_URL"
+                            echo "Uploading $APK_NAME to MinIO bucket $BUCKET_NAME"
 
-                            curl -X PUT --upload-file "$APK_PATH" \
-                                -u "$MINIO_USER:$MINIO_PASS" \
-                                "$BUCKET_URL/$APK_NAME"
+                            # Configure mc client for MinIO
+                            mc alias set minio "$MINIO_ENDPOINT" "$MINIO_USER" "$MINIO_PASS"
+                            
+                            # Create bucket if it doesn't exist
+                            mc mb minio/$BUCKET_NAME || true
+                            
+                            # Upload the APK
+                            mc cp "$APK_PATH" "minio/$BUCKET_NAME/$APK_NAME"
+                            
+                            # Generate a shareable link (optional)
+                            mc share download "minio/$BUCKET_NAME/$APK_NAME" --expire=720h
 
                             echo "SHA1 fingerprint of APK:"
-                            keytool -list -printcert -jarfile "$APK_PATH" | grep SHA1
+                            keytool -list -printcert -jarfile "$APK_PATH" | grep SHA1 || echo "Could not extract SHA1 fingerprint"
                         '''
                     }
                 }
