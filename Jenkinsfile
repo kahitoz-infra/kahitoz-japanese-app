@@ -107,8 +107,8 @@ pipeline {
                                     --user "$MINIO_USER:$MINIO_PASS" || echo "Upload failed, but continuing..."
                             fi
 
-                            echo "SHA1 fingerprint of APK:"
-                            keytool -list -printcert -jarfile "$APK_PATH" | grep SHA1 || echo "Could not extract SHA1 fingerprint"
+                            echo "SHA1 fingerprint from keystore:"
+                            keytool -keystore ~/.android/debug.keystore -list -v -storepass android | grep SHA1 || echo "Could not extract SHA1 fingerprint from debug keystore"
                         '''
                     }
                 }
