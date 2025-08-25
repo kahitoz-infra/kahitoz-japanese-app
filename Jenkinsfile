@@ -24,6 +24,10 @@ pipeline {
         // Docker specific
         DOCKER_HOST     = "tcp://10.243.52.185:2375"
         APP_NETWORK     = "app"
+
+        // GitHub credentials (configure in Jenkins)
+        GITHUB_TOKEN    = credentials('github-token')
+        GITHUB_REPO     = "yourusername/yourrepo" // replace with your repo
     }
 
     stages {
@@ -61,6 +65,9 @@ pipeline {
 
                     echo 'Building Android APK...'
                     sh './gradlew assembleDebug'
+
+                    echo 'Printing SHA1 fingerprint...'
+                    sh './gradlew signingReport | grep SHA1 || true'
                 }
             }
             post {
@@ -70,6 +77,35 @@ pipeline {
             }
         }
 
+        stage('Push APK to GitHub') {
+            when {
+                expression { params.BUILD_ANDROID_APK }
+            }
+            steps {
+                dir('android/app/build/outputs/apk/debug') {
+                    echo 'Uploading APK to GitHub Release...'
+                    sh '''
+                    APK_FILE=app-debug.apk
+                    TAG_NAME=$(date +%Y%m%d-%H%M%S)
+
+                    # Create a release (will fail if exists)
+                    curl -X POST -H "Authorization: token ${GITHUB_TOKEN}" \
+                        -H "Accept: application/vnd.github+json" \
+                        https://api.github.com/repos/${GITHUB_REPO}/releases \
+                        -d "{\\"tag_name\\": \\"$TAG_NAME\\", \\"name\\": \\"APK $TAG_NAME\\"}" || true
+
+                    # Upload APK to release
+                    RELEASE_ID=$(curl -s -H "Authorization: token ${GITHUB_TOKEN}" \
+                        https://api.github.com/repos/${GITHUB_REPO}/releases/tags/$TAG_NAME | jq -r .id)
+
+                    curl -X POST -H "Authorization: token ${GITHUB_TOKEN}" \
+                        -H "Content-Type: application/vnd.android.package-archive" \
+                        --data-binary @"$APK_FILE" \
+                        "https://uploads.github.com/repos/${GITHUB_REPO}/releases/$RELEASE_ID/assets?name=$APK_FILE"
+                    '''
+                }
+            }
+        }
 
         stage('Build Docker Image') {
             steps {
