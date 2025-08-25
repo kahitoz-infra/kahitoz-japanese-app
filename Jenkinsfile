@@ -25,9 +25,9 @@ pipeline {
         DOCKER_HOST     = "tcp://10.243.52.185:2375"
         APP_NETWORK     = "app"
 
-        // GitHub credentials (configure in Jenkins)
-        GITHUB_TOKEN    = credentials('github-token')
-        GITHUB_REPO     = "yourusername/yourrepo" // replace with your repo
+        // GitHub token from Jenkins credentials
+        GITHUB_TOKEN    = credentials('github-pat')
+        GITHUB_REPO     = "kahitoz/kahitoz-japanese-app"
     }
 
     stages {
@@ -59,9 +59,7 @@ pipeline {
             steps {
                 dir('android') {
                     echo 'Setting up Android SDK...'
-                    sh '''
-                    echo "sdk.dir=/var/lib/jenkins/android-sdk" > local.properties
-                    '''
+                    sh 'echo "sdk.dir=/var/lib/jenkins/android-sdk" > local.properties'
 
                     echo 'Building Android APK...'
                     sh './gradlew assembleDebug'
@@ -73,35 +71,28 @@ pipeline {
             post {
                 success {
                     archiveArtifacts artifacts: 'android/app/build/outputs/apk/debug/app-debug.apk', fingerprint: true
-                }
-            }
-        }
 
-        stage('Push APK to GitHub') {
-            when {
-                expression { params.BUILD_ANDROID_APK }
-            }
-            steps {
-                dir('android/app/build/outputs/apk/debug') {
-                    echo 'Uploading APK to GitHub Release...'
+                    echo 'Uploading APK to GitHub release...'
                     sh '''
-                    APK_FILE=app-debug.apk
-                    TAG_NAME=$(date +%Y%m%d-%H%M%S)
+                        APK_PATH=android/app/build/outputs/apk/debug/app-debug.apk
+                        APK_NAME=app-debug-$(date +%Y%m%d-%H%M%S).apk
+                        RELEASE_TAG="jenkins-build"
 
-                    # Create a release (will fail if exists)
-                    curl -X POST -H "Authorization: token ${GITHUB_TOKEN}" \
-                        -H "Accept: application/vnd.github+json" \
-                        https://api.github.com/repos/${GITHUB_REPO}/releases \
-                        -d "{\\"tag_name\\": \\"$TAG_NAME\\", \\"name\\": \\"APK $TAG_NAME\\"}" || true
+                        # Create release if it doesn't exist (ignore errors if already exists)
+                        curl -s -X POST -H "Authorization: token $GITHUB_TOKEN" \
+                             -d "{\\"tag_name\\": \\"$RELEASE_TAG\\", \\"name\\": \\"$RELEASE_TAG\\"}" \
+                             https://api.github.com/repos/$GITHUB_REPO/releases || true
 
-                    # Upload APK to release
-                    RELEASE_ID=$(curl -s -H "Authorization: token ${GITHUB_TOKEN}" \
-                        https://api.github.com/repos/${GITHUB_REPO}/releases/tags/$TAG_NAME | jq -r .id)
+                        # Get upload URL
+                        UPLOAD_URL=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
+                             https://api.github.com/repos/$GITHUB_REPO/releases/tags/$RELEASE_TAG \
+                             | jq -r .upload_url | sed -e "s/{?name,label}//")
 
-                    curl -X POST -H "Authorization: token ${GITHUB_TOKEN}" \
-                        -H "Content-Type: application/vnd.android.package-archive" \
-                        --data-binary @"$APK_FILE" \
-                        "https://uploads.github.com/repos/${GITHUB_REPO}/releases/$RELEASE_ID/assets?name=$APK_FILE"
+                        # Upload APK
+                        curl -s -X POST -H "Authorization: token $GITHUB_TOKEN" \
+                             -H "Content-Type: application/vnd.android.package-archive" \
+                             --data-binary @"$APK_PATH" \
+                             "$UPLOAD_URL?name=$APK_NAME"
                     '''
                 }
             }
