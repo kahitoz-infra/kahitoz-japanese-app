@@ -61,23 +61,42 @@ pipeline {
                     echo 'Setting up Android SDK...'
                     sh 'echo "sdk.dir=/var/lib/jenkins/android-sdk" > local.properties'
 
-                    echo 'Building Android APK...'
-                    sh './gradlew assembleDebug'
+                    echo 'Creating release keystore if not exists...'
+                    sh '''
+                        if [ ! -f "app/release.keystore" ]; then
+                            echo "Creating release keystore..."
+                            keytool -genkey -v -keystore app/release.keystore -alias zenkanji-key \
+                                -keyalg RSA -keysize 2048 -validity 10000 \
+                                -storepass zenkanji2024 -keypass zenkanji2024 \
+                                -dname "CN=ZenKanji, OU=Mobile, O=Kahitoz, L=Unknown, S=Unknown, C=Unknown"
+                        else
+                            echo "Release keystore already exists"
+                        fi
+                    '''
 
-                    echo 'Printing SHA1 fingerprint...'
-                    sh './gradlew signingReport | grep SHA1 || true'
+                    echo 'Building Android Release APK...'
+                    sh './gradlew assembleRelease'
+
+                    echo 'Printing SHA1 fingerprint from release keystore...'
+                    sh '''
+                        keytool -list -v \
+                            -keystore app/release.keystore \
+                            -storepass zenkanji2024 \
+                            -alias zenkanji-key \
+                            | grep SHA1 || echo "Could not extract SHA1 from release keystore"
+                    '''
                 }
             }
             post {
                 success {
-                    archiveArtifacts artifacts: 'android/app/build/outputs/apk/debug/app-debug.apk', fingerprint: true
+                    archiveArtifacts artifacts: 'android/app/build/outputs/apk/release/app-release.apk', fingerprint: true
 
-                    echo 'Uploading APK to private S3/MinIO...'
+                    echo 'Uploading Release APK to private S3/MinIO...'
 
                     withCredentials([usernamePassword(credentialsId: 'minio-creds', usernameVariable: 'MINIO_USER', passwordVariable: 'MINIO_PASS')]) {
                         sh '''
-                            APK_PATH=android/app/build/outputs/apk/debug/app-debug.apk
-                            APK_NAME=app-debug-$(date +%Y%m%d-%H%M%S).apk
+                            APK_PATH=android/app/build/outputs/apk/release/app-release.apk
+                            APK_NAME=app-release-$(date +%Y%m%d-%H%M%S).apk
                             MINIO_ENDPOINT="http://127.0.0.1:9000"
                             BUCKET_NAME="apks"
 
@@ -107,8 +126,12 @@ pipeline {
                                     --user "$MINIO_USER:$MINIO_PASS" || echo "Upload failed, but continuing..."
                             fi
 
-                            echo "SHA1 fingerprint from keystore:"
-                            keytool -keystore ~/.android/debug.keystore -list -v -storepass android | grep SHA1 || echo "Could not extract SHA1 fingerprint from debug keystore"
+                            echo "SHA1 fingerprint from release keystore:"
+                            keytool -list -v \
+                                -keystore android/app/release.keystore \
+                                -storepass zenkanji2024 \
+                                -alias zenkanji-key \
+                                | grep SHA1 || echo "Could not extract SHA1 fingerprint from release keystore"
                         '''
                     }
                 }
