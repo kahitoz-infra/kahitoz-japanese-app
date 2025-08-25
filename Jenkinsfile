@@ -30,7 +30,7 @@ pipeline {
         stage('Install Dependencies') {
             steps {
                 echo 'Installing NPM packages...'
-                sh 'npm ci'
+                sh 'npm ci --force'
             }
         }
 
