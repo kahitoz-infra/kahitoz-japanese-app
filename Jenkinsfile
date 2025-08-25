@@ -213,14 +213,18 @@ pipeline {
         }
 
         stage('Cleanup Local') {
-            when {
-                expression { params.DEPLOY_TARGET != 'apk-only' }
-            }
             steps {
                 script {
                     echo 'Cleaning up unused local Docker resources...'
                     sh "docker image prune -f"
                     sh "docker container prune -f"
+                    
+                    echo 'Cleaning up build artifacts...'
+                    sh "rm -rf .next || true"
+                    sh "rm -rf out || true"
+                    sh "rm -rf android/app/build || true"
+                    sh "rm -rf android/.gradle || true"
+                    sh "rm -rf node_modules/.cache || true"
                 }
             }
         }
