@@ -73,29 +73,39 @@ pipeline {
                     archiveArtifacts artifacts: 'android/app/build/outputs/apk/debug/app-debug.apk', fingerprint: true
 
                     echo 'Uploading APK to GitHub release...'
-                    sh '''
-                        APK_PATH=android/app/build/outputs/apk/debug/app-debug.apk
-                        APK_NAME=app-debug-$(date +%Y%m%d-%H%M%S).apk
-                        RELEASE_TAG="jenkins-build"
 
-                        # Create release if it doesn't exist (ignore errors if already exists)
-                        curl -s -X POST -H "Authorization: token $GITHUB_TOKEN" \
-                             -d "{\\"tag_name\\": \\"$RELEASE_TAG\\", \\"name\\": \\"$RELEASE_TAG\\"}" \
-                             https://api.github.com/repos/$GITHUB_REPO/releases || true
+                    withCredentials([string(credentialsId: 'github-pat', variable: 'GITHUB_TOKEN')]) {
+                        sh '''
+                            APK_PATH=android/app/build/outputs/apk/debug/app-debug.apk
+                            APK_NAME=app-debug-$(date +%Y%m%d-%H%M%S).apk
+                            RELEASE_TAG="jenkins-build"
 
-                        # Get upload URL
-                        UPLOAD_URL=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
-                             https://api.github.com/repos/$GITHUB_REPO/releases/tags/$RELEASE_TAG \
-                             | jq -r .upload_url | sed -e "s/{?name,label}//")
+                            # Set your GitHub repo here
+                            GITHUB_REPO="kahitoz/kahitoz-japanese-app"
 
-                        # Upload APK
-                        curl -s -X POST -H "Authorization: token $GITHUB_TOKEN" \
-                             -H "Content-Type: application/vnd.android.package-archive" \
-                             --data-binary @"$APK_PATH" \
-                             "$UPLOAD_URL?name=$APK_NAME"
-                    '''
+                            # Create release if it doesn't exist (ignore errors if already exists)
+                            curl -s -X POST -H "Authorization: token $GITHUB_TOKEN" \
+                                -d "{\\"tag_name\\": \\"$RELEASE_TAG\\", \\"name\\": \\"$RELEASE_TAG\\"}" \
+                                https://api.github.com/repos/$GITHUB_REPO/releases || true
+
+                            # Get upload URL
+                            UPLOAD_URL=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
+                                https://api.github.com/repos/$GITHUB_REPO/releases/tags/$RELEASE_TAG \
+                                | jq -r .upload_url | sed -e "s/{?name,label}//")
+
+                            # Upload APK
+                            curl -s -X POST -H "Authorization: token $GITHUB_TOKEN" \
+                                -H "Content-Type: application/vnd.android.package-archive" \
+                                --data-binary @"$APK_PATH" \
+                                "$UPLOAD_URL?name=$APK_NAME"
+
+                            echo "SHA1 fingerprint of APK:"
+                            keytool -list -printcert -jarfile "$APK_PATH" | grep SHA1
+                        '''
+                    }
                 }
             }
+
         }
 
         stage('Build Docker Image') {
