@@ -3,6 +3,7 @@ import { authFetch } from "@/app/middleware";
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import { useRouter } from 'next/navigation';
+import CherryBlossomSnowfall from "./CherryBlossomSnowfall";
 
 const quiz_api = process.env.NEXT_PUBLIC_API_LEARN + "/all_quiz";
 
@@ -10,7 +11,12 @@ export default function CustomKanjiQuizBlock() {
   const [type, setType] = useState("kanji");
   const [loading, setLoading] = useState(true);
   const [quizzes, setQuizzes] = useState([]);
+  const [isDarkMode, setIsDarkMode] = useState(false);
   const router = useRouter();
+
+  useEffect(() => {
+    setIsDarkMode(document.documentElement.classList.contains('dark'));
+  }, []);
 
   useEffect(() => {
     const fetch_quiz_details = async () => {
@@ -68,7 +74,9 @@ export default function CustomKanjiQuizBlock() {
   };
 
   return (
-    <div>
+    <div className="relative">
+      <CherryBlossomSnowfall isDarkMode={isDarkMode} />
+
       {/* Type Switch Buttons */}
       <div className="flex w-full justify-center gap-x-4 items-center mb-4">
         <button
