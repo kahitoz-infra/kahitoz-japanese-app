@@ -145,15 +145,6 @@ export default function AdaptiveQuizSets() {
       {/* Cherry blossom background */}
       <CherryBlossomSnowfall isDarkMode={isDarkMode} />
 
-      {/* Title */}
-      <div className="w-full max-w-md px-4">
-        <div className="relative bg-white border shadow-lg border-[#FF5274] dark:border-[#F66538] dark:bg-gray-100 rounded-full mt-2 py-3 px-6">
-          <h1 className="text-center text-2xl font-bold text-black dark:text-black">
-            Adaptive Quiz Sets
-          </h1>
-        </div>
-      </div>
-
       {/* Quiz List or Empty Message */}
       {quizzes.length === 0 ? (
         <div className="text-center mt-12">
