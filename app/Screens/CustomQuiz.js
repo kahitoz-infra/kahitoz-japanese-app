@@ -23,7 +23,7 @@ export default function CustomQuizPage() {
           className={`px-6 py-2 rounded-full ${
             activeTab === 'custom'
               ? 'bg-[#FF5274] dark:bg-[#F66538] text-white font-bold'
-              : 'bg-gray-200 dark:bg-gray-700 text-black font-bold dark:text-gray-300'
+              : 'bg-gray-200 dark:bg-gray-500 text-black font-bold dark:text-gray-200'
           }`}
         >
           Custom Quiz
@@ -33,7 +33,7 @@ export default function CustomQuizPage() {
           className={`px-6 py-2 rounded-full ${
             activeTab === 'adaptive'
               ? 'bg-[#FF5274] dark:bg-[#F66538] text-white font-bold'
-              : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-bold'
+              : 'bg-gray-200 dark:bg-gray-500 text-gray-700 dark:text-gray-200 font-bold'
           }`}
         >
           Adaptive Quiz
