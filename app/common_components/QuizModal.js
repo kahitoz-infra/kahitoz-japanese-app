@@ -17,6 +17,7 @@ export default function QuizModal({
 }) {
   const router = useRouter();
   const [filteredData, setFilteredData] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -89,6 +90,8 @@ export default function QuizModal({
   ]);
 
   const handleStartQuiz = async () => {
+    setIsLoading(true);
+    
     const levelUidMap = {};
     for (const level of selectedLevels) {
       const levelData = levelInfo.find((entry) => entry[0] === level);
@@ -149,6 +152,7 @@ export default function QuizModal({
       router.push("/Quiz?api_load=false");
     } catch (error) {
       console.error("Error creating quiz:", error);
+      setIsLoading(false); // Reset loading state on error
     }
   };
 
@@ -156,12 +160,12 @@ export default function QuizModal({
     <>
       {isOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-          <div className="relative bg-black rounded-lg shadow-lg p-6 w-full max-w-md max-h-[80vh] overflow-hidden">
+          <div className="relative bg-[#2A2A2A] rounded-lg shadow-lg p-6 w-full max-w-md max-h-[80vh] overflow-hidden">
             <h2 className="text-xl font-semibold mb-4">Quiz Information</h2>
 
-            <div className="overflow-y-auto max-h-[50vh] border border-gray-200 rounded mb-6">
-              <table className="min-w-full bg-black">
-                <thead className="sticky top-0 bg-black">
+            <div className="overflow-y-auto max-h-[40vh] border border-gray-200 rounded mb-16">
+              <table className="min-w-full bg-[#2A2A2A]">
+                <thead className="sticky top-0 bg-[#2A2A2A]">
                   <tr>
                     <th className="py-2 px-4 border-b border-gray-200 text-left">
                       S.No
@@ -196,19 +200,27 @@ export default function QuizModal({
               </table>
             </div>
 
-            {/* Fixed buttons */}
-            <div className="absolute bottom-4 right-4 flex gap-2">
+            <div className="absolute bottom-6 right-6 flex gap-2">
               <button
                 onClick={onClose}
-                className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
+                disabled={isLoading}
+                className="px-4 py-2 font-bold bg-gray-600 rounded-lg disabled:opacity-50"
               >
                 Close
               </button>
               <button
                 onClick={handleStartQuiz}
-                className="px-6 py-2 rounded-lg font-semibold text-white bg-[#FF3A60] dark:bg-[#FF5E2C]"
+                disabled={isLoading}
+                className="px-6 py-2 rounded-lg font-semibold text-white dark:text-gray-200 bg-[#FF3A60] dark:bg-[#FF5E2C] disabled:opacity-50 flex items-center gap-2"
               >
-                Start Quiz
+                {isLoading ? (
+                  <>
+                    <div className="w-5 h-5 border-t-2 border-b-2 border-white rounded-full animate-spin"></div>
+                    Creating...
+                  </>
+                ) : (
+                  'Start Quiz'
+                )}
               </button>
             </div>
           </div>
