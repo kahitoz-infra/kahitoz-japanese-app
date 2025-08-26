@@ -35,16 +35,32 @@ const getMonthDays = (year, month) => {
   return daysArray;
 };
 
+const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+
+const getCachedData = () => {
+  const cached = localStorage.getItem('calendarCache');
+  if (!cached) return null;
+
+  const { data, timestamp } = JSON.parse(cached);
+  const isExpired = Date.now() - timestamp > CACHE_DURATION;
+
+  if (isExpired) {
+    localStorage.removeItem('calendarCache');
+    return null;
+  }
+
+  return data;
+};
+
 export default function Calendar({ refreshKey = 0 }) {
   const today = dayjs();
   const [year, setYear] = useState(today.year());
   const [month, setMonth] = useState(today.month() + 1);
   const [streakData, setStreakData] = useState(() => {
-    // Initialize from cache if available
-    const cached = localStorage.getItem('streakData');
-    return cached ? JSON.parse(cached) : {};
+    const cachedData = getCachedData();
+    return cachedData?.streakData || {};
   });
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!getCachedData());
   const [error, setError] = useState(null);
 
   // Memoize month days calculation
@@ -53,6 +69,14 @@ export default function Calendar({ refreshKey = 0 }) {
 
   useEffect(() => {
     const fetchStreakData = async () => {
+      // Check cache first
+      const cachedData = getCachedData();
+      if (cachedData) {
+        setStreakData(cachedData.streakData);
+        setLoading(false);
+        return;
+      }
+
       setLoading(true);
       setError(null);
 
@@ -99,8 +123,14 @@ export default function Calendar({ refreshKey = 0 }) {
             return acc;
           }, {});
           setStreakData(transformedData);
-          // Cache the streak data
-          localStorage.setItem('streakData', JSON.stringify(transformedData));
+          
+          // Cache the complete calendar state
+          localStorage.setItem('calendarCache', JSON.stringify({
+            data: {
+              streakData: transformedData,
+            },
+            timestamp: Date.now()
+          }));
         }
       } catch (e) {
         console.error('Failed to fetch streak data:', e);
