@@ -9,15 +9,9 @@ export default function CustomQuizPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-100 dark:bg-[#2f2f2f] relative">
-      {/* Top Header */}
-      <div className="w-full h-[20vh] bg-[#fbfbfb] dark:bg-[#2F2F2F] border-b-4 border-[#FF5274] dark:border-[#F66538] rounded-b-xl px-4 py-2 flex flex-col justify-center">
-        <h1 className="text-2xl font-bold text-black dark:text-white text-center">
-          Zen Kanji Quiz Section
-        </h1>
-      </div>
 
       {/* Tab Navigation */}
-      <div className="w-full flex justify-center space-x-4 p-4">
+      <div className="w-full flex justify-center space-x-4 p-4 mt-10">
         <button
           onClick={() => setActiveTab('custom')}
           className={`px-6 py-2 rounded-full ${
