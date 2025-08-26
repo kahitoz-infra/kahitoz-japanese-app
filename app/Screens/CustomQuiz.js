@@ -35,7 +35,7 @@ export default function CustomQuizPage() {
       </div>
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col items-center justify-start pt-4 pb-6 px-4">
+      <main className="flex-1 w-full flex flex-col items-center justify-start pt-4 pb-6">
         {activeTab === 'custom' ? (
           <>
             <QuizBlock />
@@ -44,7 +44,9 @@ export default function CustomQuizPage() {
             </div>
           </>
         ) : (
-          <AdaptiveQuizSets />
+          <div className="h-screen">
+            <AdaptiveQuizSets />
+          </div>
         )}
       </main>
     </div>
