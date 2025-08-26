@@ -34,8 +34,19 @@ export default function AdaptiveQuizSets() {
     window.location.href = '/TargetLearning';
   };
 
+  // --- Zigzag Alignment Logic ---
+  const getAlignment = (index) => {
+    if ((index + 1) % 4 === 0) {
+      return "justify-start"; // left
+    }
+    if (index % 2 === 0) {
+      return "justify-center"; // center
+    }
+    return "justify-end"; // right
+  };
+
   return (
-    <div className="relative min-h-screen flex flex-col items-center py-8">
+    <div className="relative min-h-screen flex flex-col items-center w-screen py-8">
       <CherryBlossomSnowfall isDarkMode={isDarkMode} />
       
       {/* Quiz List or Empty Message */}
@@ -45,38 +56,33 @@ export default function AdaptiveQuizSets() {
           <p className="text-gray-500 dark:text-gray-400 mt-2">Generate one to get started!</p>
         </div>
       ) : (
-        <div className="mt-8 grid grid-cols-3 gap-x-12 gap-y-8 max-w-4xl px-4">
+        <div className="mt-8 grid grid-cols-1 gap-y-16 w-full max-w-4xl px-4">
           {quizzes.map((quiz, index) => {
             const isNewest = index === quizzes.length - 1;
-            const numSegments = quiz.quizData?.sets_data
-              ? Object.keys(quiz.quizData.sets_data).length
-              : 0;
-
-            // Calculate progress (mock data - replace with actual progress)
             const progress = Math.min(((index + 1) * 25), 100);
 
             return (
-              <div key={quiz.id} className="flex flex-col items-center">
-                <div className="relative">
-                  {/* Standardized play button */}
-                  <div className="relative flex items-center justify-center w-20 h-20">
+              <div key={quiz.id} className={`flex ${getAlignment(index)}`}>
+                <div className="flex flex-col items-center w-32">
+                  <div className="relative">
+                    {/* Play button */}
                     <div
-                      className={`w-full h-full flex items-center justify-center rounded-full shadow-md border-4 transition-all duration-300 cursor-pointer
+                      className={`w-20 h-20 flex items-center justify-center rounded-full shadow-md border-4 transition-all duration-300 cursor-pointer
                         ${isNewest ? 'dark:bg-[#F66538] bg-[#FF5274]' : 'dark:bg-gray-600 bg-gray-400'} 
                         hover:scale-105`}
                       onClick={() => handlePlay(quiz)}
                     >
                       <span className="text-white font-bold text-xl">▶</span>
                     </div>
-                  </div>
 
-                  {/* Progress bar */}
-                  <div className="w-full mt-3">
-                    <div className="h-1 w-full bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-[#FF5274] dark:bg-[#F66538] transition-all duration-300"
-                        style={{ width: `${progress}%` }}
-                      />
+                    {/* Progress bar */}
+                    <div className="w-full mt-3">
+                      <div className="h-1 w-full bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-[#FF5274] dark:bg-[#F66538] transition-all duration-300"
+                          style={{ width: `${progress}%` }}
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
