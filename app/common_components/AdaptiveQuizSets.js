@@ -1,5 +1,5 @@
-'use client';
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 
 // --- Cherry Blossom Snowfall Background ---
 const CherryBlossomSnowfall = ({ isDarkMode }) => {
@@ -64,7 +64,7 @@ const CherryBlossomSnowfall = ({ isDarkMode }) => {
 };
 
 // --- Concentric Circle Component ---
-const ConcentricCircle = ({ numSets, size, strokeWidth }) => {
+const ConcentricCircle = ({ numSets, completedSets, size, strokeWidth }) => {
   if (!numSets || numSets <= 0) return null;
 
   const center = size / 2;
@@ -87,15 +87,35 @@ const ConcentricCircle = ({ numSets, size, strokeWidth }) => {
 
   const paths = [];
   if (numSets === 1) {
-    paths.push(<path key="half1" d={describeArc(0, 179.99)} />);
-    paths.push(<path key="half2" d={describeArc(180, 359.99)} />);
+    const isCompleted = completedSets >= 1;
+    paths.push(
+      <path 
+        key="half1" 
+        d={describeArc(0, 179.99)} 
+        stroke={isCompleted ? '#10B981' : 'currentColor'}
+      />
+    );
+    paths.push(
+      <path 
+        key="half2" 
+        d={describeArc(180, 359.99)} 
+        stroke={isCompleted ? '#10B981' : 'currentColor'}
+      />
+    );
   } else {
     const angleGap = 10;
     const totalAngle = 360 / numSets;
     for (let i = 0; i < numSets; i++) {
       const start = i * totalAngle + angleGap / 2;
       const end = (i + 1) * totalAngle - angleGap / 2;
-      paths.push(<path key={i} d={describeArc(start, end)} />);
+      const isCompleted = i < completedSets;
+      paths.push(
+        <path 
+          key={i} 
+          d={describeArc(start, end)} 
+          stroke={isCompleted ? '#10B981' : 'currentColor'}
+        />
+      );
     }
   }
 
@@ -105,28 +125,57 @@ const ConcentricCircle = ({ numSets, size, strokeWidth }) => {
       height={size}
       className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rotate-180"
     >
-      <g fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round">
+      <g fill="none" strokeWidth={strokeWidth} strokeLinecap="round">
         {paths}
       </g>
     </svg>
   );
 };
 
+// --- Set Progress Manager ---
+class SetProgressManager {
+  static getQuizProgress(quizId) {
+    try {
+      const stored = localStorage.getItem(`quiz_progress_${quizId}`);
+      return stored ? JSON.parse(stored) : { completedSets: [], currentSet: null };
+    } catch {
+      return { completedSets: [], currentSet: null };
+    }
+  }
+
+  static saveQuizProgress(quizId, progress) {
+    localStorage.setItem(`quiz_progress_${quizId}`, JSON.stringify(progress));
+  }
+
+  static markSetCompleted(quizId, setKey) {
+    const progress = this.getQuizProgress(quizId);
+    if (!progress.completedSets.includes(setKey)) {
+      progress.completedSets.push(setKey);
+    }
+    progress.currentSet = null;
+    this.saveQuizProgress(quizId, progress);
+  }
+
+  static setCurrentSet(quizId, setKey) {
+    const progress = this.getQuizProgress(quizId);
+    progress.currentSet = setKey;
+    this.saveQuizProgress(quizId, progress);
+  }
+
+  static getNextAvailableSet(quizData, completedSets) {
+    const allSets = Object.keys(quizData.sets_data || {}).sort();
+    return allSets.find(setKey => !completedSets.includes(setKey)) || null;
+  }
+}
+
 // --- Main Adaptive Quiz Sets Component ---
 export default function AdaptiveQuizSets() {
   const [quizzes, setQuizzes] = useState([]);
-  const [isDarkMode, setIsDarkMode] = useState(false); // optional toggle
+  const [isDarkMode, setIsDarkMode] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     try {
-      if (!localStorage.getItem('adaptive_quiz_list')) {
-        const mockQuizzes = [
-          { id: 1, quizData: { sets_data: { set1: [] } } },
-          { id: 2, quizData: { sets_data: { set1: [], set2: [] } } },
-          { id: 3, quizData: { sets_data: { set1: [], set2: [], set3: [], set4: [] } } },
-        ];
-        localStorage.setItem('adaptive_quiz_list', JSON.stringify(mockQuizzes));
-      }
       const stored = JSON.parse(localStorage.getItem('adaptive_quiz_list')) || [];
       setQuizzes(stored);
     } catch (err) {
@@ -136,16 +185,40 @@ export default function AdaptiveQuizSets() {
   }, []);
 
   const handlePlay = (quiz) => {
-    localStorage.setItem('adaptive_quiz', JSON.stringify(quiz.quizData));
-    window.location.href = '/TargetLearning';
+    const progress = SetProgressManager.getQuizProgress(quiz.id);
+    const nextSet = SetProgressManager.getNextAvailableSet(quiz.quizData, progress.completedSets);
+    
+    if (!nextSet) {
+      alert('All sets completed!');
+      return;
+    }
+
+    // Set current set and navigate to target learning
+    SetProgressManager.setCurrentSet(quiz.id, nextSet);
+    
+    // Store only the current set's data
+    const setData = {
+      quiz_id: quiz.quizData.quiz_id,
+      current_set: nextSet,
+      set_data: quiz.quizData.sets_data[nextSet] || [],
+      quiz_id_internal: quiz.id,
+      total_sets: Object.keys(quiz.quizData.sets_data).length,
+      current_set_number: parseInt(nextSet.replace('set', ''))
+    };
+    
+    localStorage.setItem('current_set_quiz', JSON.stringify(setData));
+    localStorage.setItem('adaptive_quiz', JSON.stringify({
+      quiz_id: quiz.quizData.quiz_id,
+      sets_data: { [nextSet]: quiz.quizData.sets_data[nextSet] }
+    }));
+    
+    router.push('/TargetLearning');
   };
 
   return (
-    <div className={`relative min-h-screen bg-white dark:bg-[#333333] flex flex-col items-center py-8`}>
-      {/* Cherry blossom background */}
+    <div className="relative min-h-screen bg-white dark:bg-[#333333] flex flex-col items-center py-8">
       <CherryBlossomSnowfall isDarkMode={isDarkMode} />
 
-      {/* Title */}
       <div className="w-full max-w-md px-4">
         <div className="relative bg-white border shadow-lg border-[#FF5274] dark:border-[#F66538] dark:bg-gray-100 rounded-full mt-2 py-3 px-6">
           <h1 className="text-center text-2xl font-bold text-black dark:text-black">
@@ -154,7 +227,6 @@ export default function AdaptiveQuizSets() {
         </div>
       </div>
 
-      {/* Quiz List or Empty Message */}
       {quizzes.length === 0 ? (
         <div className="text-center mt-12">
           <p className="text-gray-600 dark:text-gray-300 text-lg">No quizzes yet.</p>
@@ -165,6 +237,9 @@ export default function AdaptiveQuizSets() {
           {quizzes.map((quiz, index) => {
             const isNewest = index === quizzes.length - 1;
             const numSegments = quiz.quizData?.sets_data ? Object.keys(quiz.quizData.sets_data).length : 0;
+            const progress = SetProgressManager.getQuizProgress(quiz.id);
+            const completedSets = progress.completedSets.length;
+            const nextSet = SetProgressManager.getNextAvailableSet(quiz.quizData, progress.completedSets);
             const circleColorClass = 'text-white dark:text-gray-200';
 
             return (
@@ -178,16 +253,34 @@ export default function AdaptiveQuizSets() {
                   style={{ width: isNewest ? '112px' : '96px', height: isNewest ? '112px' : '96px' }}
                 >
                   <div className={`absolute w-full h-full ${circleColorClass}`}>
-                    <ConcentricCircle numSets={numSegments} size={isNewest ? 112 : 96} strokeWidth={8} />
+                    <ConcentricCircle 
+                      numSets={numSegments} 
+                      completedSets={completedSets}
+                      size={isNewest ? 112 : 96} 
+                      strokeWidth={8} 
+                    />
                   </div>
 
                   <div
-                    className={`relative z-10 flex items-center justify-center rounded-full shadow-md border-4 transition-all duration-300 cursor-pointer
+                    className={`relative z-10 flex flex-col items-center justify-center rounded-full shadow-md border-4 transition-all duration-300 cursor-pointer
                       ${isNewest ? 'dark:bg-[#F66538] bg-[#FF5274] hover:scale-110 w-24 h-24' : 'dark:bg-gray-600 bg-gray-400 hover:scale-105 w-20 h-20'}`}
                     onClick={() => handlePlay(quiz)}
                   >
-                    <span className={`text-white font-bold ${isNewest ? 'text-2xl' : 'text-xl'}`}>▶</span>
+                    {nextSet ? (
+                      <>
+                        <span className={`text-white font-bold ${isNewest ? 'text-2xl' : 'text-xl'}`}>▶</span>
+                        <span className={`text-white text-xs mt-1`}>{nextSet}</span>
+                      </>
+                    ) : (
+                      <span className={`text-white font-bold ${isNewest ? 'text-lg' : 'text-sm'}`}>✓</span>
+                    )}
                   </div>
+                </div>
+
+                <div className="text-center mt-2">
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    {completedSets}/{numSegments} completed
+                  </p>
                 </div>
               </div>
             );
