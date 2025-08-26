@@ -1,99 +1,87 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { formatOption } from '../utils/formatOption';
-import { formatQuestion } from '../utils/formatOption'; // Optional based on usage
 
 export default function ExampleQuiz({ onComplete }) {
   const [examples, setExamples] = useState([]);
   const [currentExampleIndex, setCurrentExampleIndex] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [currentPhase, setCurrentPhase] = useState('');
+  const [currentSetName, setCurrentSetName] = useState('');
 
   useEffect(() => {
-    const rawData = localStorage.getItem('adaptive_quiz');
-    if (!rawData) {
-      console.error('adaptive_quiz not found in localStorage');
-      onComplete(); // Treat as no examples
-      return;
-    }
-
-    try {
-      const parsed = JSON.parse(rawData);
-      const sets = Object.values(parsed.sets_data || {}).flat();
-
-      // Correctly extract examples from each example-entry's internal .examples array
-      const foundExamples = sets
-        .filter((item) => item.type === 'example' && Array.isArray(item.examples))
-        .flatMap((item) =>
-          item.examples.map((ex) => ({
-            ...ex,
-            kanji: item.kanji || item._id,
-            onyomi: item.onyomi || [],
-            kunyomi: item.kunyomi || [],
-          }))
-        );
-
-      if (foundExamples.length === 0) {
-        onComplete(); // No examples, continue to quiz
-      } else {
-        setExamples(foundExamples);
+    const loadExamples = () => {
+      const rawData = localStorage.getItem('current_set_quiz');
+      const phaseData = localStorage.getItem('current_phase');
+      if (!rawData || !phaseData) {
+        onComplete();
+        return;
       }
-    } catch (err) {
-      console.error('Failed to parse adaptive_quiz data:', err);
-      onComplete();
-    } finally {
-      setLoading(false);
-    }
+
+      try {
+        const parsed = JSON.parse(rawData);
+        const { phase } = JSON.parse(phaseData);
+        const setData = parsed.set_data || [];
+        
+        setCurrentPhase(phase);
+        setCurrentSetName(parsed.current_set || '');
+
+        const filteredExamples = setData
+          .filter(item => item.type === 'example')
+          .filter(item => {
+            if (phase === 'kanji') {
+              return item.kanji && (item.onyomi || item.kunyomi);
+            } else {
+              return item.word && item.furigana;
+            }
+          });
+
+        setExamples(filteredExamples);
+      } catch (err) {
+        console.error('Error loading examples:', err);
+        onComplete();
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadExamples();
   }, [onComplete]);
 
+  const getCurrentExample = () => {
+    return examples[currentExampleIndex];
+  };
+
   const handleNext = () => {
-    const isLast = currentExampleIndex === examples.length - 1;
-    if (isLast) {
-      onComplete(); // Notify parent to load quiz
+    if (currentExampleIndex === examples.length - 1) {
+      onComplete();
     } else {
-      setCurrentExampleIndex((prev) => prev + 1);
+      setCurrentExampleIndex(prev => prev + 1);
     }
   };
 
-  if (loading) return <p className="p-4 text-center">Loading examples...</p>;
-  if (examples.length === 0) return null;
+  const renderKanjiExample = (example) => {
+    const kanji = example.kanji;
+    const selected = example.reading;
 
-  const example = examples[currentExampleIndex];
-  const kanji = example.kanji || example._id;
-  const selected = example.reading;
+    // Create options from onyomi and kunyomi
+    const options = [];
+    if (example.onyomi?.length) {
+      options.push(...example.onyomi.map((r) => ({ value: r, label: `Onyomi: ${r}` })));
+    }
+    if (example.kunyomi?.length) {
+      options.push(...example.kunyomi.map((r) => ({ value: r, label: `Kunyomi: ${r}` })));
+    }
 
-  const options = [];
-
-  if (example.onyomi?.length) {
-    options.push(...example.onyomi.map((r) => ({ value: r, label: `Onyomi: ${r}` })));
-  }
-
-  if (example.kunyomi?.length) {
-    options.push(...example.kunyomi.map((r) => ({ value: r, label: `Kunyomi: ${r}` })));
-  }
-
-  return (
-    
-    <div className="min-h-screen flex flex-col items-center justify-start px-4 pt-10 pb-40 text-black dark:text-white">
-      <div>
-        <h1 className='font-bold text-2xl text-center flex-col mb-4'>
-        Adaptive Quiz Section.
-        </h1>
-        <h2 className='font-medium text-large text-center flex-col mb-4'>
-            Kindly have a look at the sample questions.
-        </h2>
-      </div>
-      <div className="w-full max-w-xl rounded-xl shadow-md border border-[#FF5274] dark:border-[#F66538] bg-white dark:bg-[#2F2F2F] p-6 mt-8">
-        <h2 className="text-xl font-bold mb-2 text-center">
-          Example {currentExampleIndex + 1} of {examples.length}
-        </h2>
-
+    return (
+      <>
         <p className="text-center text-lg font-medium mb-4">
-          <span className="font-bold">Kanji:</span> {kanji}
+          <span className="font-bold">Kanji:</span> <span className="text-3xl">{kanji}</span>
         </p>
 
         <div className="text-base md:text-lg leading-relaxed mb-4">
           <p><span className="font-bold">Sentence:</span> {example.sentence}</p>
+          <p><span className="font-bold">Hiragana:</span> {example.sentence_hiragana}</p>
           <p><span className="font-bold">Translation:</span> {example.translation}</p>
           {example.explanation && (
             <p className="mt-2 text-sm italic text-gray-600 dark:text-gray-200">
@@ -116,8 +104,58 @@ export default function ExampleQuiz({ onComplete }) {
             </div>
           ))}
         </div>
+      </>
+    );
+  };
+
+  const renderVocabExample = (example) => {
+    return (
+      <>
+        <p className="text-center text-lg font-medium mb-4">
+          <span className="font-bold">Word:</span> <span className="text-2xl">{example.word}</span>
+        </p>
+        
+        <p className="text-center text-lg font-medium mb-4">
+          <span className="font-bold">Reading:</span> <span className="text-xl">{example.furigana}</span>
+        </p>
+
+        <div className="text-base md:text-lg leading-relaxed mb-4">
+          <p><span className="font-bold">Sentence:</span> {example.sentence}</p>
+          <p><span className="font-bold">Hiragana:</span> {example.furigana}</p>
+          <p><span className="font-bold">Translation:</span> {example.translation}</p>
+        </div>
+
+        <div className="p-4 bg-blue-50 dark:bg-blue-900 rounded-lg border-l-4 border-blue-500">
+          <p className="text-sm text-blue-800 dark:text-blue-200">
+            <span className="font-bold">Vocabulary Focus:</span> This example demonstrates the usage of <strong>{example.word}</strong> ({example.furigana}) in context.
+          </p>
+        </div>
+      </>
+    );
+  };
+
+  if (loading) return <p className="p-4 text-center">Loading examples...</p>;
+  
+  const example = getCurrentExample();
+  
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-start px-4 pt-10 pb-40 text-black dark:text-white">
+      {/* Header */}
+      <div className="w-full max-w-xl text-center mb-6">
+        <h1 className="font-bold text-2xl mb-2">
+          {currentSetName.toUpperCase()} - Sample Questions
+        </h1>
+        <h2 className="font-medium text-lg mb-2">
+          {currentPhase === 'kanji' ? 'Kanji Examples' : 'Vocabulary Examples'}
+        </h2>
       </div>
 
+      {/* Example Content */}
+      <div className="w-full max-w-xl rounded-xl shadow-md border border-[#FF5274] dark:border-[#F66538] bg-white dark:bg-[#2F2F2F] p-6">
+        {currentPhase === 'kanji' ? renderKanjiExample(example) : renderVocabExample(example)}
+      </div>
+
+      {/* Navigation Button */}
       <button
         onClick={handleNext}
         className="fixed bottom-4 w-[90%] max-w-xl px-6 py-4 text-lg font-bold rounded-lg bg-[#FF5274] dark:bg-[#F66538] text-white hover:opacity-90 transition-all"
