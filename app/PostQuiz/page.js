@@ -33,79 +33,56 @@ export default function PostQuizPage() {
     }
   }, []);
 
-useEffect(() => {
-  const sendAdaptiveQuizData = async () => {
-    const quizData = localStorage.getItem('adaptive_quiz');
-    const responseData = localStorage.getItem('adaptive_quiz_responses');
+  useEffect(() => {
+    const sendAdaptiveQuizData = async () => {
+      const currentSetData = localStorage.getItem('current_set_quiz');
+      const responseData = localStorage.getItem('adaptive_quiz_responses');
 
-    if (!quizData || !responseData) return;
+      if (!currentSetData || !responseData) return;
 
-    try {
-      const parsedQuiz = JSON.parse(quizData);
-      const parsedResponses = JSON.parse(responseData);
-      const { quiz_id, sets_data } = parsedQuiz;
-      const { responses } = parsedResponses;
+      try {
+        const parsedSet = JSON.parse(currentSetData);
+        const parsedResponses = JSON.parse(responseData);
+        const { quiz_id, current_set, quiz_id_internal } = parsedSet;
+        const { responses } = parsedResponses;
 
-      // 🔹 Build all sets in one payload
-      const setsPayload = Object.entries(sets_data).map(([setName, items]) => {
-        const questionIds = items
-          .filter(i => i.type === 'question')
-          .map(i => i._id);
+        // Build payload for current set only
+        const setPayload = {
+          quiz_id,
+          sets: [{
+            set_name: current_set,
+            response: responses.map(r => ({ 
+              question_id: r.q_id, 
+              correct: r.correct 
+            }))
+          }]
+        };
 
-        const matchedResponses = responses
-          .filter(r => questionIds.includes(r.q_id))
-          .map(r => ({ question_id: r.q_id, correct: r.correct }));
-
-        return { set_name: setName, response: matchedResponses };
-      }).filter(set => set.response.length > 0);
-
-      if (setsPayload.length === 0) return;
-
-      const payload = { quiz_id, sets: setsPayload };
-
-      // 🔹 Single API call
-      const res = await authFetch(
-        `${process.env.NEXT_PUBLIC_API_ADAPT_LEARN}/adapt_evaluate`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        }
-      );
-
-      if (res.ok) {
-        console.log("✅ Submitted all sets in one go");
-
-        // ✅ Update streak
-        const today = dayjs().format('YYYY-MM-DD');
-        const streakRes = await authFetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/update_streak?date=${today}`,
-          { method: 'PUT' }
+        const res = await authFetch(
+          `${process.env.NEXT_PUBLIC_API_ADAPT_LEARN}/adapt_evaluate`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(setPayload),
+          }
         );
 
-        if (!streakRes.ok) {
-          console.error('Streak API request failed:', streakRes.statusText);
-          return;
-        }
+        if (res.ok) {
+          // Mark this set as completed in SetProgressManager
+          SetProgressManager.markSetCompleted(quiz_id_internal, current_set);
+          console.log(`✅ Completed set ${current_set}`);
 
-        const streakData = await streakRes.json();
-        if (streakData.updated) {
-          console.log('✅ Streak updated successfully via API.');
-          const localStreaks = JSON.parse(localStorage.getItem('user_streaks') || '{}');
-          localStreaks[today] = 'complete';
-          localStorage.setItem('user_streaks', JSON.stringify(localStreaks));
+          // Update streak
+          const today = dayjs().format('YYYY-MM-DD');
+          await updateStreak(today);
         }
-      } else {
-        console.error("❌ Failed to submit quiz:", await res.text());
+      } catch (err) {
+        console.error('Error submitting set data:', err);
       }
-    } catch (err) {
-      console.error('Error submitting adaptive quiz data or updating streak:', err);
-    }
-  };
+    };
 
-  sendAdaptiveQuizData();
-}, []);
-
+    sendAdaptiveQuizData();
+  }, []);
 
   useEffect(() => {
     const match = window.matchMedia('(prefers-color-scheme: dark)');
@@ -128,7 +105,9 @@ useEffect(() => {
         </div>
         <div className="text-center text-black dark:text-white">
           <h1 className="text-3xl font-bold mt-4">よくできました</h1>
-          <p className="text-md mt-1">Well done</p>
+          <p className="text-md mt-1">
+            Set {JSON.parse(localStorage.getItem('current_set_quiz'))?.current_set} Completed!
+          </p>
         </div>
         <ProgressCard correct={correct} incorrect={incorrect} />
 
