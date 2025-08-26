@@ -1,12 +1,12 @@
 'use client';
-
+// AdaptiveQuiz.js for Sets questions
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import QuizQuestion from './QuizQuestion';
 import ProgressBar from './ProgressBar';
 import { formatOption } from '../utils/formatOption';
 
-export default function AdaptiveQuizPageContent() {
+export default function AdaptiveQuizPageContent({ onComplete }) {
   const router = useRouter();
 
   const [questions, setQuestions] = useState([]);
@@ -34,32 +34,40 @@ export default function AdaptiveQuizPageContent() {
   };
 
   useEffect(() => {
-    const loadAdaptiveQuestions = () => {
-      const rawData = localStorage.getItem('adaptive_quiz');
-      if (!rawData) {
-        console.error('adaptive_quiz not found in localStorage');
+    const loadQuestions = () => {
+      const currentSetData = localStorage.getItem('current_set_quiz');
+      const phaseData = localStorage.getItem('current_phase');
+      if (!currentSetData || !phaseData) {
         setLoading(false);
         return;
       }
 
       try {
-        const parsed = JSON.parse(rawData);
-        const setsData = parsed.sets_data || {};
+        const parsedSetData = JSON.parse(currentSetData);
+        const { phase } = JSON.parse(phaseData);
+        
+        const questions = parsedSetData.set_data
+          .filter(item => item.type === 'question')
+          .filter(item => {
+            // Filter questions based on current phase
+            if (phase === 'kanji') {
+              return item.tags?.includes('kanji');
+            } else {
+              return item.tags?.includes('vocabulary');
+            }
+          });
 
-        const allQuestions = Object.values(setsData)
-          .flat()
-          .filter((item) => item.type === 'question');
-
-        setQuestions(allQuestions);
-        setOriginalQuestions(allQuestions);
+        const shuffledQuestions = [...questions].sort(() => Math.random() - 0.5);
+        setQuestions(shuffledQuestions);
+        setOriginalQuestions(shuffledQuestions);
       } catch (err) {
-        console.error('Error parsing adaptive_quiz:', err);
+        console.error('Error parsing quiz data:', err);
       } finally {
         setLoading(false);
       }
     };
 
-    loadAdaptiveQuestions();
+    loadQuestions();
   }, []);
 
   const handleOptionClick = (option) => {
@@ -151,9 +159,8 @@ export default function AdaptiveQuizPageContent() {
       timestamp: Date.now(),
       responses: finalResponses,
     };
-
     localStorage.setItem('adaptive_quiz_responses', JSON.stringify(quizResult));
-    router.push('/PostQuiz');
+    onComplete();
   };
 
   if (loading) return <p className="p-4 text-center">Loading...</p>;
