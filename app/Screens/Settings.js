@@ -15,13 +15,16 @@ import {
   Music,
   ShieldCheck,
   LogOut,
-  ArrowLeft
+  ArrowLeft,
+  Target
 } from 'lucide-react';
+import TargetModal from '../common_components/TargetModal';
 
 export default function SettingsPage() {
   const [cherryBlossom, setCherryBlossom] = useState(false);
   const [themeDark, setThemeDark] = useState(false);
   const [soundEffects, setSoundEffects] = useState(true);
+  const [openTargetModal, setOpenTargetModal] = useState(false);
 
   const router = useRouter();
 
@@ -41,12 +44,21 @@ export default function SettingsPage() {
     { label: 'Subscription Settings', href: '/subscription-settings', icon: <Crown size={20} /> },
     { label: 'Payment Settings', href: '/payment-settings', icon: <CreditCard size={20} /> },
     { label: 'Change Password', href: '/change-password', icon: <KeyRound size={20} /> },
+    { 
+      label: 'Set Target', 
+      action: () => setOpenTargetModal(true), 
+      icon: <Target size={20} />,
+      isButton: true 
+    },
     { label: 'App Guide', href: '/app-guide', icon: <BookOpen size={20} /> },
     { label: 'Privacy Policy', href: '/privacy-policy', icon: <ShieldCheck size={20} /> },
   ];
 
   return (
     <div className="min-h-screen px-6 py-6 font-bold bg-white dark:bg-[#333333] text-black flex flex-col justify-between font-sans">
+      {/* Target Modal */}
+      {openTargetModal && <TargetModal setOpenModal={setOpenTargetModal} />}
+
       {/* Back Button */}
       <div>
         <Link href="/" className="text-sm flex items-center font-medium text-black dark:text-white mb-6">
@@ -59,15 +71,24 @@ export default function SettingsPage() {
 
         {/* Static Links */}
         <ul className="space-y-4">
-          {staticLinks.map(({ label, href, icon }) => (
+          {staticLinks.map(({ label, href, icon, action, isButton }) => (
             <li key={label}>
-              <Link href={href} className="flex items-center text-md dark:text-white font-bold transition">
-                <span className="text-lg mr-4">{icon}</span>
-                {label}
-              </Link>
+              {isButton ? (
+                <button 
+                  onClick={action}
+                  className="flex items-center text-md dark:text-white font-bold transition hover:opacity-80 w-full text-left"
+                >
+                  <span className="text-lg mr-4">{icon}</span>
+                  {label}
+                </button>
+              ) : (
+                <Link href={href} className="flex items-center text-md dark:text-white font-bold transition">
+                  <span className="text-lg mr-4">{icon}</span>
+                  {label}
+                </Link>
+              )}
             </li>
           ))}
-
 
           {/* Logout */}
           <li className="flex items-center text-md font-bold text-[#ff4970] mt-4 dark:text-[#FF5E2C]">
@@ -91,4 +112,3 @@ export default function SettingsPage() {
     </div>
   );
 }
-
