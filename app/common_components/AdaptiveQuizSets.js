@@ -47,7 +47,7 @@ export default function AdaptiveQuizSets() {
   };
 
   return (
-    <div className="relative min-h-screen flex flex-col items-center w-screen py-8">
+    <div className="relative min-h-screen flex flex-col items-center w-screen bg-gray-100 dark:bg-[#2f2f2f] py-8">
       <CherryBlossomSnowfall isDarkMode={isDarkMode} />
 
       {/* Quiz List or Empty Message */}
