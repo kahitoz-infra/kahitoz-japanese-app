@@ -9,7 +9,11 @@ export default function SettingsGrammarModal({
   const [levels, setLevels] = useState([]);
   const [grammarSelectedLevels, setSelectedLevels] = useState([]);
   const [grammarBookMarkCheck, setGrammarBookMarkCheck] = useState(false);
-  const [grammarIncludeBookmarks, setGrammarIncludeBookMarks] = useState(true)
+  const [grammarIncludeBookmarks, setGrammarIncludeBookMarks] = useState(true);
+  const [cardLimit, setCardLimit] = useState(10);
+  const [customLimit, setCustomLimit] = useState("");
+  const [isRandomized, setIsRandomized] = useState(false);
+  const [sortBy, setSortBy] = useState("default");
 
   useEffect(() => {
     if (grammarBookMarkCheck) {
@@ -22,6 +26,9 @@ export default function SettingsGrammarModal({
     const savedSelected = localStorage.getItem("grammarSelectedLevels");
     const saveBookMark = localStorage.getItem("grammarBookMarkChecked");
     const includeBookMark = localStorage.getItem("grammarBookMarkInclude");
+    const savedCardLimit = localStorage.getItem("grammarCardLimit");
+    const savedRandomized = localStorage.getItem("grammarRandomized");
+    const savedSortBy = localStorage.getItem("grammarSortBy");
 
     if (localGrammarData) {
       const data = JSON.parse(localGrammarData);
@@ -39,6 +46,18 @@ export default function SettingsGrammarModal({
 
     if (includeBookMark !== null) {
       setGrammarIncludeBookMarks(includeBookMark === "true");
+    }
+
+    if (savedCardLimit !== null) {
+      setCardLimit(savedCardLimit === "all" ? "all" : parseInt(savedCardLimit));
+    }
+
+    if (savedRandomized !== null) {
+      setIsRandomized(savedRandomized === "true");
+    }
+
+    if (savedSortBy !== null) {
+      setSortBy(savedSortBy);
     }
   }, []);
 
@@ -69,8 +88,35 @@ export default function SettingsGrammarModal({
       console.log("After level filter:", parsedData.length);
     }
 
-    console.log("Final parsed data:", parsedData);
+    // Apply sorting
+    if (sortBy === "level") {
+      parsedData.sort((a, b) => {
+        const levelOrder = { "N5": 1, "N4": 2, "N3": 3, "N2": 4, "N1": 5 };
+        return (levelOrder[a.level] || 999) - (levelOrder[b.level] || 999);
+      });
+      console.log("After level sorting");
+    } else if (sortBy === "bookmarked") {
+      parsedData.sort((a, b) => {
+        if (a.marked && !b.marked) return -1;
+        if (!a.marked && b.marked) return 1;
+        return 0;
+      });
+      console.log("After bookmark sorting");
+    }
 
+    // Apply randomization if enabled (after sorting, if both are enabled)
+    if (isRandomized) {
+      parsedData = [...parsedData].sort(() => Math.random() - 0.5);
+      console.log("After randomization");
+    }
+
+    // Apply card limit (if not "All")
+    if (cardLimit !== "all") {
+      parsedData = parsedData.slice(0, parseInt(cardLimit));
+      console.log("After card limit:", parsedData.length);
+    }
+
+    console.log("Final parsed data:", parsedData);
     return parsedData;
   };
 
@@ -129,7 +175,8 @@ export default function SettingsGrammarModal({
             <label className="block mb-2">Sort By:</label>
             <select
               className="w-full p-2 border rounded dark:bg-[#292b2d]"
-              defaultValue="level"
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
             >
               <option value="default">Default</option>
               <option value="level">By Level</option>
@@ -145,13 +192,17 @@ export default function SettingsGrammarModal({
               onChange={(e) => setGrammarBookMarkCheck(e.target.checked)}
               className="mr-2"
             />
-
             <label>Show Bookmarked Only</label>
           </div>
 
           {/* Randomized */}
           <div className="flex items-center">
-            <input type="checkbox" className="mr-2" />
+            <input 
+              type="checkbox" 
+              checked={isRandomized}
+              onChange={(e) => setIsRandomized(e.target.checked)}
+              className="mr-2" 
+            />
             <label>Randomize Order</label>
           </div>
 
@@ -159,19 +210,33 @@ export default function SettingsGrammarModal({
           <div>
             <label className="block mb-2">Card Limit:</label>
             <div className="flex gap-2 mb-2">
-              {[5, 10, 15].map((n, i) => (
+              {[5, 10, 15].map((n) => (
                 <button
                   key={n}
                   className={`px-3 py-1 rounded ${
-                    n === 10
+                    cardLimit === n
                       ? "bg-[#de3163] dark:bg-[#FF6600] text-white"
                       : "bg-gray-200 dark:bg-gray-700"
                   }`}
+                  onClick={() => {
+                    setCardLimit(n);
+                    setCustomLimit(""); // Clear custom input
+                  }}
                 >
                   {n}
                 </button>
               ))}
-              <button className="px-3 py-1 rounded bg-gray-200 dark:bg-gray-700">
+              <button 
+                className={`px-3 py-1 rounded ${
+                  cardLimit === "all"
+                    ? "bg-[#de3163] dark:bg-[#FF6600] text-white"
+                    : "bg-gray-200 dark:bg-gray-700"
+                }`}
+                onClick={() => {
+                  setCardLimit("all");
+                  setCustomLimit(""); // Clear custom input
+                }}
+              >
                 All
               </button>
             </div>
@@ -179,9 +244,18 @@ export default function SettingsGrammarModal({
               <input
                 type="number"
                 placeholder="Custom"
+                value={customLimit}
+                onChange={(e) => setCustomLimit(e.target.value)}
                 className="flex-1 p-2 border rounded dark:bg-[#292b2d]"
               />
-              <button className="px-3 py-2 bg-[#de3163] dark:bg-[#FF6600] text-white rounded">
+              <button 
+                className="px-3 py-2 bg-[#de3163] dark:bg-[#FF6600] text-white rounded"
+                onClick={() => {
+                  if (customLimit && parseInt(customLimit) > 0) {
+                    setCardLimit(parseInt(customLimit));
+                  }
+                }}
+              >
                 Set
               </button>
             </div>
@@ -192,6 +266,7 @@ export default function SettingsGrammarModal({
             <button
               className="px-4 py-2 bg-[#de3163] dark:bg-[#FF6600] text-white rounded"
               onClick={() => {
+                // Save all settings to localStorage
                 localStorage.setItem(
                   "grammarSelectedLevels",
                   JSON.stringify(grammarSelectedLevels)
@@ -200,32 +275,19 @@ export default function SettingsGrammarModal({
                   "grammarBookMarkChecked",
                   grammarBookMarkCheck.toString()
                 );
-                setBookmark(grammarBookMarkCheck);
-
                 localStorage.setItem(
                   "grammarBookMarkInclude",
                   grammarIncludeBookmarks.toString()
-                )
+                );
+                localStorage.setItem("grammarCardLimit", cardLimit.toString());
+                localStorage.setItem("grammarRandomized", isRandomized.toString());
+                localStorage.setItem("grammarSortBy", sortBy);
+
+                setBookmark(grammarBookMarkCheck);
 
                 const filtered = applyFiltersAndReturnData();
                 setFilteredData(filtered);
 
-                const localGrammarData = localStorage.getItem("cacheGrammar");
-                if (localGrammarData) {
-                  let parsed = JSON.parse(localGrammarData);
-
-                  // Filter by selected levels (if any)
-                  if (grammarSelectedLevels.length > 0) {
-                    parsed = parsed.filter((item) =>
-                      grammarSelectedLevels.includes(item.level)
-                    );
-                  }
-
-                  // Filter by bookmark if checked
-                  if (grammarBookMarkCheck) {
-                    parsed = parsed.filter((item) => item.bookmarked === true);
-                  }
-                }
                 localStorage.setItem(
                   "filteredGrammarData",
                   JSON.stringify(filtered)
