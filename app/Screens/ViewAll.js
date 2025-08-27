@@ -14,7 +14,6 @@ import SettingsVocabModal from "../common_components/SettingsVocabModal";
 import SettingsKanjiModal from "../common_components/SettingsKanjiModal";
 import SettingsGrammarModal from "../common_components/SettingsGrammarModal";
 import SettingsVerbModal from "../common_components/SettingsVerbModal";
-import TargetModal from "../common_components/TargetModal";
 
 import {
   fetch_vocab_data,
@@ -31,7 +30,6 @@ export default function ViewAll() {
   const [openKanjiModal, setOpenKanjiModal] = useState(false);
   const [openGrammarModal, setOpenGrammarModal] = useState(false);
   const [openVerbModal, setOpenVerbModal] = useState(false);
-  const [openTargetModal, setOpenTargetModal] = useState(false);
 
   const [categoryState, setCategoryState] = useState({
     Vocabulary: { list: [], cache: [], index: 0 },
@@ -190,9 +188,7 @@ export default function ViewAll() {
         </div>
       </header>
 
-      {/* 🎯 Modals */}
-      {openTargetModal && <TargetModal setOpenModal={setOpenTargetModal} />}
-
+      {/* Modals */}
       {openVocabModal && (
         <SettingsVocabModal
           setOpenModal={setOpenVocabModal}
@@ -254,14 +250,6 @@ export default function ViewAll() {
                 else if (selectedCategory === "Verbs") setOpenVerbModal(true);
               }}
             />
-            <div className="flex gap-2">
-              <button
-                onClick={() => setOpenTargetModal(true)}
-                className="px-3 py-1 mb-2 rounded-full text-black font-medium transition bg-[#FFB8C6] dark:bg-[#FF9D7E] hover:opacity-90"
-              >
-                Set Target
-              </button>
-            </div>
           </div>
 
           <TopBar onSelect={setSelectedCategory} />
