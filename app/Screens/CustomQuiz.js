@@ -5,7 +5,7 @@ import CircularButton from "../common_components/CircularButton";
 import AdaptiveQuizSets from '../common_components/AdaptiveQuizSets';
 
 export default function CustomQuizPage() {
-  const [activeTab, setActiveTab] = useState('custom');
+  const [activeTab, setActiveTab] = useState('adaptive');
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-100 dark:bg-[#2f2f2f] relative">
@@ -15,16 +15,6 @@ export default function CustomQuizPage() {
   {/* Background container */}
   <div className="bg-[#f5f5f5] dark:bg-[#2F2F2F] p-2 rounded-lg flex gap-4">
         <button
-          onClick={() => setActiveTab('custom')}
-          className={`px-6 py-2 rounded-full ${
-            activeTab === 'custom'
-              ? 'bg-[#FF5274] dark:bg-[#F66538] text-white font-bold'
-              : 'bg-gray-200 dark:bg-gray-500 text-black font-bold dark:text-gray-200'
-          }`}
-        >
-          Custom Quiz
-        </button>
-        <button
           onClick={() => setActiveTab('adaptive')}
           className={`px-6 py-2 rounded-full ${
             activeTab === 'adaptive'
@@ -33,6 +23,16 @@ export default function CustomQuizPage() {
           }`}
         >
           Lessons
+        </button>
+        <button
+          onClick={() => setActiveTab('custom')}
+          className={`px-6 py-2 rounded-full ${
+            activeTab === 'custom'
+              ? 'bg-[#FF5274] dark:bg-[#F66538] text-white font-bold'
+              : 'bg-gray-200 dark:bg-gray-500 text-black font-bold dark:text-gray-200'
+          }`}
+        >
+          Custom Quiz
         </button>
         </div>
       </div>
