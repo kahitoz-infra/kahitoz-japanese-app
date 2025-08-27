@@ -132,16 +132,6 @@ useEffect(() => {
         </div>
         <ProgressCard correct={correct} incorrect={incorrect} />
 
-        
-         <div>
-          <button
-            onClick={() => router.push('/AdaptiveSets')}
-            className="text-sm px-4 py-4 font-bold bg-[#FF3A60] dark:bg-white text:white dark:text-black rounded-2xl"
-          >
-            View Adaptive Quiz Sets
-          </button>
-        </div>
-
         <div>
           <button
             onClick={() => router.push('/')}
