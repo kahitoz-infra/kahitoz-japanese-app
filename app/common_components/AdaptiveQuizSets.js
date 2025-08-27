@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import CherryBlossomSnowfall from "./CherryBlossomSnowfall";
+import QuickStartButton from "@/app/common_components/GenerateQuizButton";
 
 // --- Main Adaptive Quiz Sets Component ---
 export default function AdaptiveQuizSets() {
@@ -48,7 +49,7 @@ export default function AdaptiveQuizSets() {
   return (
     <div className="relative min-h-screen flex flex-col items-center w-screen py-8">
       <CherryBlossomSnowfall isDarkMode={isDarkMode} />
-      
+
       {/* Quiz List or Empty Message */}
       {quizzes.length === 0 ? (
         <div className="text-center">
@@ -56,7 +57,7 @@ export default function AdaptiveQuizSets() {
           <p className="text-gray-500 dark:text-gray-400 mt-2">Generate one to get started!</p>
         </div>
       ) : (
-        <div className="mt-8 grid grid-cols-1 gap-y-16 w-full max-w-4xl px-4">
+        <div className="mt-4 grid grid-cols-1 gap-y-16 w-full max-w-4xl px-4">
           {quizzes.map((quiz, index) => {
             const isNewest = index === quizzes.length - 1;
             const progress = Math.min(((index + 1) * 25), 100);
@@ -91,6 +92,11 @@ export default function AdaptiveQuizSets() {
           })}
         </div>
       )}
+
+      {/* 🚀 Floating Quick Start Button */}
+      <div className="fixed bottom-32 right-6 z-50">
+        <QuickStartButton />
+      </div>
     </div>
   );
 }
