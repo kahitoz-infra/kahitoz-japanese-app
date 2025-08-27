@@ -1,79 +1,112 @@
 "use client";
 import React, { useState, useEffect } from "react";
 
-export default function SettingsVocabModal({
+export default function SettingsVerbModal({
   setOpenModal,
   setFilteredData,
   setBookmark,
 }) {
   const [levels, setLevels] = useState([]);
-  const [vocabSelectedLevels, setSelectedLevels] = useState([]);
-  const [vocabBookMarkCheck, setVocabBookMarkCheck] = useState(false);
-  const [vocabIncludeBookmarks, setVocabIncludeBookMarks] = useState(true)
+  const [verbSelectedLevels, setSelectedLevels] = useState([]);
+  const [verbBookMarkCheck, setVerbBookMarkCheck] = useState(false);
+  const [verbIncludeBookmarks, setVerbIncludeBookMarks] = useState(true);
+  const [cardLimit, setCardLimit] = useState(null);
+  const [sortOrder, setSortOrder] = useState("default");
+  const [randomize, setRandomize] = useState(false);
 
+  // keep "include bookmarks" and "show only bookmarks" mutually exclusive
   useEffect(() => {
-    if (vocabBookMarkCheck) {
-      setVocabIncludeBookMarks(false);
+    if (verbBookMarkCheck) {
+      setVerbIncludeBookMarks(false);
     }
-  }, [vocabBookMarkCheck]);
+  }, [verbBookMarkCheck]);
 
+  // load settings from localStorage
   useEffect(() => {
-    const localVocabData = localStorage.getItem("cacheVocab");
-    const savedSelected = localStorage.getItem("vocabSelectedLevels");
-    const saveBookMark = localStorage.getItem("vocabBookMarkChecked");
-    const includeBookMark = localStorage.getItem("vocabBookMarkInclude");
+    const localVerbData = localStorage.getItem("cacheVerb");
+    const savedSelected = localStorage.getItem("verbSelectedLevels");
+    const saveBookMark = localStorage.getItem("verbBookMarkChecked");
+    const includeBookMark = localStorage.getItem("verbBookMarkInclude");
+    const savedCardLimit = localStorage.getItem("verbCardLimit");
+    const savedSort = localStorage.getItem("verbSortOrder");
+    const savedRandom = localStorage.getItem("verbRandomize");
 
-    if (localVocabData) {
-      const data = JSON.parse(localVocabData);
+    if (localVerbData) {
+      const data = JSON.parse(localVerbData);
       const uniqueLevels = [...new Set(data.map((item) => item.level))];
       setLevels(uniqueLevels);
     }
-
-    if (savedSelected) {
-      setSelectedLevels(JSON.parse(savedSelected));
-    }
-
-    if (saveBookMark !== null) {
-      setVocabBookMarkCheck(saveBookMark === "true");
-    }
-
-    if (includeBookMark !== null) {
-      setVocabIncludeBookMarks(includeBookMark === "true");
-    }
+    if (savedSelected) setSelectedLevels(JSON.parse(savedSelected));
+    if (saveBookMark !== null) setVerbBookMarkCheck(saveBookMark === "true");
+    if (includeBookMark !== null)
+      setVerbIncludeBookMarks(includeBookMark === "true");
+    if (savedCardLimit !== null) setCardLimit(Number(savedCardLimit));
+    if (savedSort) setSortOrder(savedSort);
+    if (savedRandom !== null) setRandomize(savedRandom === "true");
   }, []);
 
+  // main filter/sort/limit function
   const applyFiltersAndReturnData = () => {
-    const localVocabData = localStorage.getItem("cacheVocab");
-    if (!localVocabData) return [];
+    const localVerbData = localStorage.getItem("cacheVerb");
+    if (!localVerbData) return [];
 
-    let parsedData = JSON.parse(localVocabData);
-    console.log("Initial data count:", parsedData.length);
+    let parsedData = JSON.parse(localVerbData);
 
-    // If bookmark filter is checked
-    if (vocabBookMarkCheck) {
+    // bookmark filters
+    if (verbBookMarkCheck) {
       parsedData = parsedData.filter((item) => item.marked === true);
-      console.log("After bookmark filter:", parsedData.length);
-    } else {
-      // If "Include Bookmarks" is NOT checked, exclude bookmarked items
-      if (!vocabIncludeBookmarks) {
-        parsedData = parsedData.filter((item) => !item.marked);
-        console.log("After excluding bookmarks:", parsedData.length);
+    } else if (!verbIncludeBookmarks) {
+      parsedData = parsedData.filter((item) => !item.marked);
+    }
+
+    // level filter
+    if (verbSelectedLevels.length > 0) {
+      parsedData = parsedData.filter((item) =>
+        verbSelectedLevels.includes(item.level)
+      );
+    }
+
+    // sort
+    if (sortOrder === "level") {
+      parsedData.sort((a, b) => (a.level > b.level ? 1 : -1));
+    } else if (sortOrder === "bookmarked") {
+      parsedData.sort((a, b) => (b.marked === true) - (a.marked === true));
+    }
+
+    // randomize
+    if (randomize) {
+      for (let i = parsedData.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [parsedData[i], parsedData[j]] = [parsedData[j], parsedData[i]];
       }
     }
 
-    // Apply level filtering if any level is selected
-    if (vocabSelectedLevels.length > 0) {
-      parsedData = parsedData.filter((item) =>
-        vocabSelectedLevels.includes(item.level)
-      );
-      console.log("After level filter:", parsedData.length);
+    // limit
+    if (cardLimit && cardLimit > 0) {
+      parsedData = parsedData.slice(0, cardLimit);
     }
 
-    console.log("Final parsed data:", parsedData);
-
-    console.log("This is the parsed data -", parsedData);
-
     return parsedData;
+  };
+
+  const handleApply = () => {
+    localStorage.setItem(
+      "verbSelectedLevels",
+      JSON.stringify(verbSelectedLevels)
+    );
+    localStorage.setItem("verbBookMarkChecked", verbBookMarkCheck.toString());
+    localStorage.setItem("verbBookMarkInclude", verbIncludeBookmarks.toString());
+    localStorage.setItem("verbCardLimit", cardLimit ?? "");
+    localStorage.setItem("verbSortOrder", sortOrder);
+    localStorage.setItem("verbRandomize", randomize.toString());
+
+    setBookmark(verbBookMarkCheck);
+
+    const filtered = applyFiltersAndReturnData();
+    setFilteredData(filtered);
+    localStorage.setItem("filteredVerbData", JSON.stringify(filtered));
+
+    setOpenModal(false);
   };
 
   return (
@@ -92,7 +125,7 @@ export default function SettingsVocabModal({
             <label className="block mb-2">Filter by JLPT Level:</label>
             <div className="flex flex-wrap gap-2">
               {levels.map((lvl) => {
-                const isSelected = vocabSelectedLevels.includes(lvl);
+                const isSelected = verbSelectedLevels.includes(lvl);
                 return (
                   <button
                     key={lvl}
@@ -116,11 +149,13 @@ export default function SettingsVocabModal({
             </div>
           </div>
 
+          {/* Include Bookmarks */}
           <div className="flex items-center">
             <input
               type="checkbox"
-              checked={vocabIncludeBookmarks}
-              onChange={(e) => setVocabIncludeBookMarks(e.target.checked)}
+              checked={verbIncludeBookmarks}
+              onChange={(e) => setVerbIncludeBookMarks(e.target.checked)}
+              disabled={verbBookMarkCheck}
               className="mr-2"
             />
             <label>Include Bookmarks</label>
@@ -131,7 +166,8 @@ export default function SettingsVocabModal({
             <label className="block mb-2">Sort By:</label>
             <select
               className="w-full p-2 border rounded dark:bg-[#292b2d]"
-              defaultValue="level"
+              value={sortOrder}
+              onChange={(e) => setSortOrder(e.target.value)}
             >
               <option value="default">Default</option>
               <option value="level">By Level</option>
@@ -143,17 +179,21 @@ export default function SettingsVocabModal({
           <div className="flex items-center">
             <input
               type="checkbox"
-              checked={vocabBookMarkCheck}
-              onChange={(e) => setVocabBookMarkCheck(e.target.checked)}
+              checked={verbBookMarkCheck}
+              onChange={(e) => setVerbBookMarkCheck(e.target.checked)}
               className="mr-2"
             />
-
             <label>Show Bookmarked Only</label>
           </div>
 
           {/* Randomized */}
           <div className="flex items-center">
-            <input type="checkbox" className="mr-2" />
+            <input
+              type="checkbox"
+              checked={randomize}
+              onChange={(e) => setRandomize(e.target.checked)}
+              className="mr-2"
+            />
             <label>Randomize Order</label>
           </div>
 
@@ -161,19 +201,27 @@ export default function SettingsVocabModal({
           <div>
             <label className="block mb-2">Card Limit:</label>
             <div className="flex gap-2 mb-2">
-              {[5, 10, 15].map((n, i) => (
+              {[5, 10, 15].map((n) => (
                 <button
                   key={n}
                   className={`px-3 py-1 rounded ${
-                    n === 10
+                    cardLimit === n
                       ? "bg-[#de3163] dark:bg-[#FF6600] text-white"
                       : "bg-gray-200 dark:bg-gray-700"
                   }`}
+                  onClick={() => setCardLimit(n)}
                 >
                   {n}
                 </button>
               ))}
-              <button className="px-3 py-1 rounded bg-gray-200 dark:bg-gray-700">
+              <button
+                className={`px-3 py-1 rounded ${
+                  cardLimit === null
+                    ? "bg-[#de3163] dark:bg-[#FF6600] text-white"
+                    : "bg-gray-200 dark:bg-gray-700"
+                }`}
+                onClick={() => setCardLimit(null)}
+              >
                 All
               </button>
             </div>
@@ -182,8 +230,14 @@ export default function SettingsVocabModal({
                 type="number"
                 placeholder="Custom"
                 className="flex-1 p-2 border rounded dark:bg-[#292b2d]"
+                onChange={(e) =>
+                  setCardLimit(e.target.value ? Number(e.target.value) : null)
+                }
               />
-              <button className="px-3 py-2 bg-[#de3163] dark:bg-[#FF6600] text-white rounded">
+              <button
+                className="px-3 py-2 bg-[#de3163] dark:bg-[#FF6600] text-white rounded"
+                onClick={() => setCardLimit(cardLimit)}
+              >
                 Set
               </button>
             </div>
@@ -193,47 +247,7 @@ export default function SettingsVocabModal({
           <div className="flex justify-end mt-4">
             <button
               className="px-4 py-2 bg-[#de3163] dark:bg-[#FF6600] text-white rounded"
-              onClick={() => {
-                localStorage.setItem(
-                  "vocabSelectedLevels",
-                  JSON.stringify(vocabSelectedLevels)
-                );
-                localStorage.setItem(
-                  "vocabBookMarkChecked",
-                  vocabBookMarkCheck.toString()
-                );
-                setBookmark(vocabBookMarkCheck);
-
-                localStorage.setItem(
-                  "vocabBookMarkInclude",
-                  vocabIncludeBookmarks.toString()
-                )
-
-                const filtered = applyFiltersAndReturnData();
-                setFilteredData(filtered);
-
-                const localVocabData = localStorage.getItem("cacheVocab");
-                if (localVocabData) {
-                  let parsed = JSON.parse(localVocabData);
-
-                  // Filter by selected levels (if any)
-                  if (vocabSelectedLevels.length > 0) {
-                    parsed = parsed.filter((item) =>
-                      vocabSelectedLevels.includes(item.level)
-                    );
-                  }
-
-                  // Filter by bookmark if checked
-                  if (vocabBookMarkCheck) {
-                    parsed = parsed.filter((item) => item.bookmarked === true);
-                  }
-                }
-                localStorage.setItem(
-                  "filteredVocabData",
-                  JSON.stringify(filtered)
-                );
-                setOpenModal(false);
-              }}
+              onClick={handleApply}
             >
               Apply
             </button>
