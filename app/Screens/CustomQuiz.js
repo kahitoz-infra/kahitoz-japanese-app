@@ -32,7 +32,7 @@ export default function CustomQuizPage() {
               : 'bg-gray-200 dark:bg-gray-500 text-black font-bold dark:text-gray-200'
           }`}
         >
-          Custom Quiz
+          Customs
         </button>
         </div>
       </div>
