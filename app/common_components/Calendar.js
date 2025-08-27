@@ -5,6 +5,7 @@ import styles from './Calendar.module.css';
 import dayjs from 'dayjs';
 import Cookies from 'js-cookie';
 import Image from 'next/image';
+import { authFetch } from '../middleware';
 
 // Helper function to read a specific cookie by name
 const getCookie = (name) => {
@@ -38,18 +39,24 @@ const getMonthDays = (year, month) => {
 const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
 
 const getCachedData = () => {
-  const cached = localStorage.getItem('calendarCache');
-  if (!cached) return null;
+  try {
+    const cached = localStorage.getItem('calendarCache');
+    if (!cached) return null;
 
-  const { data, timestamp } = JSON.parse(cached);
-  const isExpired = Date.now() - timestamp > CACHE_DURATION;
+    const { data, timestamp } = JSON.parse(cached);
+    const isExpired = Date.now() - timestamp > CACHE_DURATION;
 
-  if (isExpired) {
+    if (isExpired) {
+      localStorage.removeItem('calendarCache');
+      return null;
+    }
+
+    return data;
+  } catch (error) {
+    // If localStorage is corrupted, remove it
     localStorage.removeItem('calendarCache');
     return null;
   }
-
-  return data;
 };
 
 export default function Calendar({ refreshKey = 0 }) {
@@ -84,22 +91,15 @@ export default function Calendar({ refreshKey = 0 }) {
       const timeout = setTimeout(() => {
         setError('Loading is taking longer than expected. Please refresh.');
         setLoading(false);
-      }, 5000);
-
-      const token = getCookie('auth_token');
-
-      if (!token) {
-        setError('You are not logged in.');
-        setLoading(false);
-        clearTimeout(timeout);
-        return;
-      }
+      }, 10000); // Increased timeout to 10 seconds
 
       try {
         const apiUrl = `${process.env.NEXT_PUBLIC_API_URL}/streak_info`;
-        const response = await fetch(apiUrl, {
+        
+        // Use authFetch instead of manual token handling
+        const response = await authFetch(apiUrl, {
+          method: 'GET',
           headers: {
-            'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
           },
         });
@@ -108,7 +108,7 @@ export default function Calendar({ refreshKey = 0 }) {
           if (response.status === 401) {
             handleLogout();   // auto logout
           } else {
-            // Don’t expose raw status to the user
+            // Don't expose raw status to the user
             setError('Could not load streak data.');
           }
           setStreakData({});
@@ -125,16 +125,26 @@ export default function Calendar({ refreshKey = 0 }) {
           setStreakData(transformedData);
           
           // Cache the complete calendar state
-          localStorage.setItem('calendarCache', JSON.stringify({
-            data: {
-              streakData: transformedData,
-            },
-            timestamp: Date.now()
-          }));
+          try {
+            localStorage.setItem('calendarCache', JSON.stringify({
+              data: {
+                streakData: transformedData,
+              },
+              timestamp: Date.now()
+            }));
+          } catch (storageError) {
+            // localStorage might be full or disabled, continue without caching
+            console.warn('Could not save to localStorage:', storageError);
+          }
         }
       } catch (e) {
         console.error('Failed to fetch streak data:', e);
-        setError('Could not load streak data.');
+        // Check if it's a network error
+        if (e.name === 'TypeError' && e.message.includes('fetch')) {
+          setError('Network error. Please check your internet connection.');
+        } else {
+          setError('Could not load streak data.');
+        }
       } finally {
         clearTimeout(timeout);
         setLoading(false);
@@ -177,8 +187,21 @@ export default function Calendar({ refreshKey = 0 }) {
       </div>
     );
   }
+
   if (error) {
-    return <div className={styles.calendar}></div>;
+    return (
+      <div className={styles.calendar}>
+        <div className="flex flex-col items-center justify-center py-8">
+          <p className="text-sm text-red-600 dark:text-red-400 text-center">{error}</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (
