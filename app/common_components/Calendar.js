@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import styles from './Calendar.module.css';
 import dayjs from 'dayjs';
 import Cookies from 'js-cookie';
 import Image from 'next/image';
+import { authFetch } from '../middleware';
 
 // Helper function to read a specific cookie by name
 const getCookie = (name) => {
@@ -23,8 +24,7 @@ const handleLogout = () => {
   window.location.href = "/"; // sends them to login page
 };
 
-
-
+// Memoize expensive calculations
 const getMonthDays = (year, month) => {
   const firstDay = dayjs(`${year}-${month}-01`);
   const startDay = firstDay.day() === 0 ? 6 : firstDay.day() - 1;
@@ -36,48 +36,84 @@ const getMonthDays = (year, month) => {
   return daysArray;
 };
 
+const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+
+const getCachedData = () => {
+  try {
+    const cached = localStorage.getItem('calendarCache');
+    if (!cached) return null;
+
+    const { data, timestamp } = JSON.parse(cached);
+    const isExpired = Date.now() - timestamp > CACHE_DURATION;
+
+    if (isExpired) {
+      localStorage.removeItem('calendarCache');
+      return null;
+    }
+
+    return data;
+  } catch (error) {
+    // If localStorage is corrupted, remove it
+    localStorage.removeItem('calendarCache');
+    return null;
+  }
+};
+
 export default function Calendar({ refreshKey = 0 }) {
   const today = dayjs();
   const [year, setYear] = useState(today.year());
   const [month, setMonth] = useState(today.month() + 1);
-  const [streakData, setStreakData] = useState({});
-  const [loading, setLoading] = useState(true);
+  const [streakData, setStreakData] = useState(() => {
+    const cachedData = getCachedData();
+    return cachedData?.streakData || {};
+  });
+  const [loading, setLoading] = useState(!getCachedData());
   const [error, setError] = useState(null);
+
+  // Memoize month days calculation
+  const daysInMonth = useMemo(() => getMonthDays(year, month), [year, month]);
+  const monthName = useMemo(() => dayjs(`${year}-${month}-01`).format('MMMM'), [year, month]);
 
   useEffect(() => {
     const fetchStreakData = async () => {
-      setLoading(true);
-      setError(null);
-
-      // 1. Get the authentication token from the cookies
-      const token = getCookie('auth_token'); // <-- This is the only line that changed
-
-      if (!token) {
-        setError('You are not logged in.');
+      // Check cache first
+      const cachedData = getCachedData();
+      if (cachedData) {
+        setStreakData(cachedData.streakData);
         setLoading(false);
         return;
       }
 
+      setLoading(true);
+      setError(null);
+
+      // Add loading timeout
+      const timeout = setTimeout(() => {
+        setError('Loading is taking longer than expected. Please refresh.');
+        setLoading(false);
+      }, 10000); // Increased timeout to 10 seconds
+
       try {
         const apiUrl = `${process.env.NEXT_PUBLIC_API_URL}/streak_info`;
-
-        const response = await fetch(apiUrl, {
+        
+        // Use authFetch instead of manual token handling
+        const response = await authFetch(apiUrl, {
+          method: 'GET',
           headers: {
-            'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
           },
         });
 
-      if (!response.ok) {
-        if (response.status === 401) {
-          handleLogout();   // auto logout
-        } else {
-          // Don’t expose raw status to the user
-          setError('Could not load streak data.');
+        if (!response.ok) {
+          if (response.status === 401) {
+            handleLogout();   // auto logout
+          } else {
+            // Don't expose raw status to the user
+            setError('Could not load streak data.');
+          }
+          setStreakData({});
+          return;
         }
-        setStreakData({});
-        return;
-      }
 
         const data = await response.json();
 
@@ -87,11 +123,30 @@ export default function Calendar({ refreshKey = 0 }) {
             return acc;
           }, {});
           setStreakData(transformedData);
+          
+          // Cache the complete calendar state
+          try {
+            localStorage.setItem('calendarCache', JSON.stringify({
+              data: {
+                streakData: transformedData,
+              },
+              timestamp: Date.now()
+            }));
+          } catch (storageError) {
+            // localStorage might be full or disabled, continue without caching
+            console.warn('Could not save to localStorage:', storageError);
+          }
         }
       } catch (e) {
         console.error('Failed to fetch streak data:', e);
-        setError('Could not load streak data.');
+        // Check if it's a network error
+        if (e.name === 'TypeError' && e.message.includes('fetch')) {
+          setError('Network error. Please check your internet connection.');
+        } else {
+          setError('Could not load streak data.');
+        }
       } finally {
+        clearTimeout(timeout);
         setLoading(false);
       }
     };
@@ -99,7 +154,6 @@ export default function Calendar({ refreshKey = 0 }) {
     fetchStreakData();
   }, [refreshKey]);
 
-  // ... (rest of the component is unchanged)
   const handleMonthChange = (direction) => {
     let newMonth = month + direction;
     let newYear = year;
@@ -116,29 +170,39 @@ export default function Calendar({ refreshKey = 0 }) {
 
   const dateKey = (d) =>
     `${year}-${String(month).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-  
-  const daysInMonth = getMonthDays(year, month);
-  const monthName = dayjs(`${year}-${month}-01`).format('MMMM');
 
-if (loading) {
-  return (
-    <div className={styles.calendar}>
-      <div className="flex flex-col items-center justify-center py-8">
-        <Image
-          src="/icons/loading.svg"
-          alt="Loading..."
-          width={48}
-          height={48}
-          className="animate-spin"
-        />
-        <p className="mt-3 text-sm text-black dark:text-white">Loading calendar...</p>
+  if (loading) {
+    return (
+      <div className={styles.calendar}>
+        <div className="flex flex-col items-center justify-center py-8">
+          <Image
+            src="/icons/loading.svg"
+            alt="Loading..."
+            width={48}
+            height={48}
+            className="animate-spin"
+          />
+          <p className="mt-3 text-sm text-black dark:text-white">Loading calendar...</p>
+        </div>
       </div>
-    </div>
-  );
-}
-if (error) {
-  return <div className={styles.calendar}></div>;
-}
+    );
+  }
+
+  if (error) {
+    return (
+      <div className={styles.calendar}>
+        <div className="flex flex-col items-center justify-center py-8">
+          <p className="text-sm text-red-600 dark:text-red-400 text-center">{error}</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.calendar}>
@@ -163,7 +227,7 @@ if (error) {
           const dateStr = dateKey(day);
           const status = streakData[dateStr] || 'empty';
           const isToday = dayjs().isSame(dateStr, 'day');
-          
+
           return (
             <div
               key={i}

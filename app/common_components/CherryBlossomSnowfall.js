@@ -12,7 +12,10 @@ export default function CherryBlossomSnowfall({ isDarkMode }) {
     let w = window.innerWidth,
       h = window.innerHeight;
     canvas.width = w; canvas.height = h;
-    const color = isDarkMode ? "rgba(255,102,0,0.5)" : "rgba(222,49,99,0.5)";
+    const color = isDarkMode
+  ? "rgba(255, 182, 193, 0.9)"  // light pink glow
+  : "rgba(220, 20, 60, 0.8)";   // deeper pink
+
     const particles = Array.from({ length: 60 }).map(() => ({
       x: Math.random() * w,
       y: Math.random() * h,
