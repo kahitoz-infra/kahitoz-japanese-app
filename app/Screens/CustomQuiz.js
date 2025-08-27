@@ -11,7 +11,9 @@ export default function CustomQuizPage() {
     <div className="min-h-screen flex flex-col bg-gray-100 dark:bg-[#2f2f2f] relative">
 
       {/* Tab Navigation */}
-      <div className="w-full flex justify-center space-x-4 p-4 mt-10">
+    <div className="w-full flex justify-center p-4 mt-10">
+  {/* Background container */}
+  <div className="bg-[#f5f5f5] dark:bg-[#2F2F2F] p-2 rounded-lg flex gap-4">
         <button
           onClick={() => setActiveTab('custom')}
           className={`px-6 py-2 rounded-full ${
@@ -32,6 +34,7 @@ export default function CustomQuizPage() {
         >
           Adaptive Quiz
         </button>
+        </div>
       </div>
 
       {/* Main Content */}
