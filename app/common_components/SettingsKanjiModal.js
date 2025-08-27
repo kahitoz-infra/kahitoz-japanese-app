@@ -9,7 +9,9 @@ export default function SettingsKanjiModal({
   const [levels, setLevels] = useState([]);
   const [kanjiSelectedLevels, setSelectedLevels] = useState([]);
   const [kanjiBookMarkCheck, setKanjiBookMarkCheck] = useState(false);
-  const [kanjiIncludeBookmarks, setKanjiIncludeBookMarks] = useState(true)
+  const [kanjiIncludeBookmarks, setKanjiIncludeBookMarks] = useState(true);
+  const [cardLimit, setCardLimit] = useState(null);
+  const [customLimit, setCustomLimit] = useState("");
 
   useEffect(() => {
     if (kanjiBookMarkCheck) {
@@ -22,6 +24,7 @@ export default function SettingsKanjiModal({
     const savedSelected = localStorage.getItem("kanjiSelectedLevels");
     const saveBookMark = localStorage.getItem("kanjiBookMarkChecked");
     const includeBookMark = localStorage.getItem("kanjiBookMarkInclude");
+    const savedLimit = localStorage.getItem("kanjiCardLimit");
 
     if (localKanjiData) {
       const data = JSON.parse(localKanjiData);
@@ -39,6 +42,10 @@ export default function SettingsKanjiModal({
 
     if (includeBookMark !== null) {
       setKanjiIncludeBookMarks(includeBookMark === "true");
+    }
+
+    if (savedLimit !== null) {
+      setCardLimit(savedLimit === "all" ? "all" : parseInt(savedLimit, 10));
     }
   }, []);
 
@@ -67,6 +74,12 @@ export default function SettingsKanjiModal({
         kanjiSelectedLevels.includes(item.tags)
       );
       console.log("After level filter:", parsedData.length);
+    }
+
+    // Apply card limit
+    if (cardLimit && cardLimit !== "all") {
+      parsedData = parsedData.slice(0, cardLimit);
+      console.log("After card limit:", parsedData.length);
     }
 
     console.log("Final parsed data:", parsedData);
@@ -159,19 +172,27 @@ export default function SettingsKanjiModal({
           <div>
             <label className="block mb-2">Card Limit:</label>
             <div className="flex gap-2 mb-2">
-              {[5, 10, 15].map((n, i) => (
+              {[5, 10, 15].map((n) => (
                 <button
                   key={n}
                   className={`px-3 py-1 rounded ${
-                    n === 10
+                    cardLimit === n
                       ? "bg-[#de3163] dark:bg-[#FF6600] text-white"
                       : "bg-gray-200 dark:bg-gray-700"
                   }`}
+                  onClick={() => setCardLimit(n)}
                 >
                   {n}
                 </button>
               ))}
-              <button className="px-3 py-1 rounded bg-gray-200 dark:bg-gray-700">
+              <button
+                className={`px-3 py-1 rounded ${
+                  cardLimit === "all"
+                    ? "bg-[#de3163] dark:bg-[#FF6600] text-white"
+                    : "bg-gray-200 dark:bg-gray-700"
+                }`}
+                onClick={() => setCardLimit("all")}
+              >
                 All
               </button>
             </div>
@@ -179,9 +200,18 @@ export default function SettingsKanjiModal({
               <input
                 type="number"
                 placeholder="Custom"
+                value={customLimit}
+                onChange={(e) => setCustomLimit(e.target.value)}
                 className="flex-1 p-2 border rounded dark:bg-[#292b2d]"
               />
-              <button className="px-3 py-2 bg-[#de3163] dark:bg-[#FF6600] text-white rounded">
+              <button
+                className="px-3 py-2 bg-[#de3163] dark:bg-[#FF6600] text-white rounded"
+                onClick={() => {
+                  if (customLimit && parseInt(customLimit, 10) > 0) {
+                    setCardLimit(parseInt(customLimit, 10));
+                  }
+                }}
+              >
                 Set
               </button>
             </div>
@@ -205,31 +235,21 @@ export default function SettingsKanjiModal({
                 localStorage.setItem(
                   "kanjiBookMarkInclude",
                   kanjiIncludeBookmarks.toString()
-                )
+                );
+
+                localStorage.setItem(
+                  "kanjiCardLimit",
+                  cardLimit?.toString() ?? "all"
+                );
 
                 const filtered = applyFiltersAndReturnData();
                 setFilteredData(filtered);
 
-                const localKanjiData = localStorage.getItem("cacheKanji");
-                if (localKanjiData) {
-                  let parsed = JSON.parse(localKanjiData);
-
-                  // Filter by selected levels (if any)
-                  if (kanjiSelectedLevels.length > 0) {
-                    parsed = parsed.filter((item) =>
-                      kanjiSelectedLevels.includes(item.tags)
-                    );
-                  }
-
-                  // Filter by bookmark if checked
-                  if (kanjiBookMarkCheck) {
-                    parsed = parsed.filter((item) => item.bookmarked === true);
-                  }
-                }
                 localStorage.setItem(
                   "filteredKanjiData",
                   JSON.stringify(filtered)
                 );
+
                 setOpenModal(false);
               }}
             >
