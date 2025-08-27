@@ -61,7 +61,7 @@ export function useGenerateAdaptiveQuiz() {
 
       localStorage.setItem('adaptive_quiz_list', JSON.stringify(existing));
 
-      router.push('/AdaptiveSets');
+      router.push('/TargetLearning');
     } catch (err) {
       console.error('Failed to fetch quiz:', err);
     }
