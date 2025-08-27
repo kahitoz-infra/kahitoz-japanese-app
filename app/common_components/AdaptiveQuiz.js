@@ -1,222 +1,126 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 import QuizQuestion from './QuizQuestion';
 import ProgressBar from './ProgressBar';
 import { formatOption } from '../utils/formatOption';
 
-export default function AdaptiveQuizPageContent() {
-  const router = useRouter();
-
-  const [questions, setQuestions] = useState([]);
-  const [originalQuestions, setOriginalQuestions] = useState([]);
+export default function AdaptiveQuizPageContent({ data, onComplete }) {
+  const [questions, setQuestions] = useState(data);
+  const [originalQuestions] = useState(data);
   const [responses, setResponses] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState(null);
   const [showFeedback, setShowFeedback] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [retryResponses, setRetryResponses] = useState([]);
-
-
   const [retryMode, setRetryMode] = useState(false);
-  const [incorrectQuestions, setIncorrectQuestions] = useState([]);
+  const [retryResponses, setRetryResponses] = useState([]);
 
   const currentQuestion = questions[currentIndex];
   const totalQuestions = questions.length;
+  const isLast = currentIndex === totalQuestions - 1; // ✅ moved here globally
 
-  const formatQuestionText = (q) => {
-    if (typeof q === 'string') return q;
-    if (Array.isArray(q)) return q.join(' ');
-    if (typeof q === 'object' && q !== null) return Object.values(q).join(' ');
-    return String(q);
-  };
-
-  useEffect(() => {
-    const loadAdaptiveQuestions = () => {
-      const rawData = localStorage.getItem('adaptive_quiz');
-      if (!rawData) {
-        console.error('adaptive_quiz not found in localStorage');
-        setLoading(false);
-        return;
-      }
-
-      try {
-        const parsed = JSON.parse(rawData);
-        const setsData = parsed.sets_data || {};
-
-        const allQuestions = Object.values(setsData)
-          .flat()
-          .filter((item) => item.type === 'question');
-
-        setQuestions(allQuestions);
-        setOriginalQuestions(allQuestions);
-      } catch (err) {
-        console.error('Error parsing adaptive_quiz:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadAdaptiveQuestions();
-  }, []);
-
-  const handleOptionClick = (option) => {
-    if (showFeedback) return;
-    setSelectedOption(option);
-  };
+  if (!currentQuestion) {
+    onComplete();
+    return null;
+  }
 
   const handleCheckAnswer = () => {
     if (!selectedOption) return;
-
     const correct = selectedOption === currentQuestion.correct_option;
     setIsCorrect(correct);
     setShowFeedback(true);
-
-    const newResponse = {
-      q_id: currentQuestion._id,
-      correct,
-    };
-
-    setResponses((prev) => [...prev, newResponse]);
+    setResponses(prev => [...prev, { q_id: currentQuestion._id, correct }]);
 
     if (retryMode) {
-      // Update retry responses list
-      setRetryResponses((prev) => {
-        const updated = prev.filter((r) => r.q_id !== currentQuestion._id);
-        if (!correct) {
-          updated.push(newResponse); // Keep only incorrect ones
-        }
+      setRetryResponses(prev => {
+        const updated = prev.filter(r => r.q_id !== currentQuestion._id);
+        if (!correct) updated.push({ q_id: currentQuestion._id, correct: false });
         return updated;
       });
     }
   };
 
   const handleNext = () => {
-  const isLastQuestion = currentIndex === totalQuestions - 1;
-  const currentCorrect = selectedOption === currentQuestion.correct_option;
-
-  if (isLastQuestion) {
-    const finalResponse = {
-      q_id: currentQuestion._id,
-      correct: currentCorrect,
-    };
-    const updatedResponses = [...responses, finalResponse];
-
-    if (!retryMode) {
-      const incorrectQIDs = updatedResponses
-        .filter((res) => !res.correct)
-        .map((res) => res.q_id);
-
-      if (incorrectQIDs.length > 0) {
-        const incorrectQs = originalQuestions.filter((q) =>
-          incorrectQIDs.includes(q._id)
-        );
-        setResponses(updatedResponses);
-        setQuestions(incorrectQs);
-        setCurrentIndex(0);
-        setSelectedOption(null);
-        setShowFeedback(false);
-        setRetryMode(true);
-        setRetryResponses(incorrectQs.map((q) => ({ q_id: q._id, correct: false })));
+    if (isLast) {
+      if (!retryMode) {
+        const incorrect = responses.filter(r => !r.correct).map(r => r.q_id);
+        if (incorrect.length > 0) {
+          const incorrectQs = originalQuestions.filter(q => incorrect.includes(q._id));
+          setQuestions(incorrectQs);
+          setCurrentIndex(0);
+          setSelectedOption(null);
+          setShowFeedback(false);
+          setRetryMode(true);
+          setRetryResponses(incorrectQs.map(q => ({ q_id: q._id, correct: false })));
+        } else {
+          onComplete();
+        }
       } else {
-        saveAndRedirect(updatedResponses);
+        if (retryResponses.length === 0) {
+          onComplete();
+        } else {
+          const retryQs = originalQuestions.filter(q =>
+            retryResponses.some(r => r.q_id === q._id && !r.correct)
+          );
+          setQuestions(retryQs);
+          setCurrentIndex(0);
+          setSelectedOption(null);
+          setShowFeedback(false);
+        }
       }
     } else {
-      // RetryMode: check if retryResponses is empty
-      if (retryResponses.length === 0) {
-        saveAndRedirect(responses); // Done, all correct
-      } else {
-        // Retry again only incorrect ones
-        const retryQs = originalQuestions.filter((q) =>
-          retryResponses.some((r) => r.q_id === q._id && !r.correct)
-        );
-        setQuestions(retryQs);
-        setCurrentIndex(0);
-        setSelectedOption(null);
-        setShowFeedback(false);
-      }
+      setCurrentIndex(prev => prev + 1);
+      setSelectedOption(null);
+      setShowFeedback(false);
     }
-  } else {
-    setCurrentIndex((prev) => prev + 1);
-    setSelectedOption(null);
-    setShowFeedback(false);
-  }
-};
-
-
-  const saveAndRedirect = (finalResponses) => {
-    const quizResult = {
-      timestamp: Date.now(),
-      responses: finalResponses,
-    };
-
-    localStorage.setItem('adaptive_quiz_responses', JSON.stringify(quizResult));
-    router.push('/PostQuiz');
   };
-
-  if (loading) return <p className="p-4 text-center">Loading...</p>;
-  if (!currentQuestion) return <p className="p-4 text-center">No questions found.</p>;
 
   return (
     <div className="flex flex-col min-h-screen text-black dark:text-white">
+      {/* Header */}
       <div className="w-full h-[20vh] bg-[#fbfbfb] dark:bg-[#2F2F2F] border-b-4 border-[#FF5274] dark:border-[#F66538] rounded-b-xl px-4 py-2 flex flex-col justify-center">
         <ProgressBar
-          label={retryMode ? 'Retry Progress' : 'Progress'}
+          label={retryMode ? 'Reattempt Progress' : 'Progress'}
           start={0}
           end={totalQuestions}
           current={currentIndex + 1}
         />
         <h1 className="text-2xl font-bold text-center mt-4">
-          {retryMode ? 'Previous Mistake Revisit' : `Question ${currentIndex + 1}`}
+          {retryMode ? 'Previous Mistake' : `Question ${currentIndex + 1}`}
         </h1>
       </div>
 
+      {/* Body */}
       <div className="flex-1 px-6 mt-4 pb-40">
         <QuizQuestion
-          question={formatQuestionText(currentQuestion.question)}
+          question={currentQuestion.question}
           options={currentQuestion.options}
           name={`adaptive-q-${currentIndex}`}
           selectedOption={selectedOption}
-          onSelect={handleOptionClick}
+          onSelect={setSelectedOption}
           type={currentQuestion.type}
         />
 
+        {/* Footer */}
         <div className="fixed bottom-0 left-0 w-full">
           {showFeedback && (
             <div
               className={`w-full py-4 text-center text-lg font-semibold ${
-                isCorrect ? 'bg-green-600 text-white' : 'bg-red-600 text-white'
-              }`}
+                isCorrect ? 'bg-green-600' : 'bg-red-600'
+              } text-white`}
             >
-              {isCorrect ? (
-                <p>✅ Correct!</p>
-              ) : (
-                <p>
-                  ❌ Incorrect. Correct Answer:{' '}
-                  <span className="underline">
-                    {formatOption(currentQuestion.correct_option, currentQuestion.type)}
-                  </span>
-                </p>
-              )}
+              {isCorrect
+                ? '✅ Correct!'
+                : <>❌ Incorrect. Correct Answer: <u>{formatOption(currentQuestion.correct_option, currentQuestion.type)}</u></>}
             </div>
           )}
-
           <button
             onClick={showFeedback ? handleNext : handleCheckAnswer}
             disabled={!selectedOption && !showFeedback}
-            className={`w-full px-6 py-4 text-lg font-bold transition-all ${
-              showFeedback
-                ? isCorrect
-                  ? 'bg-green-700 text-white'
-                  : 'bg-red-700 text-white'
-                : selectedOption
-                ? 'bg-[#FF5274] dark:bg-[#F66538] text-white hover:opacity-90'
-                : 'bg-gray-300 dark:bg-gray-700 text-gray-500 cursor-not-allowed'
-            }`}
+            className="w-full px-6 py-4 text-lg font-bold bg-[#FF5274] dark:bg-[#F66538] text-white"
           >
-            {currentIndex === totalQuestions - 1 && showFeedback
+            {isLast && showFeedback
               ? retryMode
                 ? 'Finish Retry'
                 : 'Retry Incorrect'
