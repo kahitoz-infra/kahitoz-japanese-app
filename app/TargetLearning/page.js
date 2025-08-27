@@ -1,42 +1,68 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Suspense } from 'react';
-import AdaptiveQuizPageContent from '../common_components/AdaptiveQuiz';
 import ExampleQuiz from '../common_components/ExampleQuiz';
+import AdaptiveQuizPageContent from '../common_components/AdaptiveQuiz';
+import { useRouter } from 'next/navigation';
 
-export default function AdaptiveQuiz() {
-  const [hasExamples, setHasExamples] = useState(null); // null = loading
-  const [showExamples, setShowExamples] = useState(true);
+export default function TargetLearning() {
+  const router = useRouter();
+  const [phase, setPhase] = useState("KANJI_EXAMPLES");
+  const [kanjiExamples, setKanjiExamples] = useState([]);
+  const [kanjiQuestions, setKanjiQuestions] = useState([]);
+  const [vocabExamples, setVocabExamples] = useState([]);
+  const [vocabQuestions, setVocabQuestions] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const rawData = localStorage.getItem('adaptive_quiz');
-    if (!rawData) {
-      setHasExamples(false);
+    const raw = localStorage.getItem("adaptive_quiz");
+    if (!raw) {
+      setLoading(false);
       return;
     }
 
     try {
-      const parsed = JSON.parse(rawData);
-      const sets = Object.values(parsed.sets_data || {}).flat();
-      const foundExamples = sets.filter((item) => item.type === 'example');
-      setHasExamples(foundExamples.length > 0);
-    } catch {
-      setHasExamples(false);
+      const parsed = JSON.parse(raw);
+      const items = Object.values(parsed.sets_data || {}).flat();
+
+      // Split examples
+      const kanjiEx = items.filter(i => i.type === "example" && (i.kanji || i.onyomi || i.kunyomi));
+      const vocabEx = items.filter(i => i.type === "example" && (i.word || i.furigana));
+
+      // Split questions
+      const kanjiQ = items.filter(i => i.type === "question" && i.kanji);
+      const vocabQ = items.filter(i => i.type === "question" && i.vocab);
+
+      setKanjiExamples(kanjiEx);
+      setVocabExamples(vocabEx);
+      setKanjiQuestions(kanjiQ);
+      setVocabQuestions(vocabQ);
+    } catch (err) {
+      console.error("Failed to parse adaptive_quiz", err);
+    } finally {
+      setLoading(false);
     }
   }, []);
 
-  if (hasExamples === null) {
-    return <p className="p-4 text-center">Loading quiz...</p>;
-  }
+  const nextPhase = () => {
+    if (phase === "KANJI_EXAMPLES") setPhase("KANJI_QUESTIONS");
+    else if (phase === "KANJI_QUESTIONS") setPhase("VOCAB_EXAMPLES");
+    else if (phase === "VOCAB_EXAMPLES") setPhase("VOCAB_QUESTIONS");
+    else if (phase === "VOCAB_QUESTIONS") {
+      router.push("/PostQuiz");
+    }
+  };
 
-  if (hasExamples && showExamples) {
-    return <ExampleQuiz onComplete={() => setShowExamples(false)} />;
-  }
+  if (loading) return <p className="p-4 text-center">Loading quiz...</p>;
 
-  return (
-    <Suspense fallback={<p className="p-4 text-center">Loading quiz...</p>}>
-      <AdaptiveQuizPageContent />
-    </Suspense>
-  );
+  if (phase === "KANJI_EXAMPLES")
+    return <ExampleQuiz data={kanjiExamples} onComplete={nextPhase} />;
+  if (phase === "KANJI_QUESTIONS")
+    return <AdaptiveQuizPageContent data={kanjiQuestions} onComplete={nextPhase} />;
+  if (phase === "VOCAB_EXAMPLES")
+    return <ExampleQuiz data={vocabExamples} onComplete={nextPhase} />;
+  if (phase === "VOCAB_QUESTIONS")
+    return <AdaptiveQuizPageContent data={vocabQuestions} onComplete={nextPhase} />;
+
+  return null;
 }
