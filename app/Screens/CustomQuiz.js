@@ -32,7 +32,7 @@ export default function CustomQuizPage() {
               : 'bg-gray-200 dark:bg-gray-500 text-gray-700 dark:text-gray-200 font-bold'
           }`}
         >
-          Adaptive Quiz
+          Lessons
         </button>
         </div>
       </div>
