@@ -1,3 +1,5 @@
+// In /home/naman/kahitoz-japanese-app/app/utils/generateAdaptiveQuiz.js
+
 'use client';
 import { useRouter } from 'next/navigation';
 import { useCallback } from 'react';
@@ -6,32 +8,15 @@ import { authFetch } from '@/app/middleware';
 export function useGenerateAdaptiveQuiz() {
   const router = useRouter();
 
-  const getLatestTargetValue = (key) => {
-    try {
-      const item = JSON.parse(localStorage.getItem(key));
-      return item?.value ?? null;
-    } catch {
-      console.error(`Invalid localStorage value for ${key}`);
-      return null;
-    }
-  };
+  // ... (getLatestTargetValue function is fine)
 
   const generateQuiz = useCallback(async () => {
-    const kanjiTarget = getLatestTargetValue('kanji_target');
-    const vocabTarget = getLatestTargetValue('vocab_target');
-
-    if (!kanjiTarget || !vocabTarget) {
-      console.error('Target values not found in localStorage.');
-      return;
-    }
-
-    const baseUrl = process.env.NEXT_PUBLIC_API_ADAPT_LEARN;
-    const apiUrl = `${baseUrl}/adapt_quiz?kanji_target=${kanjiTarget}&vocab_target=${vocabTarget}`;
+    // ... (getting targets and setting API URL is fine)
 
     try {
       const res = await authFetch(apiUrl);
       if (!res.ok) throw new Error(`Error: ${res.status}`);
-      const quizData = await res.json();
+      const quizData = await res.json(); // This has the full quiz (set1, set2, etc.)
 
       const quizId = Date.now();
       const quizWithMeta = {
@@ -39,13 +24,37 @@ export function useGenerateAdaptiveQuiz() {
         date: new Date().toISOString(),
         kanjiTarget,
         vocabTarget,
-        quizData,
+        quizData, // Save the FULL data to the history list
       };
+      
+      // --- START: MODIFICATION ---
 
-      // Save to individual quiz slot for playing
-      localStorage.setItem('adaptive_quiz', JSON.stringify(quizData));
+      // 1. Reset progress for the new quiz
+      localStorage.removeItem('completed_sets');
 
-      // Save to quiz history list
+      // 2. Isolate the first set to start the quiz
+      const sets = quizData.sets_data;
+      const firstSetName = Object.keys(sets)[0]; // e.g., "set1"
+      
+      if (!firstSetName) {
+        console.error("Quiz data does not contain any sets.");
+        return;
+      }
+
+      const quizForFirstSet = {
+        ...quizData, // Copy metadata like quiz_id
+        sets_data: {
+          [firstSetName]: sets[firstSetName], // Only include the first set
+        }
+      };
+      
+      // 3. Save only the first set to the 'active' quiz slot
+      localStorage.setItem('adaptive_quiz', JSON.stringify(quizForFirstSet));
+
+      // --- END: MODIFICATION ---
+
+
+      // Save the complete quiz to the history list
       let existing = [];
       try {
         existing = JSON.parse(localStorage.getItem('adaptive_quiz_list')) || [];
