@@ -13,6 +13,7 @@ export default function TargetLearning() {
   const [vocabExamples, setVocabExamples] = useState([]);
   const [vocabQuestions, setVocabQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [allResponses, setAllResponses] = useState([]);
 
   useEffect(() => {
     const raw = localStorage.getItem("adaptive_quiz");
@@ -25,11 +26,9 @@ export default function TargetLearning() {
       const parsed = JSON.parse(raw);
       const items = Object.values(parsed.sets_data || {}).flat();
 
-      // Split examples
       const kanjiEx = items.filter(i => i.type === "example" && (i.kanji || i.onyomi || i.kunyomi));
       const vocabEx = items.filter(i => i.type === "example" && (i.word || i.furigana));
 
-      // Split questions
       const kanjiQ = items.filter(i => i.type === "question" && i.kanji);
       const vocabQ = items.filter(i => i.type === "question" && i.vocab);
 
@@ -44,11 +43,22 @@ export default function TargetLearning() {
     }
   }, []);
 
-  const nextPhase = () => {
+  const nextPhase = (phaseResponses = []) => {
+    if (phaseResponses.length > 0) {
+      setAllResponses(prev => [...prev, ...phaseResponses]);
+    }
+
     if (phase === "KANJI_EXAMPLES") setPhase("KANJI_QUESTIONS");
     else if (phase === "KANJI_QUESTIONS") setPhase("VOCAB_EXAMPLES");
     else if (phase === "VOCAB_EXAMPLES") setPhase("VOCAB_QUESTIONS");
     else if (phase === "VOCAB_QUESTIONS") {
+      const finalCombinedResponses = [...allResponses, ...phaseResponses];
+
+      localStorage.setItem(
+        'adaptive_quiz_responses',
+        JSON.stringify({ responses: finalCombinedResponses })
+      );
+      
       router.push("/PostQuiz");
     }
   };
@@ -57,10 +67,13 @@ export default function TargetLearning() {
 
   if (phase === "KANJI_EXAMPLES")
     return <ExampleQuiz data={kanjiExamples} onComplete={nextPhase} />;
+  
   if (phase === "KANJI_QUESTIONS")
     return <AdaptiveQuizPageContent data={kanjiQuestions} onComplete={nextPhase} />;
+
   if (phase === "VOCAB_EXAMPLES")
     return <ExampleQuiz data={vocabExamples} onComplete={nextPhase} />;
+
   if (phase === "VOCAB_QUESTIONS")
     return <AdaptiveQuizPageContent data={vocabQuestions} onComplete={nextPhase} />;
 
