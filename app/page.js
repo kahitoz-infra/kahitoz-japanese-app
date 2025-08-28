@@ -5,9 +5,9 @@ import Login from './Screens/Login';
 import Navbar from './common_components/Navbar';
 
 import Dashboard from './Screens/Dashboard';
-import CustomQuizPage from './Screens/CustomQuiz';
 import ViewAll from './Screens/ViewAll';
 import Settings from './Screens/Settings';
+import QuizV2 from './QuizV2/QuizV2';
 // import Chat from './Chat'; // when available
 
 export default function Home() {
@@ -17,7 +17,7 @@ export default function Home() {
   const renderPage = () => {
     switch (currentPage) {
       case 'quiz':
-        return <CustomQuizPage />;
+        return <QuizV2 />;
       case 'viewall':
         return <ViewAll />;
       case 'settings':
