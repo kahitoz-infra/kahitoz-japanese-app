@@ -33,78 +33,96 @@ export default function PostQuizPage() {
     }
   }, []);
 
-useEffect(() => {
-  const sendAdaptiveQuizData = async () => {
-    const quizData = localStorage.getItem('adaptive_quiz');
-    const responseData = localStorage.getItem('adaptive_quiz_responses');
+  useEffect(() => {
+    const sendAdaptiveQuizData = async () => {
+      const quizData = localStorage.getItem('adaptive_quiz');
+      const responseData = localStorage.getItem('adaptive_quiz_responses');
 
-    if (!quizData || !responseData) return;
+      if (!quizData || !responseData) return;
 
-    try {
-      const parsedQuiz = JSON.parse(quizData);
-      const parsedResponses = JSON.parse(responseData);
-      const { quiz_id, sets_data } = parsedQuiz;
-      const { responses } = parsedResponses;
+      try {
+        const parsedQuiz = JSON.parse(quizData);
+        const parsedResponses = JSON.parse(responseData);
+        const { quiz_id, sets_data } = parsedQuiz;
+        const { responses } = parsedResponses;
 
-      // 🔹 Build all sets in one payload
-      const setsPayload = Object.entries(sets_data).map(([setName, items]) => {
-        const questionIds = items
-          .filter(i => i.type === 'question')
-          .map(i => i._id);
+        // 🔹 Build all sets in one payload
+        const setsPayload = Object.entries(sets_data).map(([setName, items]) => {
+          const questionIds = items
+            .filter(i => i.type === 'question')
+            .map(i => i._id);
 
-        const matchedResponses = responses
-          .filter(r => questionIds.includes(r.q_id))
-          .map(r => ({ question_id: r.q_id, correct: r.correct }));
+          const matchedResponses = responses
+            .filter(r => questionIds.includes(r.q_id))
+            .map(r => ({ question_id: r.q_id, correct: r.correct }));
 
-        return { set_name: setName, response: matchedResponses };
-      }).filter(set => set.response.length > 0);
+          return { set_name: setName, response: matchedResponses };
+        }).filter(set => set.response.length > 0);
 
-      if (setsPayload.length === 0) return;
+        if (setsPayload.length === 0) return;
 
-      const payload = { quiz_id, sets: setsPayload };
+        const payload = { quiz_id, sets: setsPayload };
 
-      // 🔹 Single API call
-      const res = await authFetch(
-        `${process.env.NEXT_PUBLIC_API_ADAPT_LEARN}/adapt_evaluate`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        }
-      );
-
-      if (res.ok) {
-        console.log("✅ Submitted all sets in one go");
-
-        // ✅ Update streak
-        const today = dayjs().format('YYYY-MM-DD');
-        const streakRes = await authFetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/update_streak?date=${today}`,
-          { method: 'PUT' }
+        // 🔹 Single API call
+        const res = await authFetch(
+          `${process.env.NEXT_PUBLIC_API_ADAPT_LEARN}/adapt_evaluate`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          }
         );
 
-        if (!streakRes.ok) {
-          console.error('Streak API request failed:', streakRes.statusText);
-          return;
-        }
+        if (res.ok) {
+          console.log("✅ Submitted all sets in one go");
 
-        const streakData = await streakRes.json();
-        if (streakData.updated) {
-          console.log('✅ Streak updated successfully via API.');
-          const localStreaks = JSON.parse(localStorage.getItem('user_streaks') || '{}');
-          localStreaks[today] = 'complete';
-          localStorage.setItem('user_streaks', JSON.stringify(localStreaks));
+          // 🔹 Update the local set tracker on successful submission
+          const currentSetNames = Object.keys(sets_data);
+          if (currentSetNames.length > 0) {
+            const currentTracker = JSON.parse(localStorage.getItem('completed_sets_tracker') || '{}');
+            const completedSetsForQuiz = currentTracker[quiz_id] || [];
+            
+            // Add unique set names to the tracker
+            currentSetNames.forEach(setName => {
+              if (!completedSetsForQuiz.includes(setName)) {
+                completedSetsForQuiz.push(setName);
+              }
+            });
+
+            currentTracker[quiz_id] = completedSetsForQuiz;
+            localStorage.setItem('completed_sets_tracker', JSON.stringify(currentTracker));
+            console.log("✅ Updated completed_sets_tracker in local storage.");
+          }
+
+          // ✅ Update streak
+          const today = dayjs().format('YYYY-MM-DD');
+          const streakRes = await authFetch(
+            `${process.env.NEXT_PUBLIC_API_URL}/update_streak?date=${today}`,
+            { method: 'PUT' }
+          );
+
+          if (!streakRes.ok) {
+            console.error('Streak API request failed:', streakRes.statusText);
+            return;
+          }
+
+          const streakData = await streakRes.json();
+          if (streakData.updated) {
+            console.log('✅ Streak updated successfully via API.');
+            const localStreaks = JSON.parse(localStorage.getItem('user_streaks') || '{}');
+            localStreaks[today] = 'complete';
+            localStorage.setItem('user_streaks', JSON.stringify(localStreaks));
+          }
+        } else {
+          console.error("❌ Failed to submit quiz:", await res.text());
         }
-      } else {
-        console.error("❌ Failed to submit quiz:", await res.text());
+      } catch (err) {
+        console.error('Error submitting adaptive quiz data or updating streak:', err);
       }
-    } catch (err) {
-      console.error('Error submitting adaptive quiz data or updating streak:', err);
-    }
-  };
+    };
 
-  sendAdaptiveQuizData();
-}, []);
+    sendAdaptiveQuizData();
+  }, []);
 
 
   useEffect(() => {
