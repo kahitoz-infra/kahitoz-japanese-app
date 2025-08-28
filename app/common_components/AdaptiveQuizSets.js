@@ -3,54 +3,64 @@ import { useState, useEffect } from 'react';
 import CherryBlossomSnowfall from "./CherryBlossomSnowfall";
 import QuickStartButton from "@/app/common_components/GenerateQuizButton";
 
-// --- Main Adaptive Quiz Sets Component ---
 export default function AdaptiveQuizSets() {
   const [quizzes, setQuizzes] = useState([]);
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [completedSetsTracker, setCompletedSetsTracker] = useState({});
 
   useEffect(() => {
     setIsDarkMode(document.documentElement.classList.contains('dark'));
-  }, []);
-
-  useEffect(() => {
-    try {
-      if (!localStorage.getItem('adaptive_quiz_list')) {
-        const mockQuizzes = [
-          { id: 1, quizData: { sets_data: { set1: [] } } },
-          { id: 2, quizData: { sets_data: { set1: [], set2: [] } } },
-          { id: 3, quizData: { sets_data: { set1: [], set2: [], set3: [], set4: [] } } },
-        ];
-        localStorage.setItem('adaptive_quiz_list', JSON.stringify(mockQuizzes));
-      }
-      const stored = JSON.parse(localStorage.getItem('adaptive_quiz_list')) || [];
-      setQuizzes(stored);
-    } catch (err) {
-      console.error('Failed to parse adaptive_quiz_list:', err);
-      setQuizzes([]);
-    }
+    
+    // Read the latest state from local storage on component mount
+    const storedQuizzes = JSON.parse(localStorage.getItem('adaptive_quiz_list')) || [];
+    setQuizzes(storedQuizzes);
+    
+    const tracker = JSON.parse(localStorage.getItem('completed_sets_tracker') || '{}');
+    setCompletedSetsTracker(tracker);
   }, []);
 
   const handlePlay = (quiz) => {
-    localStorage.setItem('adaptive_quiz', JSON.stringify(quiz.quizData));
-    window.location.href = '/TargetLearning';
+    const fullQuizData = quizzes.find(q => q.id === quiz.id)?.quizData;
+    if (!fullQuizData) return;
+
+    const quizId = fullQuizData.quiz_id;
+    const allSetNames = Object.keys(fullQuizData.sets_data);
+    const completedSetNames = completedSetsTracker[quizId] || [];
+    
+    const nextSetToPlay = allSetNames.find(setName => !completedSetNames.includes(setName));
+
+    if (nextSetToPlay) {
+      const quizDataForNextSet = {
+        ...fullQuizData,
+        sets_data: {
+          [nextSetToPlay]: fullQuizData.sets_data[nextSetToPlay]
+        }
+      };
+      localStorage.setItem('adaptive_quiz', JSON.stringify(quizDataForNextSet));
+      window.location.href = '/TargetLearning';
+    } else {
+      alert("You have completed this quiz!");
+    }
   };
 
-  // --- Zigzag Alignment Logic ---
   const getAlignment = (index) => {
-    if ((index + 1) % 4 === 0) {
-      return "justify-start"; // left
-    }
-    if (index % 2 === 0) {
-      return "justify-center"; // center
-    }
-    return "justify-end"; // right
+    if ((index + 1) % 4 === 0) return "justify-start";
+    if (index % 2 === 0) return "justify-center";
+    return "justify-end";
+  };
+
+  const isLatestQuizCompleted = () => {
+    if (quizzes.length === 0) return true;
+    const latestQuiz = quizzes[quizzes.length - 1];
+    const quizId = latestQuiz.quizData.quiz_id;
+    const totalSets = Object.keys(latestQuiz.quizData.sets_data).length;
+    const completedCount = (completedSetsTracker[quizId] || []).length;
+    return completedCount >= totalSets;
   };
 
   return (
     <div className="relative min-h-screen flex flex-col items-center w-screen bg-gray-100 dark:bg-[#2f2f2f] py-8">
       <CherryBlossomSnowfall isDarkMode={isDarkMode} />
-
-      {/* Quiz List or Empty Message */}
       {quizzes.length === 0 ? (
         <div className="text-center">
           <p className="text-gray-600 dark:text-gray-300 text-lg">No quizzes yet.</p>
@@ -59,27 +69,27 @@ export default function AdaptiveQuizSets() {
       ) : (
         <div className="mt-4 grid grid-cols-1 gap-y-16 w-full max-w-4xl px-4">
           {quizzes.map((quiz, index) => {
-            const isNewest = index === quizzes.length - 1;
-            const progress = Math.min(((index + 1) * 25), 100);
+            const quizId = quiz.quizData.quiz_id;
+            const totalSets = Object.keys(quiz.quizData.sets_data).length;
+            const completedCount = (completedSetsTracker[quizId] || []).length;
+            const progress = totalSets > 0 ? (completedCount / totalSets) * 100 : 0;
+            const isCompleted = completedCount >= totalSets;
 
             return (
               <div key={quiz.id} className={`flex ${getAlignment(index)}`}>
                 <div className="flex flex-col items-center w-32">
                   <div className="relative">
-                    {/* Play button */}
                     <div
                       className={`w-20 h-20 flex items-center justify-center rounded-full shadow-md border-4 transition-all duration-300 cursor-pointer
-                        ${isNewest ? 'dark:bg-[#F66538] bg-[#FF5274]' : 'dark:bg-gray-600 bg-gray-400'} 
+                        ${!isCompleted ? 'dark:bg-[#F66538] bg-[#FF5274]' : 'dark:bg-gray-600 bg-gray-400'}
                         hover:scale-105`}
-                      onClick={() => handlePlay(quiz)}
+                      onClick={() => !isCompleted && handlePlay(quiz)}
                     >
                       <span className="text-white font-bold text-xl">▶</span>
                     </div>
-
-                    {/* Progress bar */}
                     <div className="w-full mt-3">
                       <div className="h-1 w-full bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                        <div 
+                        <div
                           className="h-full bg-[#FF5274] dark:bg-[#F66538] transition-all duration-300"
                           style={{ width: `${progress}%` }}
                         />
@@ -92,10 +102,8 @@ export default function AdaptiveQuizSets() {
           })}
         </div>
       )}
-
-      {/* 🚀 Floating Quick Start Button */}
       <div className="fixed bottom-32 right-6 z-50">
-        <QuickStartButton />
+        <QuickStartButton disabled={!isLatestQuizCompleted()} />
       </div>
     </div>
   );
